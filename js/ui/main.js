@@ -136,8 +136,9 @@ function render() {
     try {
       body = view.render(ctx, route);
     } catch (err) {
-      console.error(err);
-      body = errorScreen(ctx, err);
+      // A refused screen (for example another facility's page) is a normal answer, not an error.
+      if (err instanceof ActionError) body = notAllowed(ctx, true, err.message);
+      else { console.error(err); body = errorScreen(ctx, err); }
     }
   }
   const focus = captureFocus();
@@ -182,10 +183,10 @@ function restoreFocus(f) {
   try { if (f.start !== null && f.start !== undefined) el.setSelectionRange(f.start, f.end); } catch { /* not a text input */ }
 }
 
-function notAllowed(ctx, exists) {
+function notAllowed(ctx, exists, reason = null) {
   return html`<div class="app"><main class="wrap" style="max-width: 720px; padding-top: 40px">
 <h1 class="h1">${exists ? 'This screen is not for your role' : 'Page not found'}</h1>
-<p class="lead muted">${exists ? 'Each role sees only the screens it needs.' : 'The link may be old.'}</p>
+<p class="lead muted">${reason || (exists ? 'Each role sees only the screens it needs.' : 'The link may be old.')}</p>
 <a class="btn btn-primary" href="${ctx.home}" style="align-self: flex-start">${ic('back', 'w')}Go to your home screen</a>
 </main></div>`;
 }
@@ -272,7 +273,7 @@ setInterval(() => { if (app) { app.tick(); updateSyncSlot(); } }, 30000);
     render();
     scheduleSend();
     // Test hook for the browser checks (switch the signed-in test user without the sign-in screen).
-    window.taimakaTest = { signInAs: (id) => { app.state.session = { userId: id }; ui.view = {}; render(); }, app: () => app };
+    window.taimakaTest = { signInAs: (id) => { app.state.session = { userId: id }; ui.view = {}; location.hash = HOME[app.db.user(id).kind]; render(); }, app: () => app };
   } catch (err) {
     console.error(err);
     root.innerHTML = String(html`<div class="app"><main class="wrap" style="max-width: 720px; padding-top: 40px">
