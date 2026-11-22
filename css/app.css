@@ -29,7 +29,7 @@ button{cursor:pointer}
 .ph-actions{display:flex;gap:8px}
 .ph-actions .btn{flex:1 1 0;padding:8px;white-space:normal;line-height:1.2}
 /* layout fix: button labels never wrap past two lines; on narrow phones the bottom actions stack */
-@media (max-width:359px){.ph-actions{flex-direction:column}.ph-actions .btn{flex:1 1 auto}}
+.ph-actions.stack{flex-direction:column}.ph-actions.stack .btn{flex:1 1 auto}
 @container (max-width:640px){
  .btn{white-space:normal;line-height:1.2}
  .row.sp>.btn,.banner .btn{flex:1 1 auto}
@@ -61,3 +61,22 @@ textarea.input{font-family:inherit;resize:vertical}
 select.select,input.input{font-family:inherit;font-size:16px;color:var(--ink)}
 .inline-form{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
 .step-sub{font-size:14px;color:var(--ink-2)}
+
+/* Phones: the design stylesheet's phone rules (tm.css ".phone ...") applied to the real app on narrow screens,
+   so no text is below 16px on a phone. Selector list and values copied from tm.css. */
+@media (max-width:640px){
+ .app :is(.small,.hint,.stamp,.sync,.chip,.chip-sm,.tag,.savedline,.code,.btn-sm,.step-t,.tbc,.muted,.faint,.brand-name,.pb-type,.sec-t,.step .dot){font-size:16px}
+ .app .chip{--ty:.25px}
+ .app .chip-sm{--ty:.5px;min-height:28px}
+ .app .btn-sm{--ty:.25px;padding:calc(8px + var(--ty)) 14px calc(8px - var(--ty))}
+ .app .chip{white-space:normal;text-align:left}
+}
+select.select{max-width:100%}
+.inline-form .field,.row>label.row{max-width:100%;min-width:0}
+/* Text centering inside pills and buttons, re-measured in Chromium with the bundled font (CLAUDE.md: the gap
+   above the capitals equals the gap below within 0.5px). These sizes measured 0.5px to 1px off with the
+   design's --ty, so --ty is set to the measured value; everything else is unchanged. */
+.sum .chip,.needs .chip{--ty:.6px}
+.chip-sm{--ty:.9px}
+.btn{--ty:0px}
+.btn-lg{--ty:.5px;padding:calc(12px + var(--ty)) 24px calc(12px - var(--ty))}

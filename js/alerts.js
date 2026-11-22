@@ -68,6 +68,11 @@ export function openEmergency(db, storeId) {
   return [...db.shipments.values()].filter((sh) => sh.type === 'emergency' && sh.toStoreId === storeId && (sh.state === 'requested' || sh.state === 'approved')).at(-1) || null;
 }
 
+// An emergency shipment already on its way to a facility (Sent), if any, for any of these items.
+export function emergencyOnTheWay(db, storeId, itemIds = null) {
+  return [...db.shipments.values()].filter((sh) => sh.type === 'emergency' && sh.toStoreId === storeId && sh.state === 'sent' && (!itemIds || sh.lines.some((l) => itemIds.includes(l.itemId)))).at(-1) || null;
+}
+
 // One alert per facility for each stock status, listing every item (in alert item order).
 function statusAlerts(db, type, status) {
   const out = [];
@@ -79,7 +84,9 @@ function statusAlerts(db, type, status) {
       .map((v) => ({ itemId: v.item.id, name: v.item.name, onHand: v.onHand, days: v.days, months: v.months, lastsUntil: v.lastsUntil, key: itemKey(v.item, v.status === STATUS.OUT ? 0 : v.days) }))
       .sort((a, b) => compareKeys(a.key, b.key));
     const request = openEmergency(db, s.id);
-    const a = make(type, { storeId: s.id, items, request, key: [...items[0].key, storeRank(db, s.id)] });
+    const onTheWay = request ? null : emergencyOnTheWay(db, s.id, items.map((x) => x.itemId));
+    const a = make(type, { storeId: s.id, items, request, onTheWay, key: [...items[0].key, storeRank(db, s.id)] });
+    if (onTheWay) a.action = { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary', shipmentId: onTheWay.id };
     // A request from the facility is waiting: the next step is to approve it.
     if (request && request.state === 'requested' && request.steps.requested.by !== undefined && db.user(request.steps.requested.by).kind === 'facility') {
       a.action = { id: 'approve_request', label: 'Approve request', icon: 'tick', kind: 'primary', shipmentId: request.id };

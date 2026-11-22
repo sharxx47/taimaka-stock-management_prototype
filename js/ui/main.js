@@ -115,6 +115,7 @@ function makeCtx(route) {
 }
 
 function go(hash) {
+  if (ui.flash) ui.flash.keep = true; // a message set just before moving shows on the next screen
   if (location.hash === hash) render();
   else location.hash = hash;
   window.scrollTo(0, 0);
@@ -145,9 +146,23 @@ function render() {
   const routeChanged = ui.lastRoute !== location.hash;
   if (routeChanged) { ui.lastRoute = location.hash; if (route.query.at) scrollToId(route.query.at); }
   restoreFocus(focus);
+  stackWrappedActions();
   const af = root.querySelector('[data-autofocus]');
   if (af && !focus && (routeChanged || ui.modal)) { af.focus(); if (route.query.item) af.scrollIntoView({ block: 'center' }); }
   document.title = `${root.querySelector('h1')?.textContent || 'Stock Management'} · Taimaka Stock Management`;
+}
+
+// Layout fix: button labels never wrap past two lines. If a phone's bottom actions would, stack them.
+function stackWrappedActions() {
+  root.querySelectorAll('.ph-actions').forEach((g) => {
+    g.classList.remove('stack');
+    const tooTall = [...g.querySelectorAll('.btn')].some((b) => {
+      const lh = parseFloat(getComputedStyle(b).lineHeight) || 19;
+      const pad = parseFloat(getComputedStyle(b).paddingTop) + parseFloat(getComputedStyle(b).paddingBottom) + 4;
+      return (b.getBoundingClientRect().height - pad) / lh > 2.2;
+    });
+    if (tooTall) g.classList.add('stack');
+  });
 }
 
 function scrollToId(id) {
@@ -243,7 +258,7 @@ window.addEventListener('offline', () => render());
 let wasPhone = window.innerWidth < 640;
 window.addEventListener('resize', () => {
   const p = window.innerWidth < 640;
-  if (p !== wasPhone) { wasPhone = p; render(); }
+  if (p !== wasPhone) { wasPhone = p; render(); } else stackWrappedActions();
 });
 setInterval(() => { if (app) { app.tick(); updateSyncSlot(); } }, 30000);
 

@@ -25,7 +25,7 @@ function escalationBanner(ctx, storeId, esc) {
   const lines = [...byItem.entries()].map(([itemId, fl]) => {
     const it = db.item(itemId);
     const last = fl.at(-1).eval;
-    return html`<span><span class="b">${it.name}</span>: <span class="b">${fl.length}</span> ${fl.length === 1 ? 'difference' : 'differences'} in ${daysBetween(fl[0].date, fl.at(-1).date) + 1} days (latest: counted <span class="b">${formatNumber(last.counted)}</span>, expected <span class="b">${formatNumber(last.expected)}</span>).</span>`;
+    return html`<span><span class="b">${it.name}</span>: <span class="b">${fl.length}</span> ${fl.length === 1 ? 'difference' : 'differences'} in ${daysBetween(fl[0].date, fl.at(-1).date) + 1} ${daysBetween(fl[0].date, fl.at(-1).date) === 0 ? 'day' : 'days'} (latest: counted <span class="b">${formatNumber(last.counted)}</span>, expected <span class="b">${formatNumber(last.expected)}</span>).</span>`;
   });
   const told = esc.run.filter((f) => f.date < esc.supervisorSince).map((f) => html`<span class="b">${formatShortDate(f.date)}</span>`);
   return html`<div class="banner bn-order" style="align-items: flex-start">

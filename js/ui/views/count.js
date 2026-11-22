@@ -112,7 +112,7 @@ ${flashBanner(ctx)}
 <section class="card col g16">
 <span class="tl-ic">${ic('tick')}</span>
 <h1 class="h3">${isRecount ? 'Recount saved' : `Today's ${word} submitted, thank you`}</h1>
-<span class="muted">Sent ${formatTime(vs.done.at)} by ${user.name || user.role}${ctx.sync.online ? '' : `. Saved on this ${deviceType()}, will send when online`}.</span>
+<span class="muted">Sent ${formatTime(vs.done.at)} by ${user.name || user.role}${ctx.sync.online ? '' : ` · saved on this ${deviceType()}, will send when online`}</span>
 ${vs.done.flags ? html`<div class="banner bn-low">${chip('CHECK')}<p class="grow" style="margin: 0">${vs.done.flags} ${vs.done.flags === 1 ? 'difference' : 'differences'} to check. ${isRecount ? 'The facility and its supervisor can see them.' : 'They show on your home screen.'}</p></div>` : ''}
 ${isRecount ? html`<a class="btn btn-secondary" href="#/logistics" style="align-self: flex-start">${ic('back', 'b')}Back to today</a>` : html`<a class="btn btn-secondary" href="#/home" style="align-self: flex-start">${ic('back', 'b')}Back to your stock</a>`}
 </section></main></div>`;

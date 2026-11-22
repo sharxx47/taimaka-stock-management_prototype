@@ -57,7 +57,8 @@ export function alertBanner(ctx, a) {
       const head = a.type === 'OUT' ? (a.items.length > 1 ? html`${b(a.items.length)} items out of stock: ${joinAnd(items)}.` : html`${items[0]} is out of stock.`) : html`${joinAnd(items)}.`;
       const fromFacility = a.request && db.user(a.request.steps.requested.by).kind === 'facility';
       const req = a.request ? html` ${fromFacility ? 'Emergency request sent' : 'Emergency shipment planned'} ${when(a.request.steps.requested.at, d)} by ${personRef(a.request.steps.requested.byName, user)}${a.request.state === 'approved' ? ', approved, not sent yet' : ''}.` : '';
-      text = html`${sname(db, a.storeId)} · ${head}${req}`;
+      const way = a.onTheWay ? html` Emergency shipment ${b(a.onTheWay.number)} is on the way, sent ${when(a.onTheWay.steps.sent.at, d)}.` : '';
+      text = html`${sname(db, a.storeId)} · ${head}${req}${way}`;
       button = act.shipmentId
         ? goBtn(act.label, act.icon, `#/shipment/${act.shipmentId}`, act.kind || 'primary')
         : btn({ label: act.label, icon: act.icon, kind: 'primary', act: 'plan-emergency', data: { store: a.storeId } });
@@ -226,19 +227,20 @@ function proposalCard(ctx, sh) {
   const pill = sh.type === 'emergency' ? chip('ORDER_NOW', 'Emergency', 'sm') : sh.type === 'transfer' ? chip('TRANSIT', 'Transfer between facilities', 'sm') : html`<span class="tag">${ic('truck', 'i', 'sm')}Monthly</span>`;
   const amounts = (vs.amounts ||= {});
   const byFacility = db.user(sh.steps.requested.by).kind === 'facility';
+  const unset = sh.lines.filter((l) => l.qtyProposed === null).length;
   return html`<article class="card col g16">
 <div class="row sp"><a class="h3" href="#/shipment/${sh.id}" style="color: inherit">${toName}</a>${pill}</div>
+${unset ? html`<span class="b">No usage data for ${unset === 1 ? 'this item' : 'these items'}. Logistics will set the amount.</span>` : ''}
 ${sh.lines.map((l) => {
     const it = db.item(l.itemId);
     const v = stockView(db, sh.toStoreId, l.itemId);
     const key = `${sh.id}|${l.itemId}`;
     if (l.qtyProposed === null) {
-      return html`<div class="row g8">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${l.note || 'No usage data for this item. Logistics will set the amount.'}</span></span></div>
-<label class="field"><span class="label">Amount to send (${it.unit.multiply ? it.unit.one : it.unit.many})</span><input class="input" id="amt-${sh.id}-${l.itemId}" value="${amounts[key] ?? ''}" placeholder="Logistics sets this" inputmode="decimal" style="width: 220px" data-change="amount" data-key="${key}"></label>`;
+      return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<label class="grow" for="amt-${sh.id}-${l.itemId}">${it.name}<span class="small muted"> · amount to send (${it.unit.multiply ? it.unit.one : it.unit.many})</span></label><input class="input" id="amt-${sh.id}-${l.itemId}" value="${amounts[key] ?? ''}" placeholder="Set amount" inputmode="decimal" style="width: 130px" data-change="amount" data-key="${key}"></div>`;
     }
     const t = l.targetFrozen;
     const fb = firstBatch(db, sh.fromStoreId, l.itemId);
-    return html`<div class="row g8">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span></div>
+    return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span></div>
 ${sh.type !== 'transfer' && t ? html`<span class="small muted">Tops up to its ${v.estimated ? 'estimated ' : ''}2-month target of ${qtyText(it, t)}, less ${qtyText(it, v.onHand ?? 0)} on hand${v.inTransit ? `, less ${qtyText(it, v.inTransit)} on the way` : ''}${fb ? ` · ${fb}` : ''} · <span class="row g4" style="display: inline-flex">${ic('lock', 'i', 'sm')}target locked ${formatShortDate(dateOf(sh.steps.requested.at))} ${formatTime(sh.steps.requested.at)}</span></span>` : ''}`;
   })}
 ${sh.type === 'transfer' ? html`<span class="small muted">Leaves ${shortName(db, sh.fromStoreId)} when Sent, arrives at ${shortName(db, sh.toStoreId)} when Received</span>` : ''}
@@ -289,7 +291,7 @@ function suggestedSection(ctx) {
 ${open.map((sh) => proposalCard(ctx, sh))}
 ${transfers.map((t) => { const it = db.item(t.lines[0].itemId); return html`<article class="card col g16">
 <div class="row sp"><span class="h3">${sname(db, t.fromStoreId)} → ${sname(db, t.toStoreId)}</span>${chip('TRANSIT', 'Transfer between facilities', 'sm')}</div>
-<div class="row g8">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, t.lines[0].qty)}</span> from "Too much" stock</span></div>
+<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, t.lines[0].qty)}</span> from "Too much" stock</span></div>
 <span class="small muted">Leaves ${shortName(db, t.fromStoreId)} when Sent, arrives at ${shortName(db, t.toStoreId)} when Received</span>
 <div class="row g8">${btn({ label: 'Approve', icon: 'tick', kind: 'primary', act: 'plan-transfer', data: { from: t.fromStoreId, to: t.toStoreId, item: it.id, qty: t.lines[0].qty, approve: '1' } })}${btn({ label: 'Send', icon: 'truck', disabled: true })}</div>
 </article>`; })}

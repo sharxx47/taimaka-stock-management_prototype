@@ -59,10 +59,12 @@ export class Ledger {
   }
 
   // When an entry takes effect on the balance (null: not in effect, e.g. waiting for approval).
+  // An approved correction counts from when it was entered: if the facility counted again before the
+  // approval, that later count already shows the change, so it is not taken off twice.
   effectiveMs(e) {
     if (e.kind === 'adjustment' && e.needsApproval) {
       const a = this.approvals.get(e.id);
-      return a && a.decision === 'approved' ? ms(a.stamp.at) : null;
+      return a && a.decision === 'approved' ? e.tsMs : null;
     }
     return e.tsMs;
   }

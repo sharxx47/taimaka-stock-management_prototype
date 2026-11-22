@@ -14,7 +14,7 @@ import {
 } from '../../stock.js';
 import { pendingApprovals, requestEmergency, receiveShipment, addNote, ActionError } from '../../actions.js';
 import { CORRECTION_REASONS, SACHETS_PER_CARTON } from '../../config.js';
-import { openEmergency } from '../../alerts.js';
+import { openEmergency, emergencyOnTheWay } from '../../alerts.js';
 
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -82,8 +82,8 @@ export function itemCard(ctx, v0, { readOnly = false, phone = false } = {}) {
   const unit = (q) => qtyText(v.item, q);
   if (phone) {
     return html`<article class="item" style="padding: 10px 12px; gap: 6px">
-<div class="row g8" style="flex-wrap: nowrap">${pic(v.item, 'sm')}<span class="b grow" style="font-size: 17px">${v.item.name}</span><span class="b" style="font-size: 17px; white-space: nowrap">${nc ? 'Not counted' : unit(v.onHand)}</span></div>
-<div class="row sp g8">${lastsLine(v)}${check ? chip('CHECK') : statusChip(v)}</div>${check ? html`<span class="muted">Bin card said ${unit(check.expected)}</span>` : ''}${note ? html`<span class="muted">${note}</span>` : ''}
+<div class="row g8" style="flex-wrap: nowrap">${pic(v.item, 'sm')}<span class="b grow" style="font-size: 17px">${v.item.name}</span>${v.item.isRutf && !nc ? '' : html`<span class="b" style="font-size: 17px; white-space: nowrap">${nc ? 'Not counted' : unit(v.onHand)}</span>`}</div>${v.item.isRutf && !nc ? html`<span><span class="b" style="font-size: 17px">${formatNumber(v.onHand)} sachets</span>${v.onHand >= 150 ? html` <span class="muted">${formatRutf(v.onHand).slice(formatRutf(v.onHand).indexOf('('))}</span>` : ''}</span>` : ''}
+<div class="row sp g8">${lastsLine(v)}${check ? chip('CHECK') : statusChip(v)}</div>${check ? html`<span class="muted">${v.todayCount.demo ? 'Bin card said' : 'Expected'} ${unit(check.expected)}</span>` : ''}${note ? html`<span class="muted">${note}</span>` : ''}
 <a class="small muted" href="${historyHref(v.store.id, v.item.id)}">${countStamp(v, d)}</a>
 </article>`;
   }
@@ -91,7 +91,7 @@ export function itemCard(ctx, v0, { readOnly = false, phone = false } = {}) {
 <div class="item-top">${pic(v.item)}
 <div class="col g4 grow"><h3 class="item-name">${v.item.name}</h3>${nc ? qtyBig(v.item, null) : qtyBig(v.item, v.onHand)}</div></div>
 <div class="row sp">${lastsLine(v)}${statusChip(v)}</div>
-${check ? html`<div class="prompt">${chip('CHECK', null, 'sm')}<span class="grow small">Bin card said ${unit(check.expected)}</span>${readOnly ? '' : html`<a class="btn btn-ghost btn-sm" href="#/count?item=${v.item.id}">${ic('recount', 'b')}Recount</a>`}</div>` : ''}
+${check ? html`<div class="prompt">${chip('CHECK', null, 'sm')}<span class="grow small">${v.todayCount.demo ? 'Bin card said' : 'Expected'} ${unit(check.expected)}</span>${readOnly ? '' : html`<a class="btn btn-ghost btn-sm" href="#/count?item=${v.item.id}">${ic('recount', 'b')}Recount</a>`}</div>` : ''}
 ${exp.map((b) => html`<div class="prompt" style="background: var(--exp-bg); border-color: var(--exp-bd)">${chip('EXPIRY', null, 'sm')}<span class="grow small">Batch ${b.batch} expires ${formatShortDate(b.expiry)}. About ${unit(b.unusedAtExpiry)} will not be used by then.</span></div>`)}
 ${v.status === STATUS.OUT && !readOnly ? html`<a class="btn btn-primary btn-sm" href="#/emergency">${ic('emergency', 'w')}Request emergency stock</a>` : ''}
 ${note ? html`<p class="small muted" style="margin: 0">${note}</p>` : ''}
@@ -119,14 +119,16 @@ export function summaryChips(db, storeId, size = '') {
 
 // ---------- facility alerts (same order as everywhere, without headings) ----------
 
-export function facilityAlerts(ctx, storeId, { readOnly = false } = {}) {
+export function facilityAlerts(ctx, storeId, { readOnly = false, skipChecks = false } = {}) {
   const { db, user } = ctx;
   const views = storeItems(db, storeId);
   const d = today(db);
   const unit = (v, q) => qtyText(v.item, q);
   const out = [];
   const req = openEmergency(db, storeId);
-  const reqText = req ? html` Emergency request sent <span class="b">${when(req.steps.requested.at, d)}</span> by ${personRef(req.steps.requested.byName, user)}.` : '';
+  const way = req ? null : emergencyOnTheWay(db, storeId);
+  const reqText = req ? html` Emergency request sent <span class="b">${when(req.steps.requested.at, d)}</span> by ${personRef(req.steps.requested.byName, user)}${req.state === 'approved' ? ', approved by logistics' : ''}.`
+    : way ? html` Emergency shipment <span class="b">${way.number}</span> is on the way, sent <span class="b">${when(way.steps.sent.at, d)}</span>.` : '';
   const emBtn = readOnly ? '' : html`<a class="btn btn-primary" href="#/emergency">${ic('emergency', 'w')}Request emergency stock</a>`;
 
   const outs = views.filter((v) => v.status === STATUS.OUT);
@@ -145,10 +147,11 @@ export function facilityAlerts(ctx, storeId, { readOnly = false } = {}) {
     if (sh.toStoreId !== storeId || !sentTooLong(db, sh)) continue;
     out.push(html`<div class="banner bn-order">${chip({ cls: 'order', icon: 'transit' }, 'Sent over 72 hours')}<p class="grow" style="margin: 0">Shipment <span class="b">${sh.number}</span> was sent <span class="b">${formatShortDate(dateOf(sh.steps.sent.at))}</span> (<span class="b">${hoursInSent(db, sh)} hours</span> ago) and is not marked received yet. Mark it received when it arrives.</p>${readOnly ? '' : html`<a class="btn btn-secondary" href="#/receive/${sh.id}">${ic('receive', 'b')}Receive a shipment</a>`}</div>`);
   }
-  for (const v of views.filter((x) => x.needsCheck)) {
+  for (const v of views.filter((x) => x.needsCheck && !skipChecks)) {
     const c = v.check;
     const notes = db.notes.filter((n) => n.targetId === v.todayCount.id);
-    const said = v.item.isRutf ? 'we expected' : 'the bin card said';
+    // The seeded Jigawan Iro count is the bin card's own count, so its expected figure is what the card said.
+    const said = v.todayCount.demo && !v.item.isRutf ? 'the bin card said' : 'we expected';
     out.push(html`<div class="banner bn-low">${chip('CHECK')}<p class="grow" style="margin: 0"><span class="b">${v.item.name}</span>: ${readOnly ? 'counted' : 'you counted'} <span class="b">${formatNumber(c.counted)}</span> ${v.item.unit.many}, ${said} <span class="b">${formatNumber(c.expected)}</span>.${notes.length ? html` Note: "${notes.at(-1).text}"` : ''}</p>${readOnly ? '' : html`<div class="row g8"><a class="btn btn-secondary btn-sm" href="#/count?item=${v.item.id}">${ic('recount', 'b')}Recount</a>${btn({ label: 'Add a note', icon: 'note', size: 'sm', act: 'note-open', data: { target: v.todayCount.id, label: v.item.name } })}</div>`}</div>`);
   }
   if (!views.some((v) => v.countedToday)) {
@@ -231,7 +234,8 @@ function homePhone(ctx, storeId) {
   const views = storeItems(db, storeId);
   const outs = views.filter((v) => v.status === STATUS.OUT);
   const rest = urgentFirst(views.filter((v) => v.status !== STATUS.OUT));
-  const alerts = facilityAlerts(ctx, storeId).slice(outs.length ? 1 : 0);
+  // The urgent-first list already shows each Check, so the phone skips those banners.
+  const alerts = facilityAlerts(ctx, storeId, { skipChecks: true }).slice(outs.length ? 1 : 0);
   const req = openEmergency(db, storeId);
   return html`<div class="app ph-page">
 <div class="ph-hdr">
