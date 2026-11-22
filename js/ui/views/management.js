@@ -37,7 +37,7 @@ ${data.map((x) => {
     return html`<div class="col g4" style="flex: 1 1 0; align-items: center; justify-content: flex-end; min-width: 0${lean ? raw('; background: #FFF6E3; border-radius: 8px 8px 0 0') : ''}"><span class="small b num-t">${Math.round(x.qty / 1000)}k</span><span style="${raw(bar)}"></span></div>`;
   })}
 </div>
-<div class="row" style="flex-wrap: nowrap; gap: 6px; padding-top: 6px">${data.map((x) => html`<span class="small muted" style="flex: 1 1 0; text-align: center">${MONTH_NAMES[Number(x.month.slice(5, 7)) - 1]}${x.month === cur ? ' (partial)' : ''}</span>`)}</div>
+<div class="row" style="flex-wrap: nowrap; gap: 6px; padding-top: 6px">${data.map((x) => html`<span class="small muted" style="flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; text-align: center">${MONTH_NAMES[Number(x.month.slice(5, 7)) - 1]}${x.month === cur ? ' (partial)' : ''}</span>`)}</div>
 </div>
 <p class="muted" style="margin: 0">Peak in ${MONTH_FULL[Number(peak.month.slice(5, 7)) - 1]}: ${formatRutf(Math.round(peak.qty))}, ${peak.qty / first.qty >= 4 ? `more than ${Math.floor(peak.qty / first.qty)} times` : `${(peak.qty / first.qty).toFixed(1)} times`} ${MONTH_FULL[Number(first.month.slice(5, 7)) - 1]} (${formatRutf(Math.round(first.qty)).replace(' (', ', ').replace(/\)$/, '')})</p>
 </section>`;
