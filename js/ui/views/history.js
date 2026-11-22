@@ -1,11 +1,11 @@
 // Screen 9: item history (audit trail, newest first, balance after each line) and "Correct this entry".
 
-import { html, raw } from '../dom.js';
+import { html, raw, joinAnd } from '../dom.js';
 import { ic, chip, statusChip, pic, btn, header, qtyBig, qtyText, flashBanner, when, personRef, cartonsSplit } from '../parts.js';
 import { navFor, lastsPlain } from './facility.js';
 import { formatShortDate, formatTime, dateOf } from '../../time.js';
 import { formatNumber, formatRutf, rutfReadBack, formatMonths } from '../../format.js';
-import { stockView, today, rutfAlertLevel, evaluateCount, STATUS, expiryFlags } from '../../stock.js';
+import { stockView, today, rutfAlertLevel, evaluateCount, STATUS, expiryFlags, escalation } from '../../stock.js';
 import { correctEntry, ActionError } from '../../actions.js';
 import { CORRECTION_REASONS, SACHETS_PER_CARTON } from '../../config.js';
 
@@ -167,9 +167,10 @@ ${pic(it, 'lg')}
 <div class="col g4 grow">
 <span class="muted">Item history</span>
 <h1 class="h1">${it.name} at ${store.type === 'CENTRAL' ? 'the central store' : store.name}</h1>
-<span class="row g8">${nc ? html`<span class="qty" style="font-size: 22px">Not counted today</span>` : html`<span class="qty">${it.isRutf ? html`${formatNumber(v.onHand)} <small>sachets now${v.onHand >= SACHETS_PER_CARTON ? formatRutf(v.onHand).slice(formatRutf(v.onHand).indexOf(' (')) : ''}</small>` : html`${formatNumber(v.onHand ?? 0)} <small>${it.unit.multiply ? `x ${it.unit.one}` : it.unit.many} now</small>`}</span>`}${statusChip(v, { logistics: !facilityUser })}${v.tracked && !nc ? html`<span class="muted">${v.onHand > 0 ? `Lasts until ${lastsPlain(v)}` : 'None left'}${facilityUser || !Number.isFinite(v.months) || v.months === null ? '' : ` · ${formatMonths(v.months)}${v.isCentral ? ' including stock on order' : ''}`}</span>` : ''}</span>
+<span class="row g8">${nc ? html`<span class="qty" style="font-size: 22px">Not counted today</span>` : html`<span class="qty">${it.isRutf ? html`${formatNumber(v.onHand)} <small>sachets now${v.onHand >= SACHETS_PER_CARTON ? formatRutf(v.onHand).slice(formatRutf(v.onHand).indexOf(' (')) : ''}</small>` : html`${formatNumber(v.onHand ?? 0)} <small>${it.unit.multiply ? `x ${it.unit.one}` : it.unit.many} now</small>`}</span>`}${statusChip(v, { logistics: user.kind === 'logistics' })}${v.tracked && !nc ? html`<span class="muted">${v.onHand > 0 ? `Lasts until ${lastsPlain(v)}` : 'None left'}${facilityUser || !Number.isFinite(v.months) || v.months === null ? '' : ` · ${formatMonths(v.months)}${v.isCentral ? ' including stock on order' : ''}`}</span>` : ''}</span>
 ${v.isCentral && v.target ? html`<span class="small muted">Target ${qtyText(it, v.target.qty)} (3 months of network use)${v.onOrder ? ` · ${qtyText(it, v.onOrder)} on order` : ''}</span>` : ''}
 ${v.onHand > 0 ? expiryFlags(db, storeId, itemId).map((b) => html`<div class="banner bn-exp">${chip('EXPIRY')}<p class="grow" style="margin: 0">Batch ${b.batch} ${b.expired ? 'has expired' : 'expires'} <span class="b">${formatShortDate(b.expiry)}</span>. About <span class="b">${qtyText(it, b.unusedAtExpiry)}</span> will not be used by then.</p></div>`) : ''}
+${(() => { const esc = escalation(db, storeId); const fl = (esc.run || []).filter((x) => x.entry.itemId === itemId); return (esc.level === 'supervisor' || esc.level === 'management') && fl.length ? html`<div class="banner bn-order">${chip('ORDER_NOW', 'Escalation')}<p class="grow" style="margin: 0"><span class="b">${fl.length}</span> count differences for ${it.name}: ${joinAnd(fl.map((x) => html`<span class="b">${formatShortDate(x.date)}</span> (counted ${formatNumber(x.eval.counted)}, expected ${formatNumber(x.eval.expected)})`))}. ${esc.level === 'management' ? 'Sent to management.' : html`Sent to supervisor ${esc.supervisor} on ${formatShortDate(esc.supervisorSince)}; goes to management on ${formatShortDate(esc.managementDate)} if it keeps happening.`}</p></div>` : ''; })()}
 ${v.target && v.target.explanations.length ? html`<span class="small muted">${v.target.explanations.join('. ')}</span>` : ''}
 </div>
 </div>

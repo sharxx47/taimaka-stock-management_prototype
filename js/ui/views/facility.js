@@ -105,7 +105,7 @@ export function itemCard(ctx, v0, { readOnly = false, phone = false } = {}) {
   return html`<article class="item">
 <div class="item-top">${pic(v.item)}
 <div class="col g4 grow"><h3 class="item-name">${v.item.name}</h3>${nc ? qtyBig(v.item, null) : qtyBig(v.item, v.onHand)}</div></div>
-<div class="row sp">${lastsLine(v)}${statusChip(v)}</div>
+<div class="row sp">${lastsLine(v)}${statusChip(v, { logistics: ctx.user.kind === 'logistics' })}</div>
 ${check ? html`<div class="prompt">${chip('CHECK', null, 'sm')}<span class="grow small">${v.todayCount.demo ? 'Bin card said' : 'Expected'} ${unit(check.expected)}</span>${readOnly ? '' : html`<a class="btn btn-ghost btn-sm" href="#/count?item=${v.item.id}">${ic('recount', 'b')}Recount</a>`}</div>` : ''}
 ${exp.map((b) => html`<div class="prompt" style="background: var(--exp-bg); border-color: var(--exp-bd)">${chip('EXPIRY', null, 'sm')}<span class="grow small">Batch ${b.batch} expires ${formatShortDate(b.expiry)}. About ${unit(b.unusedAtExpiry)} will not be used by then.</span></div>`)}
 ${v.status === STATUS.OUT && !readOnly ? html`<a class="btn btn-primary btn-sm" href="#/emergency">${ic('emergency', 'w')}Request emergency stock</a>` : ''}

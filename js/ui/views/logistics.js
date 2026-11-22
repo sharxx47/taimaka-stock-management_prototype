@@ -159,7 +159,7 @@ function storesTable(ctx, scope = {}) {
       // One rule for the central store: its status comes from the stock view, as on every other screen.
       return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${v.months !== null && Number.isFinite(v.months) ? v.months.toFixed(1) : 'n/a'}${v.onOrder ? html` <span class="small muted">incl. ${qtyText(it, v.onOrder)} on order</span>` : ''}</td><td>${statusChip(v, { size: 'sm' })}</td>`;
     }
-    return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${monthsText(v)}</td><td><span class="row g8">${v.needsCheck && v.status !== STATUS.OUT ? chip('CHECK', null, 'sm') : ''}${statusChip(v, { size: 'sm', logistics: true })}${v.estimated ? chip('ESTIMATED', null, 'sm') : ''}</span></td>`;
+    return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${monthsText(v)}</td><td><span class="row g8">${v.needsCheck && v.status !== STATUS.OUT ? chip('CHECK', null, 'sm') : ''}${statusChip(v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}${v.estimated && ctx.user.kind === 'logistics' ? chip('ESTIMATED', null, 'sm') : ''}</span></td>`;
   };
   const updated = (r) => {
     if (!r.holds) {
@@ -208,7 +208,7 @@ ${views.map((v, i) => {
     return html`<tr class="click" data-act="go" data-href="#/history/${sid}/${v.item.id}"><td><a class="row g8" href="#/history/${sid}/${v.item.id}" style="color: inherit; text-decoration: none">${pic(v.item, 'sm')}${store.type === 'OTP' ? `${i + 1}. ` : ''}${v.item.name}</a></td>
 <td class="r">${nc ? 'Not counted' : qtyText(v.item, v.onHand)}</td><td class="r">${monthsText(v)}</td>
 <td>${nc ? (v.lastCount ? `Last counted ${when(v.lastCount.submittedAt || v.lastCount.ts, d)}` : 'Not counted') : v.tracked && !v.noRecentUse && !v.lastsMoreThanYear && v.onHand > 0 ? `${formatShortDate(v.lastsUntil)} (${v.days} days)` : lastsPlain(v)}</td>
-<td><span class="row g8">${statusChip(v, { size: 'sm', logistics: true })}${v.needsCheck ? chip('CHECK', null, 'sm') : ''}${v.estimated ? chip('ESTIMATED', null, 'sm') : ''}${below ? html`<span class="small muted">below 2-month target</span>` : ''}${v.target && v.target.explanations.length ? html`<span class="small muted">${v.target.explanations.join('. ')}</span>` : ''}</span></td></tr>`;
+<td><span class="row g8">${statusChip(v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}${v.needsCheck ? chip('CHECK', null, 'sm') : ''}${v.estimated && ctx.user.kind === 'logistics' ? chip('ESTIMATED', null, 'sm') : ''}${below ? html`<span class="small muted">below 2-month target</span>` : ''}${v.target && v.target.explanations.length ? html`<span class="small muted">${v.target.explanations.join('. ')}</span>` : ''}</span></td></tr>`;
   })}
 </tbody>
 </table>
@@ -246,14 +246,14 @@ ${lowFirst(db, sh.toStoreId, sh.lines).map((l) => {
     const v = stockView(db, sh.toStoreId, l.itemId);
     const key = `${sh.id}|${l.itemId}`;
     if (l.qtyProposed === null && readOnly) {
-      return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · amount not set yet</span>${statusChip(v, { size: 'sm', logistics: true })}</div>`;
+      return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · amount not set yet</span>${statusChip(v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}</div>`;
     }
     if (l.qtyProposed === null) {
       return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<label class="grow" for="amt-${sh.id}-${l.itemId}">${it.name}<span class="small muted"> · amount to send (${it.unit.multiply ? it.unit.one : it.unit.many})</span></label><input class="input" id="amt-${sh.id}-${l.itemId}" value="${amounts[key] ?? ''}" placeholder="Set amount" inputmode="decimal" style="width: 130px" data-change="amount" data-key="${key}"></div>`;
     }
     const t = l.targetFrozen;
     const fb = firstBatch(db, sh.fromStoreId, l.itemId);
-    return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span>${statusChip(v, { size: 'sm', logistics: true })}</div>
+    return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span>${statusChip(v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}</div>
 ${sh.type !== 'transfer' && t ? html`<span class="small muted">Tops up to its ${v.estimated ? 'estimated ' : ''}2-month target of ${qtyText(it, t)}, less ${qtyText(it, v.onHand ?? 0)} on hand${v.inTransit ? `, less ${qtyText(it, v.inTransit)} on the way` : ''}${fb ? ` · ${fb}` : ''} · <span class="row g4" style="display: inline-flex">${ic('lock', 'i', 'sm')}target locked ${formatShortDate(dateOf(sh.steps.requested.at))} ${formatTime(sh.steps.requested.at)}</span></span>` : ''}`;
   })}
 ${sh.type === 'transfer' ? html`<span class="small muted">Leaves ${shortName(db, sh.fromStoreId)} when Sent, arrives at ${shortName(db, sh.toStoreId)} when Received</span>` : ''}
@@ -474,9 +474,9 @@ ${(() => { const low = runningLow(db); return low.items ? html`<p style="margin:
     const lines = lowFirst(db, x.toStoreId, x.lines);
     const nLow = lines.filter((l) => stockView(db, x.toStoreId, l.itemId).status === STATUS.LOW).length;
     return html`<details class="card card-tight"${nLow ? raw(' open') : ''}>
-<summary class="row sp" style="cursor: pointer"><span class="b">${sname(db, x.toStoreId)}</span><span class="row g8">${nLow ? chip('LOW', `${nLow} running low`, 'sm') : ''}${est ? chip('ESTIMATED', null, 'sm') : ''}<span class="small muted">${x.lines.length} ${x.lines.length === 1 ? 'item' : 'items'}${rutf ? ` · RUTF ${formatRutf(rutf.qty)}` : ''}${x.state ? ` · ${x.state}` : ''}</span></span></summary>
+<summary class="row sp" style="cursor: pointer"><span class="b">${sname(db, x.toStoreId)}</span><span class="row g8">${nLow ? chip('LOW', `${nLow} running low`, 'sm') : ''}${est && ctx.user.kind === 'logistics' ? chip('ESTIMATED', null, 'sm') : ''}<span class="small muted">${x.lines.length} ${x.lines.length === 1 ? 'item' : 'items'}${rutf ? ` · RUTF ${formatRutf(rutf.qty)}` : ''}${x.state ? ` · ${x.state}` : ''}</span></span></summary>
 <div class="tbox" style="margin-top: 12px"><table class="tbl"><thead><tr><th>Item</th><th class="r">To send</th><th>Status now</th></tr></thead><tbody>
-${lines.map((l) => { const it = db.item(l.itemId); const v = stockView(db, x.toStoreId, l.itemId); return html`<tr><td><span class="row g8">${pic(it, 'sm')}${it.name}</span></td><td class="r">${qtyText(it, l.qty)}</td><td>${statusChip(v, { size: 'sm', logistics: true })}</td></tr>`; })}
+${lines.map((l) => { const it = db.item(l.itemId); const v = stockView(db, x.toStoreId, l.itemId); return html`<tr><td><span class="row g8">${pic(it, 'sm')}${it.name}</span></td><td class="r">${qtyText(it, l.qty)}</td><td>${statusChip(v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}</td></tr>`; })}
 </tbody></table></div>
 ${x.id ? html`<a class="btn btn-ghost btn-sm" href="#/shipment/${x.id}" style="padding-left: 0">${ic('chev', 'b')}Open shipment ${db.shipments.get(x.id).number}</a>` : ''}
 </details>`;
@@ -506,7 +506,7 @@ ${(() => { const f = q.batch ? expiryFlags(db, from, it.id).find((x) => x.batch 
 <p class="lead muted">From ${sname(db, from)}${q.batch ? `, batch ${q.batch}` : ''}. Pick the facility that can use it soonest. Stock leaves ${sname(db, from)} when Sent and arrives when Received.</p></div>
 <div class="tbox"><table class="tbl">
 <thead><tr><th></th><th>Facility</th><th class="r">On hand</th><th class="r">Months</th><th>Status</th><th class="r">Room up to target</th></tr></thead>
-<tbody>${candidates.map((c) => html`<tr class="click${c.s.id === to ? ' sel' : ''}" data-act="transfer-to" data-store="${c.s.id}"><td><input type="radio" name="to" aria-label="${c.s.name}"${c.s.id === to ? ' checked' : ''}></td><td class="b">${c.s.name}</td><td class="r">${c.v.status === STATUS.NOT_COUNTED ? 'Not counted' : qtyText(it, c.v.onHand)}</td><td class="r">${monthsText(c.v)}</td><td>${statusChip(c.v, { size: 'sm', logistics: true })}</td><td class="r">${c.need === null ? 'n/a' : qtyText(it, c.need)}</td></tr>`)}</tbody></table></div>
+<tbody>${candidates.map((c) => html`<tr class="click${c.s.id === to ? ' sel' : ''}" data-act="transfer-to" data-store="${c.s.id}"><td><input type="radio" name="to" aria-label="${c.s.name}"${c.s.id === to ? ' checked' : ''}></td><td class="b">${c.s.name}</td><td class="r">${c.v.status === STATUS.NOT_COUNTED ? 'Not counted' : qtyText(it, c.v.onHand)}</td><td class="r">${monthsText(c.v)}</td><td>${statusChip(c.v, { size: 'sm', logistics: ctx.user.kind === 'logistics' })}</td><td class="r">${c.need === null ? 'n/a' : qtyText(it, c.need)}</td></tr>`)}</tbody></table></div>
 <div class="inline-form">
 <label class="field"><span class="label">Amount to move (${it.unit.multiply ? it.unit.one : it.unit.many})</span><input class="input" id="tr-qty" value="${qty}" inputmode="decimal" style="width: 160px" data-change="transfer-qty"></label>
 ${btn({ label: 'Propose transfer', icon: 'move', kind: 'primary', act: 'transfer-propose', data: { from, item: it.id } })}
