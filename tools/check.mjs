@@ -381,6 +381,7 @@ for (const i of man.icons) need.add(i.src);
 const seenJs = new Set();
 const walk = (f) => { if (seenJs.has(f)) return; seenJs.add(f); need.add(f); const dir = f.split('/').slice(0, -1).join('/'); for (const m of fs.readFileSync(f, 'utf8').matchAll(/^import[^'"]*['"]([^'"]+)['"]/gm)) { const parts = `${dir}/${m[1]}`.split('/'); const out = []; for (const p of parts) { if (p === '..') out.pop(); else if (p !== '.') out.push(p); } walk(out.join('/')); } };
 walk('js/ui/main.js');
+for (const f of seenJs) for (const m of fs.readFileSync(f, 'utf8').matchAll(/src="(Assets\/[^"]+)"/g)) need.add(m[1]); // images the screens load
 for (const m of fs.readFileSync('css/fonts.css', 'utf8').matchAll(/url\(['"]?\.\.\/([^'")]+)/g)) need.add(m[1]);
 need.add('Assets/taimaka-logo.svg');
 const missingSw = [...need].filter((f) => !swFiles.includes(f));

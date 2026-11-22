@@ -18,6 +18,7 @@ const FILES = [
   'Assets/icon-192.png',
   'Assets/icon-512.png',
   'Assets/apple-touch-icon.png',
+  'Assets/qr-live-link.svg',
   'data/Facility list.csv',
   'data/ITP item list.csv',
   'data/ODK OTP usage Jan-Oct 2026.csv',

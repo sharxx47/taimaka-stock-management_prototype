@@ -194,3 +194,7 @@ input.num-c{font-family:inherit}
  .app a:not(.btn):not(.tab):not(.kpi-link):not(.brand-link):not(.bbar a):not(.nav a),.app .link-btn{padding-top:12px;padding-bottom:12px;margin-top:-12px;margin-bottom:-12px}
  .app details>summary.row{min-height:48px}
 }
+/* Sign-in: QR code of the live link, quieter than signing in; hidden on phones (under 640px) */
+.qr-box{display:flex;align-items:center;gap:16px;padding:16px;align-self:flex-start;max-width:420px}
+.qr-img{width:130px;height:130px;flex:none;background:#fff;padding:8px;border:1px solid var(--line-2);border-radius:var(--r-md);box-sizing:content-box}
+@media (max-width:639.98px){.qr-box{display:none}}
