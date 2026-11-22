@@ -6,7 +6,7 @@ It runs entirely in the browser, with no server. The demo data is built from the
 
 ## Open it
 
-- Online: the GitHub Pages link (to be added when it is published).
+- Online: https://sharxx47.github.io/taimaka-stock-management_prototype/
 - On your computer: from this folder, run `node tools/serve.mjs` and open http://localhost:8080. Any local web server that serves this folder works; opening `index.html` straight from the disk does not, because browsers block loading the data files that way.
 
 Sign in with any test user and the test PIN shown on screen (1234). The demo clock starts at Friday 30 October 2026, 6:05 PM, the date of the Jigawan Iro bin card, and moves on with real time until the end of that day.

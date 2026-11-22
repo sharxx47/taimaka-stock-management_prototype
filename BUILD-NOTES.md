@@ -4,7 +4,12 @@ Working notes for the Taimaka stock management prototype. If a session stops par
 
 ## Summary (read this first)
 
-**Build steps 1 to 8 are done and committed locally, with your answers of 22 Nov applied (round 2, decisions 43 to 52).** Step 9 (GitHub repository, Pages, final walkthrough on the live link) waits for you. Nothing was pushed or deployed. No commit message carries an attribution line (the history was rewritten, decision 52).
+**All nine build steps are done.** The app is live at **https://sharxx47.github.io/taimaka-stock-management_prototype/** (GitHub Pages, from the master branch of https://github.com/sharxx47/taimaka-stock-management_prototype). Your answers of 22 Nov are applied (round 2, decisions 43 to 52), and step 9 is recorded in decisions 53 to 60. No commit message carries an attribution line (decisions 52 and 60).
+
+**Live link tests (step 9):**
+- **Requests:** all 37 requests return 200 (the page, 3 stylesheets, 26 scripts, both font files, the 3 CSV files with spaces in their names, the logo); nothing loads from another site (no Google); no console messages. The bin card photo is served too (200, image/jpeg), although the app itself does not load it; the README links to it.
+- **Walkthrough:** from "Reset demo data", in the README's order, everything worked as in round 2 (count, request 1044, receive 1042, Hajara's approval, Nasiru's approve and send, receive 1044), and after a reload all 7 entries were there, 0 dropped.
+- **Sizes:** 17 routes across all five roles at 375px, 768px and 1280px: no error screens, no sideways overflow, no text under 16px on phones, every icon and picture showing (614 at 375px, 703 at the other widths). The first run at 375px found one problem (decision 57), fixed and retested on the live link.
 
 ### What works
 
@@ -64,7 +69,7 @@ Round 2 walkthrough (22 Nov), from a fresh "Reset demo data" through the sign-in
 
 ### Decisions
 
-All listed below under "Decisions I made while you were away" (1 to 18 from the seed step, 19 to 42 from the screens, 43 to 52 from round 2). The ones you may want to look at first: 3 (non-RUTF differences reach logistics only through escalation), 8 (Otomed transfer is 8 bottles, not 20), 9 and 10 (GH Deba), 12 and 43 (Jigawan Iro's emergency request now starts unsent), 16 (management figures), 19 (daily count is compact rows on phones too), 22 (only the latest count can be corrected) and 23 (pill centering).
+All listed below under "Decisions I made while you were away" (1 to 18 from the seed step, 19 to 42 from the screens, 43 to 52 from round 2, 53 to 60 from publishing). The ones you may want to look at first: 3 (non-RUTF differences reach logistics only through escalation), 8 (Otomed transfer is 8 bottles, not 20), 9 and 10 (GH Deba), 12 and 43 (Jigawan Iro's emergency request now starts unsent), 16 (management figures), 19 (daily count is compact rows on phones too), 22 (only the latest count can be corrected) and 23 (pill centering).
 
 ### Cut
 
@@ -76,8 +81,10 @@ See "Open questions for Shahzeb" at the end.
 
 ## Where things stand
 
-- Build steps 1 to 8: done, plus round 2 (your answers of 22 Nov). See `git log` for the commits; their hashes changed when the attribution lines were removed (decision 52).
-- Next: step 9 (create the public repository, turn on GitHub Pages, test the Jigawan Iro walkthrough on the live link). Nothing in the app needs a build step: publish the folder as it is.
+- Build steps 1 to 9: done, plus round 2 (your answers of 22 Nov). See `git log` for the commits; their hashes changed when the attribution lines were removed (decision 52) and again when two messages were reworded (decision 60).
+- Live: https://sharxx47.github.io/taimaka-stock-management_prototype/
+- Repository: https://github.com/sharxx47/taimaka-stock-management_prototype (one branch, master). Pages deploys from master, folder / (root). A push to master updates the live site in under a minute; browsers may keep the previous files for up to 10 minutes (decision 58).
+- Next: nothing planned. Waiting for you.
 
 ## Decisions I made while you were away
 
@@ -138,6 +145,17 @@ Round 2 (your answers of 22 Nov):
 50. **Transfer alert wording.** "running low, 20 days left, until 19 Nov" instead of the doubled brackets "(running low, lasts until 19 Nov (20 days))".
 51. **README changes** (your step 4): the opening now says the app "runs entirely in the browser, with no server"; the local server line now says "Any local web server that serves this folder works" (the word you asked me to drop is gone from the README and these notes, apart from the Google font server's host name in decision 2); the demo clock sentence now says the clock moves on with real time until the end of 30 October; walkthrough step 1 describes the home in its real order (summary, three actions, "Needs attention", items) and has Muhammad submit the count, send the emergency request and receive 1042; step 2 says "3 differences in 11 days", from 20 to 30 October, and "approve it or not"; step 3 has Nasiru approve the request, set the amounts and send it; a new step 4 has Muhammad receive it (management and GH Deba moved to steps 5 and 6); "How it works" now mentions `kpis.js`, `tools/serve.mjs`, and what `css/app.css` holds (phone text sizes and the measured pill centering). Every other sentence was checked against the app and still matches.
 52. **No AI attribution.** The coding assistant's commit and pull request byline is turned off in `.claude/settings.local.json` (not in the repository). Every local commit message was rewritten without the "Co-Authored-By" lines, using `git filter-branch --msg-filter` (no editor); authors, dates and file contents are unchanged (the latest commit's tree hash is the same before and after). The backup refs under `refs/original` were deleted and the reflog entries for the old commits were expired, so the old messages cannot be pushed later.
+
+Step 9 (publishing, 22 Nov):
+
+53. **`.nojekyll`.** An empty `.nojekyll` file at the root, so GitHub Pages serves every file as it is instead of running Jekyll.
+54. **Letter case of every path.** A script compared all 130 paths the app loads (the page, stylesheets, fonts, logo, the three CSV files, every JavaScript import) with the real file names and with Git, letter case included: 0 mismatches, so nothing needed fixing.
+55. **The push** used the GitHub sign-in already saved on this computer. Interactive credential prompts were turned off for the push, so it would have stopped instead of opening a sign-in window; it did not need to.
+56. **The bin card photo** is not loaded by the app (no screen shows it; the README links to it as the source of the Jigawan Iro numbers). I checked that the live site serves it, rather than adding it to a screen.
+57. **Chart labels on phones.** The live test at 375px found the management chart's "Oct (partial)" label 0.75px wider than its column, which made the page scroll sideways. It became 16px with the phone text rule of round 1, and management was not in my re-run of the phone check after that rule. The month labels may now wrap inside their column.
+58. **Browser cache on GitHub Pages.** Pages lets browsers keep files for up to 10 minutes, so right after a push a browser that already visited may still run the previous version. For the retest I refreshed the cached files first. Nothing to change in the app; worth knowing if the hiring team opens the link right after an update.
+59. **Opening another role's or facility's page.** The live console showed an error when a user was shown a page that is not theirs (it came from my test hook switching users while on another facility's history page). A real user who opens such a link now gets the calm "This screen is not for your role" screen with the reason ("You can only see your own facility."), and nothing is logged as an error. The test hook now goes to the user's home screen when it switches users.
+60. **The word CLAUDE.md bans for the app, in two commit messages.** After this notes commit, the two messages that used it are reworded with `git filter-branch --msg-filter` (messages only; authors, dates and files unchanged), the backup refs and old reflog entries are removed, and master is force-pushed with `--force-with-lease` (your step 7).
 
 ## Demo values (not from the task files)
 
