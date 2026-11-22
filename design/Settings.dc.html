@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F">
+<header class="hdr">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<nav class="nav" aria-label="Logistics">
+<a href="Logistics.dc.html">Today</a><a href="Logistics.dc.html">Stores</a><a href="Logistics.dc.html">Shipments</a><a href="History.dc.html">History</a><a href="#" class="on">Settings</a>
+</nav>
+<div class="grow"></div>
+<div class="who"><span class="avatar" aria-hidden="true">NB</span><span class="col" style="gap: 0"><span class="b caps">Nasiru Bello</span><span class="small muted caps">Logistics</span></span></div>
+</header>
+<main class="wrap">
+<div class="col g4"><h1 class="h1">Settings</h1><p class="muted" style="margin: 0">Only logistics can see this page. Every change is saved with who made it and when.</p></div>
+<div class="tabs" role="group" aria-label="Section"><span class="tab tab-on">Facilities</span><span class="tab">Items</span><span class="tab">Lean season</span><span class="tab">Change log</span></div>
+<section class="col g16" aria-labelledby="fac">
+<div class="row sp"><h2 class="h2" id="fac">Facilities (31)</h2><button class="btn btn-primary" type="button"><span class="ic w-plus" aria-hidden="true"></span>Add a facility</button></div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th>Name</th><th>Type</th><th>Supervisor</th><th>Linked ITP</th><th>Target</th><th></th></tr></thead>
+<tbody>
+<tr><td class="b">Central store, Gombe</td><td>Central</td><td>n/a, run by logistics</td><td class="muted">n/a</td><td>3 months</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td class="b">Jigawan Iro OTP</td><td>OTP</td><td>Hajara Nuhu</td><td>GH Deba</td><td>2 months</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td class="b">Zaune OTP</td><td>OTP</td><td>Ambi Mamman Jacob</td><td>GH Dukku</td><td><span class="chip chip-est chip-sm"><span class="ic ic-sm s-est" aria-hidden="true"></span>Estimated target</span></td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td class="b">Kalshingi OTP</td><td>OTP</td><td>Hilary Chukusa</td><td>GH Deba</td><td><span class="chip chip-est chip-sm"><span class="ic ic-sm s-est" aria-hidden="true"></span>Estimated target</span></td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td class="b">GH Deba ITP</td><td>ITP</td><td>Timothy Meller</td><td class="muted">n/a</td><td>2 months</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td colspan="6"><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-chev" aria-hidden="true"></span>Show all 31</button></td></tr>
+</tbody></table></div>
+</section>
+<section class="card col g16" aria-labelledby="add" style="border: 2px solid #292D3D">
+<h2 class="h3" id="add">Add a facility</h2>
+<div class="row g16" style="align-items: flex-end">
+<label class="field" style="flex: 1 1 220px"><span class="label">Name</span><input class="input" value="Kafarati OTP"></label>
+<label class="field" style="flex: 1 1 140px"><span class="label">Type</span><select class="select"><option>OTP</option><option>ITP</option></select></label>
+<label class="field" style="flex: 1 1 200px"><span class="label">Supervisor</span><select class="select"><option>Hajara Nuhu</option></select></label>
+<label class="field" style="flex: 1 1 180px"><span class="label">Linked ITP</span><select class="select"><option>GH Bajoga</option></select></label>
+</div>
+<span class="label">Starting stock</span>
+<div class="row g16">
+<label class="field"><span class="small muted">RUTF, sealed cartons</span><input class="input" value="20" style="width: 120px"></label>
+<label class="field"><span class="small muted">RUTF, loose sachets</span><input class="input" value="0" style="width: 120px"></label>
+<label class="field"><span class="small muted">Tom Brown, packs</span><input class="input" value="30" style="width: 120px"></label>
+<label class="field"><span class="small muted">Amoxicillin, bottles</span><input class="input" value="60" style="width: 120px"></label>
+</div>
+<div class="readback">20 sealed cartons + 0 loose = 3,000 sachets</div>
+<div class="banner bn-wait"><span class="chip chip-est"><span class="ic s-est" aria-hidden="true"></span>Estimated target</span><span class="grow">New facilities use an estimated target until they have 3 months of their own data.</span></div>
+<button class="btn btn-primary" type="button" style="align-self: flex-start"><span class="ic w-tick" aria-hidden="true"></span>Save facility</button>
+</section>
+<section class="col g16" aria-labelledby="its">
+<h2 class="h2" id="its">Items</h2>
+<div class="tbox"><table class="tbl">
+<thead><tr><th>Item</th><th>Unit</th><th>Stock type</th><th>Usage tracked</th><th></th></tr></thead>
+<tbody>
+<tr><td><span class="row g8"><span class="pic pic-sm p-rutf" aria-hidden="true"></span><span class="b">RUTF</span></span></td><td>sachets (150 per carton)</td><td><select class="select"><option>Therapeutic food</option></select></td><td>Yes</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span><span class="b">Amoxicillin susp 60ml</span></span></td><td>bottles</td><td><select class="select"><option>Medication</option></select></td><td>Yes</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-rdt" aria-hidden="true"></span><span class="b">Malaria RDT</span></span></td><td>kits</td><td><select class="select"><option>Consumable</option></select></td><td>Yes</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-lotion" aria-hidden="true"></span><span class="b">Benzyl benzoate</span></span></td><td>bottles</td><td><select class="select"><option>Medication</option></select></td><td>No</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-box" aria-hidden="true"></span><span class="b">MUAC tape</span></span></td><td>tapes</td><td><select class="select"><option>Non-consumable</option></select></td><td>No</td><td><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-edit" aria-hidden="true"></span>Edit</button></td></tr>
+</tbody></table></div>
+</section>
+<section class="card col g16" aria-labelledby="ls">
+<h2 class="h3" id="ls">Lean-season multiplier by month</h2>
+<p class="muted" style="margin: 0">Targets are multiplied by this number in each month. 1.0 means no change.</p>
+<div class="row g8" style="align-items: flex-end"><label class="field" style="flex: 1 1 72px"><span class="label">Jan</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Feb</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Mar</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Apr</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">May</span><input class="input" value="1.2" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Jun</span><input class="input" value="1.3" style="text-align: center; font-weight: 700; background: #FFF6E3"></label><label class="field" style="flex: 1 1 72px"><span class="label">Jul</span><input class="input num-focus" value="1.5" style="text-align: center; font-weight: 700; background: #FFF6E3"></label><label class="field" style="flex: 1 1 72px"><span class="label">Aug</span><input class="input" value="1.5" style="text-align: center; font-weight: 700; background: #FFF6E3"></label><label class="field" style="flex: 1 1 72px"><span class="label">Sep</span><input class="input" value="1.3" style="text-align: center; font-weight: 700; background: #FFF6E3"></label><label class="field" style="flex: 1 1 72px"><span class="label">Oct</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Nov</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label><label class="field" style="flex: 1 1 72px"><span class="label">Dec</span><input class="input" value="1.0" style="text-align: center; font-weight: 700"></label></div>
+<div class="card card-tight col g8" style="background: #FAF8F4">
+<span class="label">You changed July from 1.3 to 1.5. Why?</span>
+<input class="input" value="Plan for the 2027 lean-season peak">
+<div class="row g8"><button class="btn btn-primary btn-sm" type="button"><span class="ic w-tick" aria-hidden="true"></span>Save change</button><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-x" aria-hidden="true"></span>Cancel</button></div>
+<span class="small muted">This raises July targets at all 30 facilities. Each one will show the reason below.</span>
+</div>
+<div class="banner bn-info"><span class="ic i-history" aria-hidden="true"></span><span class="grow">Shown on every affected item: <span class="b">"Target raised: lean-season multiplier 1.5 for July, changed by Nasiru Bello"</span></span></div>
+</section>
+<section class="col g8" aria-labelledby="lg">
+<h2 class="h3" id="lg">Change log</h2>
+<div class="tbox"><table class="tbl">
+<thead><tr><th>When</th><th>Who</th><th>Change</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td class="small">30 Oct 3:12 PM</td><td>Nasiru Bello</td><td>Lean-season multiplier, July: 1.3 → 1.5</td><td>Plan for the 2027 lean-season peak</td></tr>
+<tr><td class="small">12 Aug 10:40 AM</td><td>Nasiru Bello</td><td>Added Kalshingi OTP, supervisor Hilary Chukusa</td><td>New site opened</td></tr>
+</tbody></table></div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2600}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

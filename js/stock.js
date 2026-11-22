@@ -230,7 +230,10 @@ export function evaluateCount(db, entry) {
   if (store.type === 'ITP' || entry.expected === null || entry.expected === undefined) {
     return { applicable: false, counted: entry.qty, expected: entry.expected ?? null };
   }
-  const diff = Math.round((entry.qty - entry.expected) * 1e6) / 1e6;
+  // A count corrected with "Count correction" (for example a typing mistake) is judged on the corrected amount.
+  const corrections = countCorrections(db, entry);
+  const counted = Math.round((entry.qty + corrections) * 1e6) / 1e6;
+  const diff = Math.round((counted - entry.expected) * 1e6) / 1e6;
   const use = amc(db, entry.storeId, entry.itemId) || 0;
   const daily = use / DAYS_PER_MONTH;
   let flagged;
@@ -245,9 +248,18 @@ export function evaluateCount(db, entry) {
     flagged = Math.abs(diff) > threshold;
   }
   return {
-    applicable: true, counted: entry.qty, expected: entry.expected, diff, surplus: diff > 0,
+    applicable: true, counted, original: entry.qty, corrected: corrections !== 0, expected: entry.expected, diff, surplus: diff > 0,
     flagged, alertLogistics, threshold, isRutf: item.isRutf,
   };
+}
+
+// Count corrections in effect for one count.
+export function countCorrections(db, entry) {
+  let d = 0;
+  for (const e of db.ledger.entries(entry.storeId, entry.itemId)) {
+    if (e.kind === 'adjustment' && e.correctsId === entry.id && e.reason === 'count_correction' && db.ledger.effectiveMs(e) !== null) d += e.qty;
+  }
+  return d;
 }
 
 // ---------- Escalation ----------
@@ -259,7 +271,8 @@ export function escalation(db, storeId) {
   const t = nowMs(db);
   const flags = [];
   for (const e of db.ledger.all) {
-    if (e.storeId !== storeId || e.kind !== 'count' || e.tsMs > t) continue;
+    // Logistics recounts are the follow-up to a difference, so only the facility's own counts escalate.
+    if (e.storeId !== storeId || e.kind !== 'count' || e.recount || e.tsMs > t) continue;
     const ev = evaluateCount(db, e);
     if (ev && ev.flagged) flags.push({ entry: e, date: dateOf(e.ts), eval: ev });
   }
@@ -319,12 +332,24 @@ export function batchesOnHand(db, storeId, itemId) {
 }
 
 // "Will expire before use": a batch expiring before the date the stock would be used up ("Lasts until").
+// unusedAtExpiry: how much of the batch is still left on its expiry date at the current rate of use,
+// using the soonest-expiring batch first.
 export function expiryFlags(db, storeId, itemId, lastsUntil = null) {
-  const lu = lastsUntil ?? stockView(db, storeId, itemId).lastsUntil;
+  const v = stockView(db, storeId, itemId);
+  const lu = lastsUntil ?? v.lastsUntil;
   const d = today(db);
-  return batchesOnHand(db, storeId, itemId)
-    .filter((b) => b.expiry && (b.expiry <= d || (lu && b.expiry < lu)))
-    .map((b) => ({ ...b, expired: b.expiry <= d, label: b.expiry <= d ? 'Expired' : 'Will expire before use', action: 'Move to another facility' }));
+  const daily = v.amc ? v.amc / DAYS_PER_MONTH : 0;
+  let before = 0;
+  const out = [];
+  for (const b of batchesOnHand(db, storeId, itemId)) {
+    const start = before;
+    before += b.qty;
+    if (!b.expiry || !(b.expiry <= d || (lu && b.expiry < lu))) continue;
+    const usedByExpiry = b.expiry <= d ? 0 : daily * daysBetween(d, b.expiry);
+    const unused = Math.max(0, Math.min(b.qty, before - Math.max(start, usedByExpiry)));
+    out.push({ ...b, expired: b.expiry <= d, unusedAtExpiry: Math.round(unused), label: b.expiry <= d ? 'Expired' : 'Will expire before use', action: 'Move to another facility' });
+  }
+  return out;
 }
 
 // ---------- The item view: everything a screen needs for one item at one store ----------
@@ -372,7 +397,8 @@ export function stockView(db, storeId, itemId) {
       noRecentUse: zeroUse,
       status, needsCheck, check, sortRank, aboveTarget,
       estimated: !!(u && u.estimated),
-      countedToday: counted, todayCount,
+      countedToday: counted, todayCount, countedAt: todayCount ? (todayCount.submittedAt || todayCount.ts) : null,
+      lastCount: latestCount(db, storeId, itemId),
       target: t, inTransit: transit, onOrder: ordered, monthsInclPipeline,
       belowCentralTarget: store.type === 'CENTRAL' && t !== null && qty !== null ? qty + ordered < t.exact : false,
       lastUpdated: lastEntry ? { at: lastEntry.ts, byName: lastEntry.stamp?.byName ?? null, kind: lastEntry.kind } : null,
@@ -406,7 +432,7 @@ export function facilitySummary(db, storeId) {
   }
   const parts = [];
   if (c.out) parts.push(`${c.out} out of stock`);
-  if (c.orderNow) parts.push(`${c.orderNow} to order now`); // wording TO CONFIRM against the design
+  if (c.orderNow) parts.push(`${c.orderNow} to order now`);
   if (c.low) parts.push(`${c.low} running low`);
   if (c.tooMuch) parts.push(`${c.tooMuch} with too much`);
   if (parts.length) {

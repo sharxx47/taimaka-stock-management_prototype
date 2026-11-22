@@ -56,6 +56,12 @@ const OTP_ITEMS = [
 
 export const BIN_CARD_ITEM_COUNT = 26;
 
+// Items held only at the central store (not on a facility bin card). MUAC tape is a demo item from the
+// design's Settings screen (decisions log C11), so the "Non-consumables" stock type has an example.
+const CENTRAL_ONLY_ITEMS = [
+  { id: 'muac_tape', name: 'MUAC tape', unit: 'tape', type: 'non_consumable', typeAssumed: true, icon: 'box', note: 'Demo item from the design (decisions log C11)' },
+];
+
 const ITP_CATEGORY_TYPES = { 'therapeutic food': 'therapeutic_food', medication: 'medication' };
 
 export function normalizeName(s) {
@@ -111,6 +117,14 @@ export function buildItems(itpRecords) {
       aliases: [...new Set(aliases)],
     });
   });
+
+  for (const def of CENTRAL_ONLY_ITEMS) {
+    items.push({
+      id: def.id, name: def.name, unit: makeUnit(def.unit), unitSource: def.note, type: def.type, typeAssumed: def.typeAssumed,
+      icon: def.icon, isRutf: false, odkName: null, binCardName: null, itpName: null, binCardOrder: null,
+      heldAtOtp: false, heldAtItp: false, centralOnly: true, aliases: [def.name],
+    });
+  }
 
   for (const rec of itpRecords) {
     if (mergedItp.has(normalizeName(rec.item))) continue;

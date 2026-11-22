@@ -32,6 +32,7 @@ export class Db {
       targetOverrides: new Map(), // "store|item" -> { qty, reason, stamp }
       overrideLog: [],
       typeLog: [],
+      facilityLog: [], // facilities added or changed: { storeId, text, reason, stamp }
     };
     this.odk = { usage: {}, months: [], source: 'bundled', uploads: [] };
     this.loadOdk(odkCsv, 'bundled');
@@ -172,6 +173,7 @@ const HANDLERS = {
   add_store(db, ev) {
     if (db.stores.some((s) => s.id === ev.store.id)) throw new Error(`A facility called ${ev.store.label} already exists`);
     db.stores.push({ ...ev.store, addedInDemo: true });
+    db.settings.facilityLog.push({ storeId: ev.store.id, text: `Added ${ev.store.name}${ev.store.supervisor ? `, supervisor ${ev.store.supervisor}` : ''}`, reason: ev.reason || '', stamp: ev.stamp });
   },
   odk_upload(db, ev) {
     const res = db.loadOdk(ev.csvText, 'upload');

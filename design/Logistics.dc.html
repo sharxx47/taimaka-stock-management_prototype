@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Logistics dashboard</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F">
+<header class="hdr">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<nav class="nav" aria-label="Logistics">
+<a href="#" class="on">Today</a><a href="#stores">Stores</a><a href="#ship">Shipments</a><a href="History.dc.html">History</a><a href="Settings.dc.html">Settings</a>
+</nav>
+<div class="grow"></div>
+<span class="sync"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Sent. Last sync 6:05 PM</span>
+<div class="who"><span class="avatar" aria-hidden="true">NB</span><span class="col" style="gap: 0"><span class="b caps">Nasiru Bello</span><span class="small muted caps">Logistics</span></span></div>
+</header>
+<main class="wrap">
+<div class="row sp" style="align-items: flex-end">
+<div class="col g4"><p class="muted" style="margin: 0">Friday 30 Oct 2026 · 31 stores</p><h1 class="h1">Needs attention today</h1></div>
+<div class="row g8">
+<button class="btn btn-secondary" type="button"><span class="ic b-upload" aria-hidden="true"></span>Upload ODK usage (CSV)</button>
+<button class="btn btn-secondary" type="button"><span class="ic b-recount" aria-hidden="true"></span>Record a recount</button>
+<button class="btn btn-secondary" type="button"><span class="ic b-receive" aria-hidden="true"></span>Receive at central store</button>
+</div>
+</div>
+<p class="small muted" style="margin: -12px 0 0">Last ODK upload: today 9:10 AM by Nasiru Bello · 27 of 27 OTPs</p>
+<section class="col g8 needs" aria-label="Alerts">
+<h2 class="grp-h">Stock-out risk (3)</h2>
+<div class="banner bn-out"><span class="chip chip-out"><span class="ic s-out" aria-hidden="true"></span>Out of stock</span><p class="grow" style="margin: 0">Jigawan Iro OTP · <span class="b">4</span> items out of stock: <span class="b">Ciprotap ear drop</span>, <span class="b">Multivite syrup (Fe/FA)</span>, <span class="b">Tabs ACT AL 2</span> and <span class="b">Sponge</span>. Emergency request sent 5:55 PM by <span class="b">Muhammad S.</span></p><button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Approve request</button></div>
+<div class="banner bn-order"><span class="chip chip-order"><span class="ic s-order" aria-hidden="true"></span>Order now</span><p class="grow" style="margin: 0">Zaune OTP · <span class="b">RUTF</span> lasts until <span class="b">7 Nov</span> (<span class="b">8 days</span>, 0.3 months).</p><button class="btn btn-primary" type="button"><span class="ic w-truck" aria-hidden="true"></span>Send emergency shipment</button></div>
+<div class="banner bn-order"><span class="chip chip-order"><span class="ic s-transit" aria-hidden="true"></span>Sent over 72 hours</span><p class="grow" style="margin: 0"><span class="b">Shipment 1037</span> to GH Dukku sent <span class="b">26 Oct</span> 2:00 PM (<span class="b">100 hours</span> ago), not yet received.</p><button class="btn btn-secondary" type="button"><span class="ic b-truck" aria-hidden="true"></span>Check shipment</button></div>
+<h2 class="grp-h">Data checks (4)</h2>
+<div class="banner bn-order"><span class="chip chip-order"><span class="ic s-order" aria-hidden="true"></span>Escalation</span><p class="grow" style="margin: 0">Repeated differences at Jigawan Iro, sent to supervisor <span class="b">Hajara Nuhu</span> on <span class="b">30 Oct</span>. Goes to management on <span class="b">19 Nov</span> if it keeps happening.</p><button class="btn btn-secondary" type="button"><span class="ic b-history" aria-hidden="true"></span>View history</button></div>
+<div class="banner bn-low"><span class="chip chip-check"><span class="ic s-check" aria-hidden="true"></span>Count difference</span><p class="grow" style="margin: 0">Jigawan Iro OTP · <span class="b">Amoxicillin susp 60ml</span>: counted <span class="b">80</span>, expected <span class="b">86</span> (-6 bottles, over 5%).</p><button class="btn btn-secondary" type="button"><span class="ic b-recount" aria-hidden="true"></span>Plan a recount</button></div>
+<div class="banner bn-nc"><span class="chip chip-nc"><span class="ic s-nc" aria-hidden="true"></span>Not counted today</span><p class="grow" style="margin: 0">Tumfure OTP and Maikaho OTP have not sent today's count. Last counts <span class="b">29 Oct</span> 5:20 PM and <span class="b">29 Oct</span> 5:15 PM.</p><button class="btn btn-secondary" type="button"><span class="ic b-bell" aria-hidden="true"></span>Send a reminder</button></div>
+<div class="banner bn-wait"><span class="chip chip-wait"><span class="ic s-wait" aria-hidden="true"></span>Approval waiting</span><p class="grow" style="margin: 0">Jigawan Iro OTP · <span class="b">RUTF</span> correction <span class="b">-180 sachets (1 carton + 30 loose)</span> (Damaged), waiting for <span class="b">Hajara Nuhu</span>.</p><button class="btn btn-secondary" type="button"><span class="ic b-bell" aria-hidden="true"></span>Remind approver</button></div>
+<h2 class="grp-h">Planning (2)</h2>
+<div class="banner bn-low"><span class="chip chip-low"><span class="ic s-low" aria-hidden="true"></span>Central store low</span><p class="grow" style="margin: 0">Central store · <span class="b">RUTF</span> at <span class="b">2.4 months</span>, below its 3-month target of 564,615 sachets (3,764 cartons + 15 loose). On hand 410,000 sachets (2,733 cartons + 50 loose), on order 40,000 sachets (266 cartons + 100 loose), together 450,000 sachets (3,000 cartons).</p><button class="btn btn-secondary" type="button"><span class="ic b-truck" aria-hidden="true"></span>Plan supplier order</button></div>
+<div class="banner bn-exp"><span class="chip chip-exp"><span class="ic s-exp" aria-hidden="true"></span>Will expire before use</span><p class="grow" style="margin: 0">GH Bajoga ITP · <span class="b">F100</span> batch F1-2501 expires <span class="b">30 Nov</span>. About <span class="b">210 x 1000 ml</span> will not be used by then.</p><button class="btn btn-secondary" type="button"><span class="ic b-move" aria-hidden="true"></span>Move to another facility</button></div>
+</section>
+<section class="col g16" id="stores" aria-labelledby="st">
+<div class="row sp"><h2 class="h2" id="st">All stores</h2>
+<label class="row g8"><span class="label">Item</span><select class="select"><option>RUTF (sachets)</option><option>Tom Brown</option><option>Amoxicillin susp 60ml</option><option>F75</option><option>F100</option></select></label></div>
+<div class="tabs" role="group" aria-label="Stock type"><span class="tab tab-on">All types</span><span class="tab">Therapeutic food</span><span class="tab">Medication</span><span class="tab">Consumables</span><span class="tab">Non-consumables</span></div>
+<div class="tbox">
+<table class="tbl">
+<thead><tr><th>Store</th><th>Type</th><th class="r">RUTF on hand</th><th class="r">Months of stock</th><th>Status</th><th>Last updated</th></tr></thead>
+<tbody>
+<tr><td class="b">Central store, Gombe</td><td>Central</td><td class="r">410,000 sachets (2,733 cartons + 50 loose)</td><td class="r">2.4 <span class="small muted">incl. 40,000 sachets (266 cartons + 100 loose) on order</span></td><td><span class="chip chip-low chip-sm"><span class="ic ic-sm s-low" aria-hidden="true"></span>Below 3-month target</span></td><td class="small muted">Today 8:00 AM</td></tr>
+<tr><td class="b"><a href="#detail">Zaune OTP</a></td><td>OTP</td><td class="r">3,630 sachets (24 cartons + 30 loose)</td><td class="r">0.3</td><td><span class="row g8"><span class="chip chip-order chip-sm"><span class="ic ic-sm s-order" aria-hidden="true"></span>Order now</span><span class="chip chip-est chip-sm"><span class="ic ic-sm s-est" aria-hidden="true"></span>Estimated target</span></span></td><td class="small muted">Today 4:55 PM</td></tr>
+<tr class="sel"><td class="b"><a href="#detail">Jigawan Iro OTP</a></td><td>OTP</td><td class="r">4,331 sachets (28 cartons + 131 loose)</td><td class="r">1.4</td><td><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span></td><td class="small muted">Today 5:40 PM</td></tr>
+<tr><td class="b"><a href="#detail">Kalshingi OTP</a></td><td>OTP</td><td class="r">3,900 sachets (26 cartons)</td><td class="r">2.0</td><td><span class="row g8"><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span><span class="chip chip-est chip-sm"><span class="ic ic-sm s-est" aria-hidden="true"></span>Estimated target</span></span></td><td class="small muted">Today 5:02 PM</td></tr>
+<tr><td class="b"><a href="#detail">Ashaka Gari OTP</a></td><td>OTP</td><td class="r">9,600 sachets (64 cartons)</td><td class="r">1.7</td><td><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span></td><td class="small muted">Today 5:31 PM</td></tr>
+<tr><td class="b"><a href="#detail">Tumfure OTP</a></td><td>OTP</td><td class="r muted">Waiting for today's count</td><td class="r muted">Not shown</td><td><span class="chip chip-nc chip-sm"><span class="ic ic-sm s-nc" aria-hidden="true"></span>Not counted today</span></td><td class="small muted">29 Oct 5:20 PM</td></tr>
+<tr><td class="b">GH Bajoga ITP</td><td>ITP</td><td class="r muted">Not held here</td><td class="r muted">Not held</td><td class="small muted">No status</td><td class="small muted">Today 4:30 PM</td></tr>
+<tr><td class="b">GH Deba ITP</td><td>ITP</td><td class="r muted">Not held here</td><td class="r muted">Not held</td><td class="small muted">No status</td><td class="small muted">Today 4:20 PM</td></tr>
+<tr><td class="b">GH Dukku ITP</td><td>ITP</td><td class="r muted">Not held here</td><td class="r muted">Not held</td><td class="small muted">No status</td><td class="small muted">Today 3:58 PM</td></tr>
+<tr><td colspan="6"><button class="btn btn-ghost btn-sm" type="button"><span class="ic b-chev" aria-hidden="true"></span>Show 22 more OTPs</button></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="card col g16" id="detail" aria-labelledby="dt">
+<div class="row sp"><h2 class="h3" id="dt">Jigawan Iro OTP · every item today</h2><span class="small muted">Counted today 5:40 PM by Muhammad S. · supervisor Hajara Nuhu</span></div>
+<div class="tbox">
+<table class="tbl">
+<thead><tr><th>Item</th><th class="r">On hand</th><th class="r">Months</th><th>Lasts until</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><span class="row g8"><span class="pic pic-sm p-tube" aria-hidden="true"></span>1. 20% Zinc oxide cream</span></td><td class="r">56 tubes</td><td class="r">3.9</td><td>26 Feb (119 days)</td><td><span class="chip chip-above chip-sm"><span class="ic ic-sm s-above" aria-hidden="true"></span>Above target</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-blister" aria-hidden="true"></span>2. ACT tablets AL 1</span></td><td class="r">76 sachets</td><td class="r">2.5</td><td>14 Jan (76 days)</td><td><span class="chip chip-above chip-sm"><span class="ic ic-sm s-above" aria-hidden="true"></span>Above target</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span>3. Amoxicillin susp 100ml</span></td><td class="r">82 bottles</td><td class="r">1.7</td><td>19 Dec (50 days)</td><td><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span>4. Amoxicillin susp 60ml</span></td><td class="r">80 bottles</td><td class="r">1.8</td><td>23 Dec (54 days)</td><td><span class="row g8"><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span><span class="chip chip-check chip-sm"><span class="ic ic-sm s-check" aria-hidden="true"></span>Check</span></span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-drops" aria-hidden="true"></span>5. Ciprotap ear drop</span></td><td class="r">0 bottles</td><td class="r">0</td><td>None left</td><td><span class="chip chip-out chip-sm"><span class="ic ic-sm s-out" aria-hidden="true"></span>Out of stock</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-box" aria-hidden="true"></span>6. Loratadine</span></td><td class="r">60 bottles</td><td class="r">8.0</td><td>30 Jun (243 days)</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-rdt" aria-hidden="true"></span>7. Malaria RDT</span></td><td class="r">132 kits</td><td class="r">2.0</td><td>29 Dec (60 days)</td><td><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span>8. Multivite syrup (Fe/FA)</span></td><td class="r">0 bottles</td><td class="r">0</td><td>None left</td><td><span class="chip chip-out chip-sm"><span class="ic ic-sm s-out" aria-hidden="true"></span>Out of stock</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span>9. Nystatin suspension</span></td><td class="r">26 bottles</td><td class="r">2.3</td><td>7 Jan (69 days)</td><td><span class="chip chip-above chip-sm"><span class="ic ic-sm s-above" aria-hidden="true"></span>Above target</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-ors" aria-hidden="true"></span>10. ORS</span></td><td class="r">96 pieces</td><td class="r">1.7</td><td>19 Dec (50 days)</td><td><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bottle" aria-hidden="true"></span>11. Paracetamol syrup</span></td><td class="r">58 bottles</td><td class="r">7.5</td><td>15 Jun (228 days)</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-rutf" aria-hidden="true"></span>12. RUTF</span></td><td class="r">4,331 sachets (28 cartons + 131 loose)</td><td class="r">1.4</td><td>12 Dec (43 days)</td><td><span class="row g8"><span class="chip chip-ok chip-sm"><span class="ic ic-sm s-ok" aria-hidden="true"></span>OK</span><span class="small muted">below 2-month target</span></span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-blister" aria-hidden="true"></span>13. Tabs ACT AL 2</span></td><td class="r">0 units</td><td class="r">0</td><td>None left</td><td><span class="chip chip-out chip-sm"><span class="ic ic-sm s-out" aria-hidden="true"></span>Out of stock</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-blister" aria-hidden="true"></span>14. Tabs Albendazole 400mg</span></td><td class="r">69 sachets</td><td class="r">3.5</td><td>12 Feb (105 days)</td><td><span class="chip chip-above chip-sm"><span class="ic ic-sm s-above" aria-hidden="true"></span>Above target</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-tube" aria-hidden="true"></span>15. Tetracycline ointment</span></td><td class="r">19 tubes</td><td class="r">2.2</td><td>5 Jan (67 days)</td><td><span class="chip chip-above chip-sm"><span class="ic ic-sm s-above" aria-hidden="true"></span>Above target</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-tombrown" aria-hidden="true"></span>16. Tom Brown</span></td><td class="r">11 packs</td><td class="r">0.7</td><td>19 Nov (20 days)</td><td><span class="chip chip-low chip-sm"><span class="ic ic-sm s-low" aria-hidden="true"></span>Running low</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-blister" aria-hidden="true"></span>17. Z AA (Toddler)</span></td><td class="r">13 units</td><td class="r">n/a</td><td>No use in August or September</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-drops" aria-hidden="true"></span>18. Z Otomed</span></td><td class="r">29 bottles</td><td class="r">21</td><td>more than a year</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-box" aria-hidden="true"></span>19. Zinc sulfate</span></td><td class="r">28.5 sachets</td><td class="r">10.6</td><td>15 Sep (320 days)</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-box" aria-hidden="true"></span>20. Z Sups. Cefixime</span></td><td class="r">25 units</td><td class="r">6.9</td><td>29 May (211 days)</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-blister" aria-hidden="true"></span>21. Z AA (Infant)</span></td><td class="r">14 units</td><td class="r">7.0</td><td>30 May (212 days)</td><td><span class="chip chip-much chip-sm"><span class="ic ic-sm s-much" aria-hidden="true"></span>Too much</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-bucket" aria-hidden="true"></span>22. TB Bucket</span></td><td class="r">Not counted</td><td class="r"><span class="muted">Not counted</span></td><td>Left blank on today's count</td><td><span class="chip chip-nc chip-sm"><span class="ic ic-sm s-nc" aria-hidden="true"></span>Not counted today</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-box" aria-hidden="true"></span>23. BMS</span></td><td class="r">11 units</td><td class="r">n/a</td><td>No end date: use is not recorded</td><td><span class="chip chip-untr chip-sm"><span class="ic ic-sm s-untr" aria-hidden="true"></span>Usage not tracked</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-lotion" aria-hidden="true"></span>24. Benzyl benzoate</span></td><td class="r">33 bottles</td><td class="r">n/a</td><td>No end date: use is not recorded</td><td><span class="chip chip-untr chip-sm"><span class="ic ic-sm s-untr" aria-hidden="true"></span>Usage not tracked</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-soap" aria-hidden="true"></span>25. Soap</span></td><td class="r">38 units</td><td class="r">n/a</td><td>No end date: use is not recorded</td><td><span class="chip chip-untr chip-sm"><span class="ic ic-sm s-untr" aria-hidden="true"></span>Usage not tracked</span></td></tr>
+<tr><td><span class="row g8"><span class="pic pic-sm p-sponge" aria-hidden="true"></span>26. Sponge</span></td><td class="r">0 units</td><td class="r">0</td><td>None left</td><td><span class="chip chip-out chip-sm"><span class="ic ic-sm s-out" aria-hidden="true"></span>Out of stock</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="col g16" id="ship" aria-labelledby="sg">
+<div class="row sp"><h2 class="h2" id="sg">Suggested shipments</h2><span class="muted">Each tops up to target. Soonest-expiring batch goes first.</span></div>
+<div class="two">
+<article class="card col g16">
+<div class="row sp"><span class="h3">Zaune OTP</span><span class="chip chip-order chip-sm"><span class="ic ic-sm s-order" aria-hidden="true"></span>Emergency</span></div>
+<div class="row g8"><span class="pic pic-sm p-rutf" aria-hidden="true"></span><span class="grow">RUTF · <span class="b">23,870 sachets (159 cartons + 20 loose)</span></span></div>
+<span class="small muted">Tops up to its estimated 2-month target of 27,500 sachets (183 cartons + 50 loose), less 3,630 sachets (24 cartons + 30 loose) on hand · batch RU-2604 (expires 31 Mar 2027) first · <span class="row g4" style="display: inline-flex"><span class="ic ic-sm i-lock" aria-hidden="true"></span>target locked 30 Oct 5:10 PM</span></span>
+<div class="row g8"><button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Approve</button><button class="btn btn-secondary" type="button" disabled><span class="ic i-truck" aria-hidden="true"></span>Send</button></div>
+</article>
+<article class="card col g16">
+<div class="row sp"><span class="h3">Jigawan Iro OTP</span><span class="chip chip-order chip-sm"><span class="ic ic-sm s-order" aria-hidden="true"></span>Emergency</span></div>
+<div class="row g8"><span class="pic pic-sm p-drops" aria-hidden="true"></span><span class="grow">Ciprotap ear drop · <span class="b">No usage data for this item. Logistics will set the amount.</span></span></div>
+<label class="field"><span class="label">Amount to send (bottles)</span><input class="input" value="" placeholder="Logistics sets this" style="width: 220px"></label>
+<span class="small muted">Requested by Muhammad S. 5:55 PM</span>
+<div class="row g8"><button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Approve</button><button class="btn btn-secondary" type="button" disabled><span class="ic i-truck" aria-hidden="true"></span>Send</button></div>
+</article>
+<article class="card col g16">
+<div class="row sp"><span class="h3">Jigawan Iro OTP → Ashaka Gari OTP</span><span class="chip chip-transit chip-sm"><span class="ic ic-sm s-transit" aria-hidden="true"></span>Transfer between facilities</span></div>
+<div class="row g8"><span class="pic pic-sm p-drops" aria-hidden="true"></span><span class="grow">Z Otomed · <span class="b">20 bottles</span> from "Too much" stock</span></div>
+<span class="small muted">Leaves Jigawan Iro when Sent, arrives at Ashaka Gari when Received</span>
+<div class="row g8"><button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Approve</button><button class="btn btn-secondary" type="button" disabled><span class="ic i-truck" aria-hidden="true"></span>Send</button></div>
+</article>
+<article class="card col g16">
+<div class="row sp"><span class="h3">November monthly round</span><span class="tag"><span class="ic ic-sm i-truck" aria-hidden="true"></span>Monthly</span></div>
+<span>28 facilities ready, 2 waiting for today's count (Tumfure, Maikaho).</span>
+<span class="small muted">Planned dispatch 2 Nov · targets locked once proposed</span>
+<div class="row g8"><button class="btn btn-primary" type="button"><span class="ic w-truck" aria-hidden="true"></span>Review 28 shipments</button></div>
+</article>
+</div>
+</section>
+<section class="col g16" aria-labelledby="tr">
+<h2 class="h2" id="tr">Shipments in transit (2)</h2>
+<div class="two">
+<article class="card col g16">
+<div class="row sp"><span class="b">1042 · October monthly · Central store → Jigawan Iro OTP</span><span class="small muted">Sent 32 hours ago</span></div>
+<ol class="steps"><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Requested</span></li><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Approved</span></li><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Sent</span></li><li class="step step-now"><span class="dot">4</span><span class="step-t">Received</span></li></ol>
+<span class="small muted">RUTF 1,800 sachets (12 cartons) · Tom Brown 23 packs</span>
+</article>
+<article class="card col g16" style="border: 2px solid #B3261E">
+<div class="row sp"><span class="b">1037 · Central store → GH Dukku ITP</span><span class="chip chip-order chip-sm"><span class="ic ic-sm s-order" aria-hidden="true"></span>100 hours in Sent</span></div>
+<ol class="steps"><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Requested</span></li><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Approved</span></li><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Sent</span></li><li class="step step-now"><span class="dot">4</span><span class="step-t">Received</span></li></ol>
+<span class="small muted">F75 600 x 1000 ml · Ceftriaxone 1g 100 vials</span>
+</article>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="rc">
+<h2 class="h3" id="rc">Receive at central store</h2>
+<p class="muted" style="margin: 0">Stock arriving from a supplier. One line per batch.</p>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Item</span><select class="select"><option>RUTF (sachets)</option></select></label>
+<label class="field"><span class="label">Quantity</span><input class="input" value="40,000" style="width: 140px"></label>
+<label class="field"><span class="label">Batch number</span><input class="input" placeholder="As printed" style="width: 160px"></label>
+<label class="field"><span class="label">Expiry date</span><input class="input" placeholder="DD/MM/YYYY" style="width: 160px"></label>
+<button class="btn btn-primary" type="button"><span class="ic w-receive" aria-hidden="true"></span>Add to central store</button>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":5300}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

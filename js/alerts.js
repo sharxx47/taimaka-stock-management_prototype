@@ -5,8 +5,7 @@
 //   Planning:       8 Central store below target, 9 Will expire before use, 10 Too much (transfer suggestions)
 // Within one type: therapeutic food, medication, consumables, non-consumables; then the most urgent
 // (fewest days left, or the oldest alert); then bin card order.
-//
-// Button labels marked "label TO CONFIRM" wait for the final design files.
+// Pill labels and button labels come from the final design files (Logistics dashboard).
 
 import { STOCK_TYPES } from './config.js';
 import {
@@ -21,22 +20,23 @@ export const ALERT_GROUPS = [
   { id: 'planning', label: 'Planning' },
 ];
 
+// pill: the chip class and icon; label: the pill word.
 export const ALERT_TYPES = {
-  OUT: { rank: 1, group: 'stockout', label: 'Out of stock', action: { id: 'emergency', label: 'Send emergency stock (label TO CONFIRM)' } },
-  ORDER_NOW: { rank: 2, group: 'stockout', label: 'Order now', action: { id: 'emergency', label: 'Send emergency stock (label TO CONFIRM)' } },
-  OVERDUE: { rank: 3, group: 'stockout', label: 'Shipment overdue', action: { id: 'shipment', label: 'Check shipment (label TO CONFIRM)' } },
-  ESCALATION: { rank: 4, group: 'data', label: 'Escalation', action: { id: 'history', label: 'See history (label TO CONFIRM)' } },
-  COUNT_DIFF: { rank: 5, group: 'data', label: 'Count difference', action: { id: 'recount', label: 'Record a recount' } },
-  NOT_COUNTED: { rank: 6, group: 'data', label: 'Not counted today', action: { id: 'contact', label: 'Contact facility (label TO CONFIRM)' } },
-  APPROVAL: { rank: 7, group: 'data', label: 'Approval waiting', action: { id: 'approve', label: 'Review correction (label TO CONFIRM)' } },
-  CENTRAL_BELOW: { rank: 8, group: 'planning', label: 'Central store below target', action: { id: 'central', label: 'Receive at central store' } },
-  EXPIRY: { rank: 9, group: 'planning', label: 'Will expire before use', action: { id: 'transfer', label: 'Move to another facility' } },
-  TRANSFER: { rank: 10, group: 'planning', label: 'Too much', action: { id: 'transfer', label: 'Plan transfer (label TO CONFIRM)' } },
+  OUT: { rank: 1, group: 'stockout', label: 'Out of stock', pill: 'out', banner: 'out', action: { id: 'emergency', label: 'Send emergency shipment', icon: 'truck' } },
+  ORDER_NOW: { rank: 2, group: 'stockout', label: 'Order now', pill: 'order', banner: 'order', action: { id: 'emergency', label: 'Send emergency shipment', icon: 'truck' } },
+  OVERDUE: { rank: 3, group: 'stockout', label: 'Sent over 72 hours', pill: 'order', icon: 'transit', banner: 'order', action: { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary' } },
+  ESCALATION: { rank: 4, group: 'data', label: 'Escalation', pill: 'order', banner: 'order', action: { id: 'history', label: 'View history', icon: 'history', kind: 'secondary' } },
+  COUNT_DIFF: { rank: 5, group: 'data', label: 'Count difference', pill: 'check', banner: 'low', action: { id: 'recount', label: 'Plan a recount', icon: 'recount', kind: 'secondary' } },
+  NOT_COUNTED: { rank: 6, group: 'data', label: 'Not counted today', pill: 'nc', banner: 'nc', action: { id: 'remind', label: 'Send a reminder', icon: 'bell', kind: 'secondary' } },
+  APPROVAL: { rank: 7, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', action: { id: 'remind_approver', label: 'Remind approver', icon: 'bell', kind: 'secondary' } },
+  CENTRAL_BELOW: { rank: 8, group: 'planning', label: 'Central store low', pill: 'low', banner: 'low', action: { id: 'supplier_order', label: 'Plan supplier order', icon: 'truck', kind: 'secondary' } },
+  EXPIRY: { rank: 9, group: 'planning', label: 'Will expire before use', pill: 'exp', banner: 'exp', action: { id: 'move', label: 'Move to another facility', icon: 'move', kind: 'secondary' } },
+  TRANSFER: { rank: 10, group: 'planning', label: 'Too much', pill: 'much', banner: 'much', action: { id: 'transfer', label: 'Plan transfer', icon: 'move', kind: 'secondary' } },
 };
 
 const TYPE_ORDER = Object.fromEntries(STOCK_TYPES.map((t, i) => [t.id, i]));
 
-function itemOrder(item) {
+export function itemOrder(item) {
   return item.binCardOrder ?? 100 + (item.itpOrder ?? 0);
 }
 
@@ -56,23 +56,37 @@ function compareKeys(a, b) {
 
 function make(type, fields) {
   const t = ALERT_TYPES[type];
-  return { type, rank: t.rank, group: t.group, label: t.label, action: t.action, ...fields };
+  return { type, rank: t.rank, group: t.group, label: t.label, pill: t.pill, icon: t.icon || t.pill, banner: t.banner, action: { ...t.action }, ...fields };
 }
 
 function storeRank(db, storeId) {
   return db.stores.findIndex((s) => s.id === storeId);
 }
 
+// The open emergency request for a facility (Requested or Approved, not yet sent), if any.
+export function openEmergency(db, storeId) {
+  return [...db.shipments.values()].filter((sh) => sh.type === 'emergency' && sh.toStoreId === storeId && (sh.state === 'requested' || sh.state === 'approved')).at(-1) || null;
+}
+
 // One alert per facility for each stock status, listing every item (in alert item order).
 function statusAlerts(db, type, status) {
   const out = [];
   for (const s of db.stores) {
+    if (s.type === 'CENTRAL') continue;
     const views = storeItems(db, s.id).filter((v) => v.status === status);
     if (!views.length) continue;
     const items = views
-      .map((v) => ({ itemId: v.item.id, name: v.item.name, onHand: v.onHand, days: v.days, lastsUntil: v.lastsUntil, key: itemKey(v.item, v.status === STATUS.OUT ? 0 : v.days) }))
+      .map((v) => ({ itemId: v.item.id, name: v.item.name, onHand: v.onHand, days: v.days, months: v.months, lastsUntil: v.lastsUntil, key: itemKey(v.item, v.status === STATUS.OUT ? 0 : v.days) }))
       .sort((a, b) => compareKeys(a.key, b.key));
-    out.push(make(type, { storeId: s.id, items, key: [...items[0].key, storeRank(db, s.id)] }));
+    const request = openEmergency(db, s.id);
+    const a = make(type, { storeId: s.id, items, request, key: [...items[0].key, storeRank(db, s.id)] });
+    // A request from the facility is waiting: the next step is to approve it.
+    if (request && request.state === 'requested' && request.steps.requested.by !== undefined && db.user(request.steps.requested.by).kind === 'facility') {
+      a.action = { id: 'approve_request', label: 'Approve request', icon: 'tick', kind: 'primary', shipmentId: request.id };
+    } else if (request) {
+      a.action = { ...a.action, shipmentId: request.id };
+    }
+    out.push(a);
   }
   return out;
 }
@@ -90,7 +104,7 @@ export function needsAttention(db) {
     if (!sentTooLong(db, sh)) continue;
     const first = sh.lines.map((l) => db.item(l.itemId)).sort((a, b) => compareKeys(itemKey(a, 0), itemKey(b, 0)))[0];
     alerts.push(make('OVERDUE', {
-      storeId: sh.toStoreId, shipmentId: sh.id, number: sh.number, hours: hoursInSent(db, sh), sentAt: sh.steps.sent.at,
+      storeId: sh.toStoreId, fromStoreId: sh.fromStoreId, shipmentId: sh.id, number: sh.number, hours: hoursInSent(db, sh), sentAt: sh.steps.sent.at,
       key: [TYPE_ORDER[first.type], -hoursInSent(db, sh), itemOrder(first)],
     }));
   }
@@ -103,7 +117,7 @@ export function needsAttention(db) {
     const top = items.sort((a, b) => compareKeys(itemKey(a, 0), itemKey(b, 0)))[0];
     alerts.push(make('ESCALATION', {
       storeId: s.id, level: esc.level, supervisor: esc.supervisor, flagCount: esc.run.length, firstFlagDate: esc.firstFlagDate,
-      managementDate: esc.managementDate, itemIds: items.map((i) => i.id),
+      supervisorSince: esc.supervisorSince, managementDate: esc.managementDate, itemIds: items.map((i) => i.id), run: esc.run,
       key: [TYPE_ORDER[top.type], esc.firstFlagDate, itemOrder(top)],
     }));
   }
@@ -122,8 +136,9 @@ export function needsAttention(db) {
     }
   }
 
-  // 6. Not counted today: facilities with no count submitted today (oldest last count first).
-  // Single blank rows (for example TB Bucket) show on the facility's own screen, not here.
+  // 6. Not counted today: one alert listing every facility with no count submitted today
+  // (oldest last count first). Single blank rows (for example TB Bucket) show on the facility's own screen.
+  const notCounted = [];
   for (const s of db.stores) {
     if (s.type !== 'OTP' && s.type !== 'ITP') continue;
     const views = storeItems(db, s.id);
@@ -131,15 +146,23 @@ export function needsAttention(db) {
     let last = null;
     for (const v of views) {
       const c = latestCount(db, s.id, v.item.id);
-      if (c && (!last || c.ts > last)) last = c.ts;
+      const t = c ? (c.submittedAt || c.ts) : null;
+      if (t && (!last || t > last)) last = t;
     }
-    alerts.push(make('NOT_COUNTED', { storeId: s.id, lastCountAt: last, key: [0, last || '', storeRank(db, s.id)] }));
+    notCounted.push({ storeId: s.id, lastCountAt: last });
+  }
+  if (notCounted.length) {
+    notCounted.sort((a, b) => (a.lastCountAt || '').localeCompare(b.lastCountAt || '') || storeRank(db, a.storeId) - storeRank(db, b.storeId));
+    alerts.push(make('NOT_COUNTED', { storeId: notCounted[0].storeId, stores: notCounted, storeIds: notCounted.map((x) => x.storeId), key: [0, notCounted[0].lastCountAt || ''] }));
   }
 
   // 7. Approval waiting: corrections waiting for a second named person (oldest first).
   for (const e of pendingApprovals(db)) {
     const it = db.item(e.itemId);
-    alerts.push(make('APPROVAL', { storeId: e.storeId, itemId: e.itemId, entryId: e.id, qty: e.qty, requestedBy: e.stamp.byName, key: [TYPE_ORDER[it.type], e.ts, itemOrder(it)] }));
+    alerts.push(make('APPROVAL', {
+      storeId: e.storeId, itemId: e.itemId, entryId: e.id, qty: e.qty, reason: e.reason, requestedBy: e.stamp.byName, at: e.ts,
+      approver: db.store(e.storeId).supervisor, key: [TYPE_ORDER[it.type], e.ts, itemOrder(it)],
+    }));
   }
 
   // 8. Central store below its 3-month target, counting stock on order.
@@ -158,8 +181,8 @@ export function needsAttention(db) {
       const batches = expiryFlags(db, s.id, it.id, v.lastsUntil);
       if (!batches.length) continue;
       alerts.push(make('EXPIRY', {
-        storeId: s.id, itemId: it.id, batches, qty: batches.reduce((t, b) => t + b.qty, 0), expiry: batches[0].expiry,
-        lastsUntil: v.lastsUntil, expired: batches.some((b) => b.expired),
+        storeId: s.id, itemId: it.id, batches, qty: batches.reduce((t, b) => t + b.qty, 0), unused: batches.reduce((t, b) => t + b.unusedAtExpiry, 0),
+        expiry: batches[0].expiry, lastsUntil: v.lastsUntil, expired: batches.some((b) => b.expired),
         key: [TYPE_ORDER[it.type], batches[0].expiry, itemOrder(it)],
       }));
     }
@@ -179,8 +202,8 @@ export function needsAttention(db) {
   }).filter((g) => g.count > 0); // groups with no alerts are hidden
 }
 
-// Facility home and supervisor home: the same order without headings.
+// Supervisor home and other filtered views: the same order without headings.
 export function alertsForStores(db, storeIds) {
   const set = new Set(storeIds);
-  return needsAttention(db).flatMap((g) => g.alerts).filter((a) => set.has(a.storeId) || set.has(a.toStoreId));
+  return needsAttention(db).flatMap((g) => g.alerts).filter((a) => set.has(a.storeId) || set.has(a.toStoreId) || (a.storeIds || []).some((x) => set.has(x)));
 }

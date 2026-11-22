@@ -25,7 +25,7 @@ A prototype for Taimaka's Operations Associate test task (Task 1). Taimaka treat
 - Usable on day one with no training. Each role sees only what it needs; facility staff get at most three actions.
 - The system does the maths: facility staff see "Lasts until [date] ([N] days)"; logistics and management also see months of stock.
 - Exceptions first. Every alert shows its next action as a button. Alert order is set in "Alert order" below.
-- Where the Claude Design files and this file differ, this file wins.
+- Where the Claude Design files and this file differ, this file wins. The final design files are in `design/` (see `design/README.md`).
 - Status is color + icon + word, never color alone.
 - Every number carries its unit and thousands separators, and shows when it was last updated ("Counted today 5:40 PM").
 - RUTF quantities of 150 sachets or more show the sachet total, then whole cartons and loose sachets: "23,870 sachets (159 cartons + 20 loose)". An exact number of cartons reads "1,800 sachets (12 cartons)". Under 150, sachets only ("131 sachets"). This applies everywhere RUTF appears (shipments, emergency requests, receiving, item cards, logistics table, item history). It is display only: all calculations stay in exact sachets.
@@ -129,6 +129,14 @@ Every item has one of the task's four stock types: therapeutic food, medication,
 - Urgent-first order (phone home and any list sorted by urgency): Out of stock, Order now, Check (count difference), Running low, Not counted today, Too much, OK, Usage not tracked.
 - An item tracked in ODK with zero recent use and stock on hand counts as Too much. An item not tracked in ODK at all shows "Usage not tracked" (on hand only, no status).
 
+### Layout fixes on top of the design (agreed after the final design round)
+
+- Out of stock alerts: when one facility has more than one item out of stock, show one alert listing all of them with one "Request emergency stock" button, on laptop as on phone (the phone home already does this).
+- Button labels never wrap past two lines. On phones, if the bottom actions would wrap further, stack them full width, one per row.
+- Pill sizes on laptop: every pill inside an alert, on every screen (logistics "Needs attention", facility home alerts, the supervisor's escalations and approvals), uses one size, the large "Needs attention" size. The facility home summary pills stay large too. Status pills that are not alerts (the "All stores" table, item cards, facility cards, history) keep the normal size, so tables and cards stay compact. Phone screens keep their current pill sizes.
+- Supervisor home, "Your facilities": every card has the same structure (name and last count, status pills, one detail line, then the button). Cards in a row are the same height, and each card's button is full width and pinned to the bottom, so the buttons line up across the row whatever the content above them.
+- When text refers to the person who is signed in, it says "you" with their name in brackets. Example, on Hajara Nuhu's supervisor home: "sent to you (Hajara Nuhu) on 30 Oct", not "sent to supervisor Hajara Nuhu". Other people's screens keep the name as it is.
+
 ### Alert order (all screens)
 
 Alerts are ranked by how soon a child could go without treatment, then by how much they affect trust in the numbers, then planning:
@@ -178,7 +186,7 @@ Same numbering as the Claude Design brief:
 1. Test sign-in (with a small "Reset demo data" link).
 2. Facility home (summary, item list, three actions).
 3. Receive a shipment, and Request emergency stock.
-4. Daily count (also used for logistics recounts, marked "Recount by logistics").
+4. Daily count (also used for logistics recounts, marked "Recount by logistics"). Layout: compact single rows, one line per item in bin card order (the right side of the "Daily count: cards vs compact rows" artboard), chosen over cards because it needs about a third of the scrolling.
 5. ITP pharmacy daily log ("We ran out of this today" toggle; the app calculates use). ITP home is the facility home with "Enter today's log".
 6. Supervisor home (their facilities, corrections waiting for approval, escalations).
 7. Logistics dashboard ("Needs attention today" first, including the central store below target; table of all 31 stores with an item selector, a stock-type filter and a click-through to every item at a store; suggested shipments; shipments in transit; record a recount; "Receive at central store"; "Upload ODK usage (CSV)").

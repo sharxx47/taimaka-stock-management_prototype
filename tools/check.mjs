@@ -35,7 +35,7 @@ const EXPECTED = [
   ['amox_60', '80', 'bottles', 54, '23 Dec', '1.8', 'OK', '', 'Check (expected 86)'],
   ['ciprotap', '0', 'bottles', '', '', '', 'Out of stock', '', ''],
   ['loratadine', '60', 'bottles', 243, '30 Jun', '8.0', 'Too much', '', ''],
-  ['malaria_rdt', '132', 'kits', 60, '29 Dec', '2.0', 'OK', '', ''],
+  ['malaria_rdt', '132', 'kits', 60, '29 Dec', '2.0', 'OK', 'Above target', ''], // just over 2 months: the rule gives Above target
   ['multivite', '0', 'bottles', '', '', '', 'Out of stock', '', ''],
   ['nystatin', '26', 'bottles', 69, '7 Jan', '2.3', 'OK', 'Above target', ''],
   ['ors', '96', 'pieces', 50, '19 Dec', '1.7', 'OK', '', ''],
@@ -71,22 +71,24 @@ expect('Jigawan Iro item count', views.length, 26);
 views.forEach((v, i) => {
   const e = EXPECTED[i];
   const marks = [];
-  const onHandText = v.onHand === null ? '' : v.item.isRutf ? formatRutf(v.onHand) : formatNumber(v.onHand);
+  // Not counted today: yesterday's numbers are never shown as current.
+  const hidden = v.status.code === 'NOT_COUNTED';
+  const onHandText = v.onHand === null || hidden ? '' : v.item.isRutf ? formatRutf(v.onHand) : formatNumber(v.onHand);
   marks.push(expect(`${v.item.name} id`, v.item.id, e[0]));
   marks.push(expect(`${v.item.name} on hand`, onHandText, e[1]));
   marks.push(expect(`${v.item.name} unit`, v.item.unit.many, e[2]));
-  marks.push(expect(`${v.item.name} days`, Number.isFinite(v.days) && !v.lastsMoreThanYear ? v.days : '', e[3]));
-  marks.push(expect(`${v.item.name} lasts until`, lastsText(v), e[4]));
-  const monthsText = Number.isFinite(v.months) && v.months !== null ? v.months.toFixed(1) : '';
+  marks.push(expect(`${v.item.name} days`, Number.isFinite(v.days) && !v.lastsMoreThanYear && !hidden ? v.days : '', e[3]));
+  marks.push(expect(`${v.item.name} lasts until`, hidden ? '' : lastsText(v), e[4]));
+  const monthsText = Number.isFinite(v.months) && v.months !== null && !hidden ? v.months.toFixed(1) : '';
   marks.push(expect(`${v.item.name} months`, monthsText, e[5]));
   marks.push(expect(`${v.item.name} status`, v.status.label, e[6]));
   const badge = v.aboveTarget ? 'Above target' : '';
   marks.push(expect(`${v.item.name} logistics badge`, badge, e[7]));
   const check = v.needsCheck ? `Check (expected ${formatNumber(v.check.expected)})` : '';
   marks.push(expect(`${v.item.name} count check`, check, e[8]));
-  const upd = v.countedToday ? `Counted today ${formatTime(v.todayCount.ts)}` : 'No count today';
+  const upd = v.countedToday ? `Counted today ${formatTime(v.countedAt)}` : `Last counted ${v.lastCount ? `${formatShortDate(dateOf(v.lastCount.submittedAt || v.lastCount.ts))} ${formatTime(v.lastCount.submittedAt || v.lastCount.ts)}` : 'never'}`;
   const flag = marks.some(Boolean) ? ' **MISMATCH**' : '';
-  console.log(`| ${i + 1} | ${v.item.name} | ${onHandText} | ${v.item.unit.many} | ${e[3] === '' ? '' : v.days} | ${lastsText(v)} | ${monthsText} | ${v.status.label}${flag} | ${badge} | ${check} | ${upd} |`);
+  console.log(`| ${i + 1} | ${v.item.name} | ${onHandText} | ${v.item.unit.many} | ${e[3] === '' ? '' : v.days} | ${hidden ? '' : lastsText(v)} | ${monthsText} | ${v.status.label}${flag} | ${badge} | ${check} | ${upd} |`);
 });
 
 const sum = facilitySummary(db, 'jigawan_iro');
@@ -134,7 +136,7 @@ row('Other 23 OTPs RUTF combined', formatNumber(other23), '230,000');
 console.log(`| Network RUTF (stores + in transit), months incl. on order | ${formatNumber(net.held + net.inTransit)} sachets, ${net.monthsInclOrder.toFixed(1)} months | (information) | |`);
 const ks = facilitySummary(db, 'kurjale');
 const kc = latestCount(db, 'kurjale', 'rutf');
-row('Kurjale', `${ks.line}, counted today ${formatTime(kc.ts)}`, 'All items OK, counted today 5:25 PM');
+row('Kurjale (real use: Z AA (Toddler) about 0.1 a month)', `${ks.line}, counted today ${formatTime(kc.ts)}`, '1 item with too much, counted today 5:25 PM');
 const mv = stockView(db, 'maikaho', 'rutf');
 const mc = latestCount(db, 'maikaho', 'rutf');
 row('Maikaho', `${mv.status.label}, last counted ${formatShortDate(dateOf(mc.ts))} ${formatTime(mc.ts)}`, 'Not counted today, last counted 29 Oct 5:15 PM');
@@ -148,10 +150,33 @@ row('OTPs with Estimated target', est.join(', '), 'Barambu, Daban Fulani, Dukul,
 const itpEst = db.stores.filter((s) => s.type === 'ITP').map((s) => `${s.label}: ${db.itemsForStore(s.id).filter((i) => usageInfo(db, s.id, i.id)?.estimated).length}`);
 row('ITP items with Estimated target', itpEst.join(', '), 'GH Bajoga: 0, GH Deba: 0, GH Dukku: 0');
 const monthly = db.odk.months.map((m) => Object.values(db.odk.usage).reduce((t, u) => t + (u.rutf?.[m] || 0), 0));
-row('RUTF use by month (chart)', monthly.map((x) => formatNumber(Math.round(x))).join(' | '), '48,677 | 44,488 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705');
+row('RUTF use by month (chart)', monthly.map((x) => formatNumber(Math.round(x))).join(' | '), '48,677 | 44,489 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705');
 row('RUTF display, exact cartons', formatRutf(1800), '1,800 sachets (12 cartons)');
 row('RUTF display, under 150', formatRutf(131), '131 sachets');
 row('Count read-back', rutfReadBack(12, 37).text, '12 sealed cartons + 37 loose = 1,837 sachets');
+
+// ---------- Design demo values (final design files) ----------
+const deba = (name) => {
+  const it = db.itemIdFor(name);
+  const counts = db.ledger.entries('gh_deba', it).filter((e) => e.kind === 'count');
+  const [y, t] = counts.slice(-2);
+  const recv = db.ledger.entries('gh_deba', it).filter((e) => e.kind === 'received' && dateOf(e.ts) === '2026-10-30').reduce((s, e) => s + e.qty, 0);
+  return `${formatNumber(y.qty)} + ${formatNumber(recv)} - ${formatNumber(t.qty)} = ${formatNumber(y.qty + recv - t.qty)} used (${stockView(db, 'gh_deba', it).status.label})`;
+};
+row('GH Deba log, F75', deba('F75'), '240 + 0 - 214 = 26 used (Running low)');
+row('GH Deba log, F100', deba('F100'), '410 + 120 - 468 = 62 used (Running low)');
+row('GH Deba log, Ceftriaxone 1g', deba('Ceftriaxone 1g (Tandak/Syceph)'), '48 + 0 - 36 = 12 used (Running low)');
+row('GH Deba log, IV Artesunate 30mg', deba('IV Artesunate 30mg (Rekmal)'), '6 + 0 - 0 = 6 used (Out of stock)');
+row('GH Deba log, Normal saline 500 ml', deba('Normal saline 500 ml'), '75 + 0 - 68 = 7 used (Running low)');
+const exp = needsAttention(db).flatMap((g) => g.alerts).find((a) => a.type === 'EXPIRY');
+row('Will expire before use', exp ? `${db.store(exp.storeId).name}, ${db.item(exp.itemId).name} batch ${exp.batches.map((b) => b.batch).join(', ')}, expires ${formatShortDate(exp.expiry)}, about ${Math.round(exp.unused / 10) * 10} will not be used` : '', 'GH Bajoga ITP, F100 batch F1-2501, expires 30 Nov, about 210 will not be used');
+const jh = db.ledger.history('jigawan_iro', 'rutf').filter((r) => r.entry.tsMs >= Date.parse('2026-10-27T10:00:00+01:00'));
+row('Jigawan Iro RUTF history from the 27 Oct delivery (design: item history)', jh.map((r) => `${r.entry.kind}${r.entry.recount ? ' (recount)' : ''} ${r.entry.kind === 'count' ? r.entry.qty : r.entry.qty} -> ${r.balance}${r.inEffect ? '' : ' (waiting)'}`).join(', '),
+  'received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting)');
+const z1043 = db.shipments.get('sh-1043');
+row('Zaune emergency (planned by logistics)', `${z1043.number}, ${z1043.state}, ${formatRutf(z1043.lines[0].qtyProposed)}, target locked ${formatTime(z1043.steps.requested.at)} by ${z1043.steps.requested.byName}`, '1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello');
+const j1044 = db.shipments.get('sh-1044');
+row('Jigawan Iro emergency request', `${j1044.number}, ${j1044.state}, ${j1044.lines.length} items, sent ${formatTime(j1044.steps.requested.at)} by ${j1044.steps.requested.byName}`, '1044, requested, 4 items, sent 5:55 PM by Muhammad S.');
 
 // Statuses that appear somewhere in the network.
 const seen = new Set();
@@ -172,10 +197,10 @@ for (const g of groups) {
       case 'OVERDUE': text = `Shipment ${a.number} to ${sname(a.storeId)}: in Sent for ${a.hours} hours`; break;
       case 'ESCALATION': text = `${sname(a.storeId)}: ${a.flagCount} count differences since ${formatShortDate(a.firstFlagDate)} (${a.itemIds.map((x) => db.item(x).name).join(', ')}), sent to supervisor ${a.supervisor}; goes to management on ${formatShortDate(a.managementDate)} if it keeps happening`; break;
       case 'COUNT_DIFF': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} counted ${a.counted}, expected ${a.expected}`; break;
-      case 'NOT_COUNTED': text = `${sname(a.storeId)}: last counted ${formatShortDate(dateOf(a.lastCountAt))} ${formatTime(a.lastCountAt)}`; break;
-      case 'APPROVAL': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} ${a.qty} by ${a.requestedBy}`; break;
+      case 'NOT_COUNTED': text = a.stores.map((x) => `${sname(x.storeId)}: last counted ${formatShortDate(dateOf(x.lastCountAt))} ${formatTime(x.lastCountAt)}`).join('; '); break;
+      case 'APPROVAL': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} correction ${formatQty(db.item(a.itemId), a.qty)} (${a.reason}) by ${a.requestedBy}, waiting for ${a.approver}`; break;
       case 'CENTRAL_BELOW': text = `Central store ${db.item(a.itemId).name}: ${a.monthsInclOrder.toFixed(1)} months, including ${formatQty(db.item(a.itemId), a.onOrder)} on order (target ${formatQty(db.item(a.itemId), a.target)})`; break;
-      case 'EXPIRY': text = `${sname(a.storeId)}: ${db.item(a.itemId).name}, ${formatQty(db.item(a.itemId), a.qty)} in ${a.batches.length} batch(es) (${a.batches.map((b) => b.batch).join(', ')}), expires ${formatShortDate(a.expiry)}, lasts until ${formatShortDate(a.lastsUntil)}`; break;
+      case 'EXPIRY': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} batch ${a.batches.map((b) => b.batch).join(', ')} expires ${formatShortDate(a.expiry)}, ${formatQty(db.item(a.itemId), a.qty)} on hand, about ${formatQty(db.item(a.itemId), a.unused)} will not be used by then (lasts until ${formatShortDate(a.lastsUntil)})`; break;
       case 'TRANSFER': text = `${sname(a.storeId)} to ${sname(a.toStoreId)}: ${formatQty(db.item(a.itemId), a.qty)} of ${db.item(a.itemId).name}`; break;
       default: text = JSON.stringify(a);
     }

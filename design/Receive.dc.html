@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Receive a shipment</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F">
+<header class="hdr">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<div class="place-box"><span class="ic i-store" aria-hidden="true"></span><span class="col" style="gap: 0"><span class="pb-name">Jigawan Iro OTP</span><span class="pb-type">Outpatient site</span></span></div>
+<div class="grow"></div>
+<span class="sync"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Saved on this laptop, will send when online</span>
+<div class="who"><span class="avatar" aria-hidden="true">MS</span><span class="col" style="gap: 0"><span class="b caps">Muhammad S.</span><span class="small muted caps">Lead Triage Officer</span></span></div>
+</header>
+<main class="wrap" style="max-width: 1040px">
+<a href="FacilityHome.dc.html" class="btn btn-ghost" style="align-self: flex-start; padding-left: 0"><span class="ic b-back" aria-hidden="true"></span>Back to your stock</a>
+<div class="col g8">
+<h1 class="h1">Receive a shipment</h1>
+<p class="lead muted">October monthly shipment from the Central store, Gombe. Check what arrived, item by item.</p>
+</div>
+<section class="card col g16" aria-label="Shipment progress">
+<div class="row sp"><span class="b">Shipment 1042 · October monthly</span><span class="chip chip-transit"><span class="ic s-transit" aria-hidden="true"></span>In transit</span></div>
+<ol class="steps">
+<li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Requested</span><span class="small muted">27 Oct</span></li>
+<li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Approved</span><span class="small muted">28 Oct · Nasiru Bello</span></li>
+<li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Sent</span><span class="small muted">29 Oct 10:15 AM</span></li>
+<li class="step step-now"><span class="dot">4</span><span class="step-t">Received</span><span class="small muted">You, now</span></li>
+</ol>
+<p class="small muted row g8" style="margin: 0"><span class="ic ic-sm i-lock" aria-hidden="true"></span>Sent amounts are locked. Only Jigawan Iro OTP can mark this received.</p>
+</section>
+<section class="card col g16" aria-labelledby="r1">
+<div class="item-top"><span class="pic p-rutf" role="img" aria-label="RUTF sachet"></span>
+<div class="col g4 grow"><h2 class="h3" id="r1">RUTF</h2><span class="muted">Sent: <span class="b">1,800 sachets (12 cartons)</span> in 2 batches</span></div></div>
+<div class="card card-tight col g16" style="background: #FAF8F4">
+<div class="row sp"><span class="b">Batch RU-2604 · expires 31 Mar 2027</span><span class="small muted">Sent 1,200 sachets (8 cartons)</span></div>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><input class="num" value="8" inputmode="numeric" style="max-width: 140px"></label>
+<label class="field"><span class="label">Loose sachets</span><input class="num" value="0" inputmode="numeric" style="max-width: 140px"></label>
+<label class="field"><span class="label">Batch number</span><input class="input" value="RU-2604" style="width: 160px"></label>
+<label class="field"><span class="label">Expiry date</span><input class="input" value="31/03/2027" style="width: 160px"></label>
+</div>
+<div class="readback"><span class="ic b-tick" aria-hidden="true"></span>8 sealed cartons + 0 loose = 1,200 sachets · matches what was sent</div>
+</div>
+<div class="card card-tight col g16" style="background: #FAF8F4">
+<div class="row sp"><span class="b">Batch RU-2611 · expires 30 Jun 2027</span><span class="small muted">Sent 600 sachets (4 cartons)</span></div>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><input class="num num-warn" value="3" inputmode="numeric" style="max-width: 140px"></label>
+<label class="field"><span class="label">Loose sachets</span><input class="num num-warn" value="140" inputmode="numeric" style="max-width: 140px"></label>
+<label class="field"><span class="label">Batch number</span><input class="input" value="RU-2611" style="width: 160px"></label>
+<label class="field"><span class="label">Expiry date</span><input class="input" value="30/06/2027" style="width: 160px"></label>
+</div>
+<div class="readback"><span class="ic b-count" aria-hidden="true"></span>3 sealed cartons + 140 loose = 590 sachets</div>
+<div class="prompt" style="flex-direction: column; align-items: stretch">
+<div class="row g8"><span class="chip chip-check chip-sm"><span class="ic ic-sm s-check" aria-hidden="true"></span>10 sachets short</span><span class="b">What happened?</span></div>
+<div class="row g8">
+<span class="tab">Short</span><span class="tab tab-on">Damaged</span><span class="tab">Extra</span>
+</div>
+<label class="field"><span class="label">Add a note</span><textarea class="input" rows="2">1 carton was torn, 10 sachets burst. Kept aside.</textarea></label>
+</div>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="r2">
+<div class="item-top"><span class="pic p-tombrown" role="img" aria-label="Tom Brown pack"></span>
+<div class="col g4 grow"><h2 class="h3" id="r2">Tom Brown</h2><span class="muted">Sent: <span class="b">23 packs</span> in 1 batch</span></div></div>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Packs received</span><input class="num" value="23" inputmode="numeric" style="max-width: 140px"></label>
+<label class="field"><span class="label">Batch number</span><input class="input" value="TB-0925" style="width: 160px"></label>
+<label class="field"><span class="label">Expiry date</span><input class="input" value="15/01/2027" style="width: 160px"></label>
+<span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Matches what was sent · saved 6:02 PM</span>
+</div>
+</section>
+<section class="card col g16" style="border: 2px solid #292D3D">
+<h2 class="h3">Check and confirm</h2>
+<p style="margin: 0">RUTF: <span class="b">1,790 sachets (11 cartons + 140 loose) of 1,800 sachets (12 cartons)</span> received, 10 sachets damaged (note added). Tom Brown: <span class="b">23 of 23 packs</span>.</p>
+<button class="btn btn-primary btn-lg" type="button" style="align-self: flex-start"><span class="ic ic-lg w-tick" aria-hidden="true"></span>Confirm shipment received</button>
+<p class="small muted" style="margin: 0">This adds the stock to Jigawan Iro OTP, stamped Muhammad S., 30 Oct 2026.</p>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

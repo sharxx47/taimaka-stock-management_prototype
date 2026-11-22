@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Test sign-in</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; min-height: 960px">
+<header class="hdr">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<div class="grow"></div>
+<span class="sync"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Test version</span>
+</header>
+<main class="wrap" style="max-width: 1080px; padding-top: 40px">
+<div class="col g8">
+<h1 class="h1">Welcome. Who is using the app?</h1>
+<p class="lead muted">Pick your test user, then type the test PIN shown on the right. You will only see the screens for your role.</p>
+</div>
+<div class="two">
+<section class="card col g16" aria-labelledby="pick">
+<h2 class="h3" id="pick">1. Pick your test user</h2>
+<button class="user-card user-card-on" type="button">
+<span class="avatar" aria-hidden="true">MS</span>
+<span class="col g4 grow"><span class="b caps" style="font-size: 18px">Muhammad S.</span><span class="muted"><span class="caps">Lead Triage Officer</span> · Jigawan Iro OTP</span></span>
+<span class="ic ic-lg b-tick" aria-label="Selected"></span>
+</button>
+<button class="user-card" type="button">
+<span class="avatar" aria-hidden="true">PT</span>
+<span class="col g4 grow"><span class="b caps" style="font-size: 18px">Pharmacy Technician</span><span class="muted">GH Deba (ITP)</span></span>
+</button>
+<button class="user-card" type="button">
+<span class="avatar" aria-hidden="true">HN</span>
+<span class="col g4 grow"><span class="b caps" style="font-size: 18px">Hajara Nuhu</span><span class="muted"><span class="caps">Supervisor</span> · Jigawan Iro, Kurjale, Maikaho</span></span>
+</button>
+<button class="user-card" type="button">
+<span class="avatar" aria-hidden="true">NB</span>
+<span class="col g4 grow"><span class="b caps" style="font-size: 18px">Nasiru Bello</span><span class="muted"><span class="caps">Logistics</span> · Central store, Gombe</span></span>
+</button>
+<button class="user-card" type="button">
+<span class="avatar" aria-hidden="true"><span class="ic i-eye"></span></span>
+<span class="col g4 grow"><span class="b caps" style="font-size: 18px">Management</span><span class="muted">View only</span></span>
+</button>
+</section>
+<section class="card col g16" aria-labelledby="pinh">
+<h2 class="h3" id="pinh">2. Type your test PIN</h2>
+<p style="margin: 0">Signing in as <span class="b">Muhammad S.</span>, Lead Triage Officer, Jigawan Iro OTP</p>
+<span class="testpin"><span class="ic ic-sm i-lock" aria-hidden="true"></span>Test PIN for this user: 1 2 3 4</span>
+<div class="field">
+<span class="label" id="pinlbl">PIN</span>
+<div class="pin" role="group" aria-labelledby="pinlbl"><span>1</span><span>2</span><span></span><span></span></div>
+</div>
+<button class="btn btn-primary btn-lg btn-block" type="button" disabled><span class="ic ic-lg i-user" aria-hidden="true"></span>Sign in</button>
+<p class="small muted" style="margin: 0">The button turns on when all 4 numbers are in.</p>
+<hr class="divider">
+<div class="row sp">
+<span class="small muted">Today: Friday 30 Oct 2026</span>
+<a href="#" class="small">Reset demo data</a>
+</div>
+</section>
+</div>
+<div class="banner bn-info">
+<span class="ic ic-lg i-history" aria-hidden="true"></span>
+<p class="grow" style="margin: 0">Everything you enter is saved with your name and the time. Your name and role stay at the top of every screen.</p>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":960}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

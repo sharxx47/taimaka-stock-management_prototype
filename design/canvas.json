@@ -1,0 +1,260 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "CountCompare.dc.html": {
+      "h": 3300,
+      "page": "laptop",
+      "title": "Daily count: cards vs compact rows",
+      "w": 2340,
+      "x": 5440,
+      "y": 3480
+    },
+    "DailyCount.dc.html": {
+      "expand": "fill",
+      "h": 2400,
+      "page": "laptop",
+      "title": "4 · Daily count",
+      "w": 1280,
+      "x": 0,
+      "y": 3480
+    },
+    "Emergency.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "page": "laptop",
+      "title": "3b · Request emergency stock",
+      "w": 1280,
+      "x": 4080,
+      "y": 0
+    },
+    "FacilityHome.dc.html": {
+      "expand": "fill",
+      "h": 3100,
+      "page": "laptop",
+      "title": "2 · Facility home, Jigawan Iro OTP",
+      "w": 1280,
+      "x": 1360,
+      "y": 0
+    },
+    "History.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "page": "laptop",
+      "title": "9 · Item history and Correct this entry",
+      "w": 1280,
+      "x": 4080,
+      "y": 3480
+    },
+    "ItpLog.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "page": "laptop",
+      "title": "5 · ITP pharmacy daily log, GH Deba",
+      "w": 1280,
+      "x": 1360,
+      "y": 3480
+    },
+    "Logistics.dc.html": {
+      "expand": "fill",
+      "h": 5300,
+      "page": "laptop",
+      "title": "7 · Logistics dashboard",
+      "w": 1280,
+      "x": 0,
+      "y": 6260
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "page": "laptop",
+      "title": "1 · Test sign-in",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Management.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "page": "laptop",
+      "title": "8 · Management overview",
+      "w": 1280,
+      "x": 1360,
+      "y": 6260
+    },
+    "PhoneCount.dc.html": {
+      "h": 940,
+      "page": "phone",
+      "title": "12 · Daily count on a phone",
+      "w": 1500,
+      "x": 1440,
+      "y": 0
+    },
+    "PhoneHome.dc.html": {
+      "h": 1040,
+      "page": "phone",
+      "title": "11 · Facility home on a phone",
+      "w": 1360,
+      "x": 0,
+      "y": 0
+    },
+    "Receive.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "page": "laptop",
+      "title": "3a · Receive a shipment",
+      "w": 1280,
+      "x": 2720,
+      "y": 0
+    },
+    "Responsive.dc.html": {
+      "h": 1800,
+      "page": "phone",
+      "title": "Responsive check: 375, 768, 1280",
+      "w": 2600,
+      "x": 1360,
+      "y": 1320
+    },
+    "Settings.dc.html": {
+      "expand": "fill",
+      "h": 2600,
+      "page": "laptop",
+      "title": "10 · Settings (logistics only)",
+      "w": 1280,
+      "x": 2720,
+      "y": 6260
+    },
+    "States.dc.html": {
+      "h": 1200,
+      "page": "phone",
+      "title": "In-between states",
+      "w": 1280,
+      "x": 0,
+      "y": 1320
+    },
+    "StyleGuide.dc.html": {
+      "h": 5000,
+      "page": "guide",
+      "title": "Style guide",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Supervisor.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "page": "laptop",
+      "title": "6 · Supervisor home, Hajara Nuhu",
+      "w": 1280,
+      "x": 2720,
+      "y": 3480
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-22T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "laptop",
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "t1",
+    "t2",
+    "t3",
+    "n1",
+    "t4",
+    "t5"
+  ],
+  "notes": {
+    "n1": {
+      "fill": "orange",
+      "page": "laptop",
+      "size": 24,
+      "text": "Demo data note (round 2)\n\nFrom the brief and Sharks' round 2 message: names, supervisors, linked ITPs, the 26 Jigawan Iro bin card rows with their statuses, units and lasts-until dates (round 3), Zaune/Kalshingi/Ashaka Gari RUTF use, network use 188,205 a month, the 2026 RUTF chart, units kits and 1000 ml.\n\nDemo values (not real data):\n- Stock on hand: Zaune 3,630, Kalshingi 3,900, Ashaka Gari 9,600, central store 410,000, other 23 OTPs 230,000 in total (network 661,461), RUTF on order 40,000\n- Batch numbers, expiry dates, shipment numbers 1029, 1037, 1042\n- Count times, saved times, last-count times (Maikaho 29 Oct 5:15 PM, Kurjale 5:25 PM, Tumfure 29 Oct 5:20 PM)\n- Expected values on the daily count, daily use 98, 100, 101 sachets in the history\n- Comparison artboard: saved times for items 6 to 11 (5:36, 5:37, 5:37, 5:38, 5:38, 5:39 PM) and expected values for items 6 to 11 equal to the counted amounts\n- Kurjale All OK, Maikaho Not counted today\n- ITP log quantities (F75, F100, Ceftriaxone, Artesunate, saline)\n- Shipment 1037 contents, the Z Otomed transfer of 20 bottles, the RUTF -180 correction\n- Management indicators other than RUTF months and the chart\n- Settings: Kafarati OTP and its starting stock, MUAC tape, the July multiplier change\n- Units: Tom Brown packs, zinc oxide tubes, ear drops and lotions bottles\n\nDashed boxes marked TO CONFIRM are values still missing.",
+      "w": 520,
+      "x": 4160,
+      "y": 6260
+    },
+    "t1": {
+      "kind": "title1",
+      "maxW": 5360,
+      "page": "laptop",
+      "text": "Laptop screens: facility staff",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 5360,
+      "page": "laptop",
+      "text": "Laptop screens: daily count, ITP, supervisor, audit",
+      "w": 240,
+      "x": 0,
+      "y": 3220
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "laptop",
+      "text": "Laptop screens: logistics and management",
+      "w": 240,
+      "x": 0,
+      "y": 6000
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 2940,
+      "page": "phone",
+      "text": "Phone screens",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 3960,
+      "page": "phone",
+      "text": "States and responsive check",
+      "w": 240,
+      "x": 0,
+      "y": 1060
+    }
+  },
+  "order": [
+    "PhoneHome.dc.html",
+    "PhoneCount.dc.html",
+    "States.dc.html",
+    "Responsive.dc.html",
+    "StyleGuide.dc.html",
+    "Main.dc.html",
+    "FacilityHome.dc.html",
+    "Receive.dc.html",
+    "Emergency.dc.html",
+    "DailyCount.dc.html",
+    "ItpLog.dc.html",
+    "Supervisor.dc.html",
+    "History.dc.html",
+    "Logistics.dc.html",
+    "Management.dc.html",
+    "Settings.dc.html",
+    "CountCompare.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "laptop",
+      "name": "Laptop screens"
+    },
+    {
+      "id": "phone",
+      "name": "Phone, states, responsive"
+    },
+    {
+      "id": "guide",
+      "name": "Style guide"
+    }
+  ],
+  "title": "Taimaka Stock Management Mockup"
+}

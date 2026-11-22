@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>In-between states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 1280px; min-height: 1200px">
+<main class="wrap">
+<div class="col g4"><h1 class="h1">In-between states</h1><p class="muted" style="margin: 0">Every screen uses these same patterns. Plain words, and always a next step.</p></div>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<section class="card col g16" aria-labelledby="s1">
+<h2 class="sec-t" id="s1">Empty</h2>
+<div class="col g8" style="align-items: center; text-align: center; padding: 16px 0">
+<span class="tl-ic" style="width: 64px; height: 64px"><span class="ic ic-lg b-truck" aria-hidden="true"></span></span>
+<span class="h3">No shipments in transit</span>
+<span class="muted">When logistics sends you stock, it shows here.</span>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="s2">
+<h2 class="sec-t" id="s2">Loading</h2>
+<div class="row g8"><span class="spinner" aria-hidden="true"></span><span>Loading your stock...</span></div>
+<div class="row g16"><span class="skel" style="width: 56px; height: 56px"></span><div class="col g8 grow"><span class="skel" style="height: 18px; width: 70%"></span><span class="skel" style="height: 14px; width: 45%"></span></div></div>
+<div class="row g16"><span class="skel" style="width: 56px; height: 56px"></span><div class="col g8 grow"><span class="skel" style="height: 18px; width: 60%"></span><span class="skel" style="height: 14px; width: 40%"></span></div></div>
+</section>
+<section class="card col g16" aria-labelledby="s3">
+<h2 class="sec-t" id="s3">Saving, line by line</h2>
+<div class="row sp"><span>Malaria RDT · 132</span><span class="row g8 small muted"><span class="spinner" style="width: 18px; height: 18px; border-width: 3px" aria-hidden="true"></span>Saving...</span></div>
+<div class="row sp"><span>Amoxicillin · 80</span><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:41 PM</span></div>
+<div class="row sp"><span>Tom Brown · 11</span><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:40 PM</span></div>
+</section>
+<section class="card col g16" aria-labelledby="s4">
+<h2 class="sec-t" id="s4">Offline</h2>
+<span class="sync sync-off" style="align-self: flex-start"><span class="ic ic-sm i-offline" aria-hidden="true"></span>Saved on this phone, will send when online</span>
+<span class="muted">3 entries waiting to send. You can keep working. Nothing is lost if the app closes. On a laptop or tablet the label says "laptop" or "tablet" instead of "phone".</span>
+<span class="sync" style="align-self: flex-start"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Sent. Last sync 6:02 PM</span>
+</section>
+<section class="card col g16" aria-labelledby="s5" style="border-color: #A9D5B6">
+<h2 class="sec-t" id="s5">Success</h2>
+<div class="col g8" style="align-items: center; text-align: center">
+<span class="tl-ic" style="width: 64px; height: 64px; background: #E2F2E7"><span class="ic ic-lg s-ok" aria-hidden="true"></span></span>
+<span class="h3">Today's count submitted, thank you</span>
+<span class="muted">Sent 5:58 PM by Muhammad S.</span>
+<a href="FacilityHome.dc.html" class="btn btn-secondary"><span class="ic b-back" aria-hidden="true"></span>Back to your stock</a>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="s6">
+<h2 class="sec-t" id="s6">Request sent</h2>
+<div class="banner bn-ok"><span class="ic ic-lg s-ok" aria-hidden="true"></span><span class="grow"><span class="b">Emergency request sent.</span> Logistics usually sends within 24 to 48 hours.</span></div>
+<ol class="steps"><li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Requested</span></li><li class="step step-now"><span class="dot">2</span><span class="step-t">Approved</span></li><li class="step"><span class="dot">3</span><span class="step-t">Sent</span></li><li class="step"><span class="dot">4</span><span class="step-t">Received</span></li></ol>
+</section>
+<section class="card col g16" aria-labelledby="s7" style="border-color: #F2A39B">
+<h2 class="sec-t" id="s7">Error: could not send</h2>
+<div class="banner bn-order"><span class="ic ic-lg s-order" aria-hidden="true"></span><span class="grow">We could not send your count. <span class="b">Your numbers are safe on this phone.</span></span><button class="btn btn-primary" type="button"><span class="ic w-recount" aria-hidden="true"></span>Try again</button></div>
+</section>
+<section class="card col g16" aria-labelledby="s8" style="border-color: #F2A39B">
+<h2 class="sec-t" id="s8">Error: number looks wrong</h2>
+<label class="field"><span class="label">Sealed cartons</span><input class="num num-warn" value="4331" style="max-width: none"></label>
+<div class="prompt"><span class="grow">4,331 cartons would be 649,650 sachets. Did you mean loose sachets?</span><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-move" aria-hidden="true"></span>Move to loose sachets</button></div>
+</section>
+<section class="card col g16" aria-labelledby="s9" style="border-color: #F2A39B">
+<h2 class="sec-t" id="s9">Error: wrong PIN</h2>
+<div class="pin"><span style="border-color: #B3261E">1</span><span style="border-color: #B3261E">2</span><span style="border-color: #B3261E">4</span><span style="border-color: #B3261E">3</span></div>
+<span class="row g8" style="color: #B3261E"><span class="ic s-order" aria-hidden="true"></span>That PIN does not match. Check the test PIN shown above.</span>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1200}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

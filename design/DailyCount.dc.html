@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily count</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F">
+<header class="hdr">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<div class="place-box"><span class="ic i-store" aria-hidden="true"></span><span class="col" style="gap: 0"><span class="pb-name">Jigawan Iro OTP</span><span class="pb-type">Outpatient site</span></span></div>
+<div class="grow"></div>
+<span class="sync sync-off"><span class="ic ic-sm i-offline" aria-hidden="true"></span>Saved on this laptop, will send when online</span>
+<div class="who"><span class="avatar" aria-hidden="true">MS</span><span class="col" style="gap: 0"><span class="b caps">Muhammad S.</span><span class="small muted caps">Lead Triage Officer</span></span></div>
+</header>
+<main class="wrap">
+<div class="col g8">
+<a href="FacilityHome.dc.html" class="btn btn-ghost" style="align-self: flex-start; padding-left: 0"><span class="ic b-back" aria-hidden="true"></span>Back to your stock</a>
+<h1 class="h1">Today's count · Friday 30 Oct</h1>
+<p class="lead muted">Count what is on the shelf and type the number. Each line saves by itself.</p>
+</div>
+<div class="side">
+<div class="main">
+<section class="card col g16" aria-labelledby="c1">
+<div class="row sp"><div class="row"><span class="pic p-tube" role="img" aria-label="Cream tube"></span><div class="col g4"><h2 class="h3" id="c1">1. 20% Zinc oxide cream</h2><span class="faint">Expected 56 tubes</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:33 PM</span></div>
+<label class="field"><span class="label">Tubes on the shelf</span><input class="num" value="56" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="c2">
+<div class="row sp"><div class="row"><span class="pic p-blister" role="img" aria-label="Tablet blister pack"></span><div class="col g4"><h2 class="h3" id="c2">2. ACT tablets AL 1</h2><span class="faint">Expected 76 sachets</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span></div>
+<label class="field"><span class="label">Sachets on the shelf</span><input class="num" value="76" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="c3">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="c3">3. Amoxicillin susp 100ml</h2><span class="faint">Expected 82 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="82" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="c4" style="border-color: #F0C47A">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="c4">4. Amoxicillin susp 60ml</h2><span class="faint">Expected 86 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:35 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num num-warn" value="80" inputmode="numeric"></label>
+<div class="prompt">
+<span class="chip chip-check chip-sm"><span class="ic ic-sm s-check" aria-hidden="true"></span>Check</span>
+<span class="grow">You counted 80, we expected 86. Please recount or add a note.</span>
+<div class="row g8"><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-recount" aria-hidden="true"></span>Recount</button><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-note" aria-hidden="true"></span>Add a note</button></div>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="c5">
+<div class="row sp"><div class="row"><span class="pic p-drops" role="img" aria-label="Dropper bottle"></span><div class="col g4"><h2 class="h3" id="c5">5. Ciprotap ear drop</h2><span class="faint">Expected 0 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="0" inputmode="numeric"></label>
+</section>
+<p class="muted" style="margin: 0; text-align: center">Items 6 to 11 saved</p>
+<section class="card col g16" aria-labelledby="c12" style="border: 2px solid #292D3D">
+<div class="row sp"><div class="row"><span class="pic p-rutf" role="img" aria-label="RUTF sachet"></span><div class="col g4"><h2 class="h3" id="c12">12. RUTF</h2><span class="faint">Expected 4,331 sachets (28 cartons + 131 loose)</span></div></div><span class="row g8 small muted"><span class="spinner" style="width: 18px; height: 18px; border-width: 3px" aria-hidden="true"></span>Saving...</span></div>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><span class="hint">150 sachets each</span><input class="num" value="28" inputmode="numeric" style="max-width: 160px"></label>
+<span style="font-size: 30px; font-weight: 700; padding-bottom: 12px" aria-hidden="true">+</span>
+<label class="field"><span class="label">Loose sachets</span><span class="hint">Any opened carton counts here</span><input class="num num-focus" value="131" inputmode="numeric" style="max-width: 160px"></label>
+</div>
+<div class="readback"><span class="ic b-tick" aria-hidden="true"></span>28 sealed cartons + 131 loose = 4,331 sachets</div>
+</section>
+<p class="muted" style="margin: 0; text-align: center">Items 13 to 26 come next, in bin card order</p>
+<section class="card col g16" aria-labelledby="rv" style="border: 2px solid #292D3D">
+<span class="tag" style="align-self: flex-start">Step 2 of 2 · shown after the last item</span>
+<h2 class="h2" id="rv">Review today's count</h2>
+<div class="col g8">
+<div class="row sp"><span>Items counted</span><span class="b">25 of 26 · TB Bucket left blank</span></div>
+<div class="row sp"><span>RUTF</span><span class="b">28 sealed cartons + 131 loose = 4,331 sachets</span></div>
+<div class="row sp"><span>Differences</span><span class="b">1, note added (Amoxicillin)</span></div>
+</div>
+<label class="cbox"><input type="checkbox" checked>Store is cool, dry and locked today</label>
+<button class="btn btn-primary btn-lg" type="button"><span class="ic ic-lg w-tick" aria-hidden="true"></span>Submit today's count</button>
+<p class="small muted" style="margin: 0">Submitted as Muhammad S. with today's date and time.</p>
+</section>
+</div>
+<aside class="aside">
+<div class="card col g8">
+<span class="b">Progress</span>
+<div class="progress" role="progressbar" aria-valuenow="11" aria-valuemin="0" aria-valuemax="26" aria-label="Items counted"><span style="width: 42%"></span></div>
+<span class="muted">11 of 26 items counted</span>
+</div>
+<div class="card col g8">
+<span class="row g8 b"><span class="ic i-offline" aria-hidden="true"></span>No internet right now</span>
+<span class="muted">Your numbers are safe on this laptop. They send by themselves when the signal comes back.</span>
+</div>
+<div class="card col g8">
+<span class="b">Logistics recount</span>
+<span class="muted">Logistics use this same screen during visits. It shows a clear label at the top:</span>
+<span class="tag tag-recount" style="align-self: flex-start"><span class="ic ic-sm w-recount" aria-hidden="true"></span>Recount by logistics · Nasiru Bello</span>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2400}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

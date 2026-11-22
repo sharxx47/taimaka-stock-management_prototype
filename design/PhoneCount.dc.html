@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily count on a phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 1500px; height: 940px; display: flex; align-items: center; justify-content: center; gap: 48px; background: #E9E6DF">
+<div class="phone">
+<div class="screen">
+<div class="ph-hdr">
+<div class="row sp"><span class="b">Today's count</span><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:35 PM</span></div>
+<div class="progress" aria-hidden="true"><span style="width: 15%"></span></div>
+<span class="small muted">Item 4 of 26</span>
+</div>
+<div class="ph-body" style="gap: 10px">
+<div class="row g16"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col" style="gap: 0"><span class="h3">Amoxicillin susp 60ml</span><span class="faint">Expected 86 bottles</span></div></div>
+<div class="field"><span class="label" id="amxl">Bottles on the shelf</span><div class="num num-warn" aria-labelledby="amxl" style="max-width: none; display: flex; align-items: center">80</div></div>
+<div class="prompt" style="padding: 8px 12px"><span class="grow">You counted 80, we expected 86. Please recount or add a note.</span></div>
+<div class="keypad" role="group" aria-label="Number keypad">
+<button class="key" type="button">1</button><button class="key" type="button">2</button><button class="key" type="button">3</button>
+<button class="key" type="button">4</button><button class="key" type="button">5</button><button class="key" type="button">6</button>
+<button class="key" type="button">7</button><button class="key" type="button">8</button><button class="key" type="button">9</button>
+<button class="key" type="button" style="font-size: 16px">Clear</button><button class="key" type="button">0</button><button class="key" type="button" style="font-size: 16px" aria-label="Delete last number"><span class="ic i-back" aria-hidden="true"></span>Del</button>
+</div>
+</div>
+<div class="ph-foot" style="flex-direction: row; gap: 10px">
+<button class="btn btn-secondary btn-lg" type="button" style="flex: 1 1 0"><span class="ic b-back" aria-hidden="true"></span>Back</button>
+<button class="btn btn-primary btn-lg" type="button" style="flex: 2 1 0">Next<span class="ic w-chev" aria-hidden="true"></span></button>
+</div>
+</div>
+</div>
+<div class="phone">
+<div class="screen">
+<div class="ph-hdr">
+<div class="row sp"><span class="b">Today's count</span><span class="sync sync-off" style="padding: 4px 10px"><span class="ic ic-sm i-offline" aria-hidden="true"></span>Offline</span></div>
+<div class="progress" aria-hidden="true"><span style="width: 42%"></span></div>
+<span class="small muted">Item 12 of 26</span>
+</div>
+<div class="ph-body" style="gap: 14px">
+<div class="row g16"><span class="pic pic-lg p-rutf" role="img" aria-label="RUTF sachet"></span><div class="col g4"><span class="h2">RUTF</span><span class="faint">Expected 4,331 sachets (28 cartons + 131 loose)</span></div></div>
+<label class="field"><span class="label">Sealed cartons</span><span class="hint">150 sachets each</span><input class="num" value="28" inputmode="numeric" style="max-width: none"></label>
+<label class="field"><span class="label">Loose sachets</span><span class="hint">Any opened carton counts here</span><input class="num num-focus" value="131" inputmode="numeric" style="max-width: none"></label>
+<div class="readback" style="font-size: 17px"><span class="ic b-tick" aria-hidden="true"></span>28 sealed cartons + 131 loose = 4,331 sachets</div>
+</div>
+<div class="ph-foot" style="flex-direction: row; gap: 10px">
+<button class="btn btn-secondary btn-lg" type="button" style="flex: 1 1 0"><span class="ic b-back" aria-hidden="true"></span>Back</button>
+<button class="btn btn-primary btn-lg" type="button" style="flex: 2 1 0">Next<span class="ic w-chev" aria-hidden="true"></span></button>
+</div>
+</div>
+</div>
+<div class="phone">
+<div class="screen">
+<div class="ph-hdr">
+<div class="row sp"><span class="b">Review today's count</span></div>
+<div class="progress" aria-hidden="true"><span style="width: 100%"></span></div>
+<span class="small muted">25 of 26 items counted · TB Bucket left blank</span>
+</div>
+<div class="ph-body" style="gap: 12px">
+<div class="card card-tight col g8">
+<div class="row sp"><span>RUTF</span><span class="b">4,331 sachets</span></div>
+<span class="small muted">28 sealed cartons + 131 loose</span>
+</div>
+<div class="card card-tight col g8" style="border-color: #F0C47A">
+<div class="row sp"><span>Amoxicillin</span><span class="b">80 bottles</span></div>
+<span class="small" style="color: #8A4B00">Expected 86 · note added</span>
+<button class="btn btn-ghost btn-sm" type="button" style="align-self: flex-start; padding-left: 0"><span class="ic b-edit" aria-hidden="true"></span>Change</button>
+</div>
+<div class="card card-tight row sp"><span>23 other items</span><span class="b">Match</span></div>
+<label class="cbox" style="font-size: 17px"><input type="checkbox" checked>Store is cool, dry and locked today</label>
+<span class="small muted">Saved on this phone, will send when online</span>
+</div>
+<div class="ph-foot">
+<button class="btn btn-primary btn-lg btn-block" type="button"><span class="ic ic-lg w-tick" aria-hidden="true"></span>Submit today's count</button>
+<button class="btn btn-ghost btn-block" type="button"><span class="ic b-back" aria-hidden="true"></span>Back to items</button>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1500,"height":940}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

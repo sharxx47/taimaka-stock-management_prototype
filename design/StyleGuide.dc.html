@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Style guide</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 1440px; min-height: 2400px">
+<main class="wrap" style="max-width: 1360px; padding: 48px 40px">
+<div class="row sp" style="align-items: flex-end">
+<div class="col g4"><div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div><h1 class="h1" style="font-size: 40px">Style guide</h1><p class="lead muted">Copy these values exactly. Colors follow taimaka.org: navy #292D3D, cream #F8F4ED and #F6F2E9, gold #B5955E.</p></div>
+<span class="tag">Stylesheet: tm.css · one file for every screen</span>
+</div>
+<section class="col g16" aria-labelledby="c">
+<h2 class="h2" id="c">Colors</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px"><div class="col g4"><span class="swatch" style="background: #F8F4ED"></span><span class="b small">Background (Taimaka cream)</span><span class="code">--bg: #F8F4ED</span></div><div class="col g4"><span class="swatch" style="background: #FFFFFF"></span><span class="b small">Surface (cards)</span><span class="code">--surface: #FFFFFF</span></div><div class="col g4"><span class="swatch" style="background: #F6F2E9"></span><span class="b small">Surface 2 (Taimaka cream 2)</span><span class="code">--surface-2: #F6F2E9</span></div><div class="col g4"><span class="swatch" style="background: #DCD7CC"></span><span class="b small">Line</span><span class="code">--line: #DCD7CC</span></div><div class="col g4"><span class="swatch" style="background: #E8E4DB"></span><span class="b small">Line 2</span><span class="code">--line-2: #E8E4DB</span></div><div class="col g4"><span class="swatch" style="background: #1B2A2F"></span><span class="b small">Text</span><span class="code">--ink: #1B2A2F</span></div><div class="col g4"><span class="swatch" style="background: #47555A"></span><span class="b small">Text secondary</span><span class="code">--ink-2: #47555A</span></div><div class="col g4"><span class="swatch" style="background: #5E6A6E"></span><span class="b small">Faint text (expected numbers)</span><span class="code">--faint: #5E6A6E</span></div><div class="col g4"><span class="swatch" style="background: #292D3D"></span><span class="b small">Primary (Taimaka navy)</span><span class="code">--primary: #292D3D</span></div><div class="col g4"><span class="swatch" style="background: #1B1E29"></span><span class="b small">Primary hover (new)</span><span class="code">--primary-hover: #1B1E29</span></div><div class="col g4"><span class="swatch" style="background: #E8E9EF"></span><span class="b small">Primary tint (new)</span><span class="code">--primary-tint: #E8E9EF</span></div><div class="col g4"><span class="swatch" style="background: #F2B33D"></span><span class="b small">Focus ring</span><span class="code">--focus: #F2B33D</span></div><div class="col g4"><span class="swatch" style="background: #B5955E"></span><span class="b small">Gold (decoration only)</span><span class="code">--gold: #B5955E</span><span class="small" style="color: #B3261E">Never for text or white-text buttons</span></div></div>
+</section>
+<section class="col g16" aria-labelledby="st">
+<h2 class="h2" id="st">Status chips and badges</h2>
+<p class="muted" style="margin: 0">Always color + icon + word. When more than one applies, show the most urgent: Out of stock, then Order now, then Running low, then Too much, then OK. Never show yesterday's status as today's.</p>
+<div class="tbox"><table class="tbl"><thead><tr><th>Chip</th><th>Text and icon</th><th>Fill</th><th>Border</th><th>Meaning</th></tr></thead><tbody><tr><td><span class="chip chip-ok"><span class="ic s-ok" aria-hidden="true"></span>OK</span></td><td class="code">#17663A</td><td class="code">#E2F2E7</td><td class="code">#A9D5B6</td><td class="small">Green, 1 month or more left</td></tr><tr><td><span class="chip chip-low"><span class="ic s-low" aria-hidden="true"></span>Running low</span></td><td class="code">#8A4B00</td><td class="code">#FFF0D6</td><td class="code">#F0C47A</td><td class="small">Amber, less than 1 month</td></tr><tr><td><span class="chip chip-order"><span class="ic s-order" aria-hidden="true"></span>Order now</span></td><td class="code">#B3261E</td><td class="code">#FDE4E1</td><td class="code">#F2A39B</td><td class="small">Red, runs out within 10 days</td></tr><tr><td><span class="chip chip-out"><span class="ic s-out" aria-hidden="true"></span>Out of stock</span></td><td class="code">#FFFFFF</td><td class="code">#7F1D1D</td><td class="code">#7F1D1D</td><td class="small">Dark red, zero</td></tr><tr><td><span class="chip chip-much"><span class="ic s-much" aria-hidden="true"></span>Too much</span></td><td class="code">#1D4F91</td><td class="code">#E3EDFA</td><td class="code">#A8C3EA</td><td class="small">Blue, more than 4 months or zero use</td></tr><tr><td><span class="chip chip-nc"><span class="ic s-nc" aria-hidden="true"></span>Not counted today</span></td><td class="code">#4A4F55</td><td class="code">#ECECEA</td><td class="code">#C9C9C4</td><td class="small">Grey, no count today</td></tr><tr><td><span class="chip chip-above"><span class="ic s-above" aria-hidden="true"></span>Above target</span></td><td class="code">#5A544A</td><td class="code">#F1EEE8</td><td class="code">#D6D0C4</td><td class="small">Logistics only, 2 to 4 months</td></tr><tr><td><span class="chip chip-est"><span class="ic s-est" aria-hidden="true"></span>Estimated target</span></td><td class="code">#5B3FA0</td><td class="code">#F1ECFB</td><td class="code">#C9B8EE</td><td class="small">Logistics only, under 3 months of data</td></tr><tr><td><span class="chip chip-exp"><span class="ic s-exp" aria-hidden="true"></span>Will expire before use</span></td><td class="code">#8A2A6B</td><td class="code">#FBE7F3</td><td class="code">#E9A9D2</td><td class="small">Batch expires before stock is used</td></tr><tr><td><span class="chip chip-untr"><span class="ic s-untr" aria-hidden="true"></span>Usage not tracked</span></td><td class="code">#4A4F55</td><td class="code">#FFFFFF</td><td class="code">#8C9196 dashed</td><td class="small">No status shown, amount only</td></tr><tr><td><span class="chip chip-check"><span class="ic s-check" aria-hidden="true"></span>Check</span></td><td class="code">#8A4B00</td><td class="code">#FFFFFF</td><td class="code">#F0C47A</td><td class="small">Count difference</td></tr><tr><td><span class="chip chip-wait"><span class="ic s-wait" aria-hidden="true"></span>Waiting for approval</span></td><td class="code">#5B3FA0</td><td class="code">#F1ECFB</td><td class="code">#C9B8EE</td><td class="small">Needs a second person</td></tr><tr><td><span class="chip chip-transit"><span class="ic s-transit" aria-hidden="true"></span>In transit</span></td><td class="code">#292D3D</td><td class="code">#E8E9EF</td><td class="code">#DCD7CC</td><td class="small">Between Sent and Received</td></tr><tr><td><span class="tbc">TO CONFIRM</span></td><td class="code">#1B2A2F</td><td class="code">#FFFFFF</td><td class="code">#1B2A2F dashed</td><td class="small">Mockup only: a value still to be confirmed</td></tr></tbody></table></div>
+</section>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<section class="card col g16" aria-labelledby="ty">
+<h2 class="h3" id="ty">Type</h2>
+<span class="code">font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif</span>
+<span class="small muted">Google Fonts, weights 400 and 700. Built for low vision readers: clear 1, l, I and 0, O.</span>
+<div class="col g8">
+<span class="h1">Page title 32 / 700</span>
+<span class="h2">Section 24 / 700</span>
+<span class="h3">Card title 20 / 700</span>
+<span style="font-size: 18px; font-weight: 700">Item name 18 / 700</span>
+<span>Body 16 / 400, line height 1.5</span>
+<span class="small">Small 14 (laptop only, never body text)</span>
+<span class="qty">Quantity 28 / 700 <small>unit 16</small></span>
+<span style="font-size: 30px; font-weight: 700">Number box 30 / 700</span>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="spc">
+<h2 class="h3" id="spc">Spacing, radius, sizes</h2>
+<span class="label">Spacing scale (px)</span>
+<div class="row g8" style="align-items: flex-end">
+<span class="col g4" style="align-items: center"><span style="width: 4px; height: 4px; background: #292D3D"></span><span class="code">4</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 8px; height: 8px; background: #292D3D"></span><span class="code">8</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 12px; height: 12px; background: #292D3D"></span><span class="code">12</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 16px; height: 16px; background: #292D3D"></span><span class="code">16</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 20px; height: 20px; background: #292D3D"></span><span class="code">20</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 24px; height: 24px; background: #292D3D"></span><span class="code">24</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 32px; height: 32px; background: #292D3D"></span><span class="code">32</span></span>
+<span class="col g4" style="align-items: center"><span style="width: 48px; height: 48px; background: #292D3D"></span><span class="code">48</span></span>
+</div>
+<span class="label">Corner radius</span>
+<span class="code">--r-sm 8px · --r-md 12px · --r-lg 16px · --r-xl 24px · --r-pill 999px</span>
+<span class="small muted">Buttons and inputs 12px, large buttons 14px, cards 16px, dialogs 24px, chips 999px.</span>
+<span class="label">Minimum sizes</span>
+<span class="small">Tap targets 48px tall (large buttons 56px, number keys 56px). On phones no text is smaller than 16px, chips and labels included (14px small text is laptop only). Product picture 56px (40px in tables, 88px on count screens).</span>
+<span class="label">Layout</span>
+<span class="small">Content max width 1240px, page padding 24px (14px under 640px). Cards reflow with grid auto-fill, min 340px. Breakpoint for one column: 640px container width.</span>
+</section>
+<section class="card col g16" aria-labelledby="bt">
+<h2 class="h3" id="bt">Buttons</h2>
+<button class="btn btn-primary btn-lg" type="button"><span class="ic ic-lg w-count" aria-hidden="true"></span>Primary large 56px</button>
+<button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Primary 48px · #292D3D, white text</button>
+<button class="btn btn-secondary" type="button"><span class="ic b-chev" aria-hidden="true"></span>Secondary · white, 2px #292D3D</button>
+<button class="btn btn-ghost" type="button"><span class="ic b-chev" aria-hidden="true"></span>Text button · underlined</button>
+<button class="btn btn-primary" type="button" disabled><span class="ic i-lock" aria-hidden="true"></span>Disabled · #E3E1DB, #5E6A6E text</button>
+<span class="small muted">One primary button per screen area. Labels are verbs in plain words.</span>
+</section>
+</div>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<section class="col g8" aria-labelledby="ic">
+<h2 class="h3" id="ic">Item card with picture</h2>
+<article class="item">
+<div class="item-top"><span class="pic p-rutf" role="img" aria-label="RUTF sachet"></span>
+<div class="col g4 grow"><h3 class="item-name">RUTF</h3><span class="qty">4,331 <small>sachets</small></span><span class="small muted">28 sealed cartons + 131 loose</span></div></div>
+<div class="row sp"><span class="lasts">Lasts until <span class="b">12 Dec (43 days)</span></span><span class="chip chip-ok"><span class="ic s-ok" aria-hidden="true"></span>OK</span></div>
+<span class="stamp"><span class="ic ic-sm i-history" aria-hidden="true"></span>Counted today 5:40 PM</span>
+</article>
+<span class="small muted">Picture tile 56px, fill #EFEBE2, radius 12. Card padding 16, radius 16, border 1px #E8E4DB.</span>
+<div class="row g8"><span class="pic pic-sm p-rutf" aria-hidden="true"></span><span class="pic pic-sm p-tombrown" aria-hidden="true"></span><span class="pic pic-sm p-bottle" aria-hidden="true"></span><span class="pic pic-sm p-rdt" aria-hidden="true"></span><span class="pic pic-sm p-tube" aria-hidden="true"></span><span class="pic pic-sm p-drops" aria-hidden="true"></span><span class="pic pic-sm p-lotion" aria-hidden="true"></span><span class="pic pic-sm p-tin" aria-hidden="true"></span><span class="pic pic-sm p-vial" aria-hidden="true"></span><span class="pic pic-sm p-ivbag" aria-hidden="true"></span><span class="pic pic-sm p-box" aria-hidden="true"></span></div>
+</section>
+<section class="col g8" aria-labelledby="ni">
+<h2 class="h3" id="ni">Number input with read-back</h2>
+<div class="card col g16">
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><span class="hint">150 sachets each</span><input class="num" value="12" style="max-width: 140px"></label>
+<label class="field"><span class="label">Loose sachets</span><span class="hint">Opened cartons</span><input class="num num-focus" value="37" style="max-width: 140px"></label>
+</div>
+<div class="readback"><span class="ic b-tick" aria-hidden="true"></span>12 sealed cartons + 37 loose = 1,837 sachets</div>
+<div class="prompt"><span class="grow small">You counted 80, we expected 86. Please recount or add a note.</span></div>
+</div>
+<span class="small muted">Box 64px tall, 30px bold, 2px #8A9396 border. Focus: #292D3D border + 4px #F2B33D ring. Warning: #8A4B00 border on #FFFBF2.</span>
+</section>
+<section class="col g8" aria-labelledby="tk">
+<h2 class="h3" id="tk">Step tracker</h2>
+<div class="card col g16">
+<ol class="steps">
+<li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Requested</span></li>
+<li class="step step-done"><span class="dot"><span class="ic w-tick" aria-hidden="true"></span></span><span class="step-t">Approved</span></li>
+<li class="step step-now"><span class="dot">3</span><span class="step-t">Sent</span></li>
+<li class="step"><span class="dot">4</span><span class="step-t">Received</span></li>
+</ol>
+</div>
+<span class="small muted">Dot 38px. Done: #292D3D fill with tick. Current: ring + 5px #E8E9EF halo. Next: #DCD7CC outline. Connector 4px.</span>
+<h2 class="h3" style="margin-top: 16px">Test sign-in card</h2>
+<button class="user-card user-card-on" type="button"><span class="avatar" aria-hidden="true">MS</span><span class="col g4 grow"><span class="b" style="font-size: 18px">Muhammad S.</span><span class="muted">Lead Triage Officer · Jigawan Iro OTP</span></span><span class="ic ic-lg b-tick" aria-label="Selected"></span></button>
+<span class="testpin"><span class="ic ic-sm i-lock" aria-hidden="true"></span>Test PIN for this user: 1 2 3 4</span>
+</section>
+</div>
+<section class="col g8" aria-labelledby="bn">
+<h2 class="h3" id="bn">Alert banner with action, and approval banner</h2>
+<div class="banner bn-order"><span class="chip chip-order"><span class="ic s-order" aria-hidden="true"></span>Order now</span><p class="grow" style="margin: 0">Zaune OTP · <span class="b">RUTF</span> lasts until <span class="b">7 Nov</span> (<span class="b">8 days</span>).</p><button class="btn btn-primary" type="button"><span class="ic w-truck" aria-hidden="true"></span>Send emergency shipment</button></div>
+<div class="banner bn-wait"><span class="chip chip-wait"><span class="ic s-wait" aria-hidden="true"></span>Waiting for approval</span><p class="grow" style="margin: 0"><span class="b">RUTF</span> correction <span class="b">-180 sachets (1 carton + 30 loose)</span> by <span class="b">Muhammad S.</span> needs a second person.</p><div class="row g8"><button class="btn btn-primary" type="button"><span class="ic w-tick" aria-hidden="true"></span>Approve</button><button class="btn btn-secondary" type="button"><span class="ic b-x" aria-hidden="true"></span>Do not approve</button></div></div>
+<span class="small muted">Banner radius 16, padding 14 by 16, 1.5px border in the status border color, fill in the status fill color. Every alert ends with its next action as a button.</span>
+</section>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<section class="card col g8" aria-labelledby="cn">
+<h2 class="h3" id="cn">Contrast check (WCAG AA)</h2>
+<span>Checked against background #F8F4ED, white cards and primary #292D3D. Every text pair and every status chip passes 4.5:1.</span>
+<span class="small code">White on primary 13.66 · white on hover 16.61 · primary on tint 11.28 · text on background 13.50 · secondary text on background 7.06 · faint text on background 5.09 (lowest) · link on background 6.42 · status chips 5.40 to 10.02</span>
+<span class="small">Exceptions: disabled buttons (#5E6A6E on #E3E1DB, 4.27:1; WCAG does not require contrast for disabled controls) and the Taimaka logo (logos are exempt).</span>
+</section>
+<section class="card col g8" aria-labelledby="gr">
+<h2 class="h3" id="gr">Gold rule</h2>
+<span style="display: block; height: 3px; width: 120px; background: #B5955E; border-radius: 2px" aria-hidden="true"></span>
+<span>Gold #B5955E is only for small decorative touches such as a thin rule. The header uses the navy Taimaka logo, not gold text. Never for text on a light background (2.58:1 on #F8F4ED) or a button with white text (2.83:1). Keep it away from status areas so it is never confused with amber "Running low".</span>
+</section>
+<section class="card col g8" aria-labelledby="sy">
+<h2 class="h3" id="sy">Sync indicator and "Data as of"</h2>
+<span class="sync sync-off" style="align-self: flex-start"><span class="ic ic-sm i-offline" aria-hidden="true"></span>Saved on this laptop, will send when online</span>
+<span class="sync" style="align-self: flex-start"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Sent. Last sync 5:52 PM</span>
+<span>Entries waiting: "Saved on this [device], will send when online", where [device] is the type the app detects: phone, tablet or laptop (laptop also covers desktops). Nothing waiting: "Sent. Last sync [time]". The sync indicator appears only on screens where staff enter data. View-only screens (management) show "Data as of [time]" instead, for example "Data as of 30 Oct 6:05 PM".</span>
+<span class="sync" style="align-self: flex-start"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Data as of 30 Oct 6:05 PM</span>
+</section>
+</div>
+<section class="card col g16" aria-labelledby="hd">
+<h2 class="h3" id="hd">Header layout</h2>
+<div class="hdr" style="border: 1px solid #E8E4DB; border-radius: 12px">
+<div class="brand"><img class="logo" src="/_blob/995f1343890a94906656cbfec067869b" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<div class="place-box"><span class="ic i-store" aria-hidden="true"></span><span class="col" style="gap: 0"><span class="pb-name">Jigawan Iro OTP</span><span class="pb-type">Outpatient site</span></span></div>
+<div class="grow"></div>
+<span class="sync"><span class="ic ic-sm i-saved" aria-hidden="true"></span>Sent. Last sync 5:52 PM</span>
+<div class="who"><span class="avatar" aria-hidden="true">MS</span><span class="col" style="gap: 0"><span class="b caps">Muhammad S.</span><span class="small muted caps">Lead Triage Officer</span></span></div>
+</div>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<span class="small"><span class="b">Brand unit:</span> Taimaka logo (the supplied SVG with its white background and margins trimmed, not redrawn or recolored) at 48px tall, a 1px #DCD7CC divider 32px tall, then "Stock Management" at 15px, #47555A. The three read as one unit.</span>
+<span class="small"><span class="b">Facility box:</span> #E8E9EF tint, radius 12px, store icon, facility name bold 16px, site type 14px on a second line: "Outpatient site" for OTPs, "Inpatient site" for ITPs. Supervisor and management keep their current label in the same box ("Your facilities", "Network overview").</span>
+<span class="small"><span class="b">Capitals:</span> only in the header user pill and on the sign-in user cards, the person's name and role are shown in capitals with CSS text-transform: uppercase (class .caps). The text itself stays in normal case for screen readers. Everywhere else, including stamps and history, names stay in normal case.</span>
+</div>
+</section>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<section class="card col g8" aria-labelledby="rc">
+<h2 class="h3" id="rc">RUTF in cartons and loose sachets</h2>
+<span>Any RUTF quantity of 150 sachets or more shows the sachet total first, then whole cartons and loose sachets in brackets: "23,870 sachets (159 cartons + 20 loose)". An exact number of cartons: "1,800 sachets (12 cartons)". Under 150: sachets only, "131 sachets". Display only: all figures are stored in exact sachets. The daily count read-back keeps its own wording: "28 sealed cartons + 131 loose = 4,331 sachets".</span>
+</section>
+<section class="card col g8" aria-labelledby="uo">
+<h2 class="h3" id="uo">Urgent-first order</h2>
+<span>Phone home and any list sorted by urgency: Out of stock, Order now, Check (count difference), Running low, Not counted today, Too much, OK, Usage not tracked. Items with the same status follow bin card order.</span>
+<span class="small">Laptop facility home, daily count and the logistics item table follow bin card order.</span>
+</section>
+<section class="card col g8" aria-labelledby="iq">
+<h2 class="h3" id="iq">Icon URLs: single quotes</h2>
+<span>Every icon in tm.css is a CSS background image written as url('data:image/svg+xml,...') with single quotes outside. The SVG markup inside uses double quotes, so double quotes outside end the URL early and the browser drops the whole rule.</span>
+<span class="code">.s-ok{background-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" ...')}</span>
+</section>
+</div>
+<section class="card col g16 needs" aria-labelledby="al">
+<h2 class="h3" id="al">Alerts: order, groups, pills and bold</h2>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<div class="col g4"><span class="b">Stock-out risk</span><span>1. Out of stock<br>2. Order now<br>3. Shipment overdue (in Sent for over 72 hours)</span></div>
+<div class="col g4"><span class="b">Data checks</span><span>4. Escalation<br>5. Count difference<br>6. Not counted today<br>7. Approval waiting</span></div>
+<div class="col g4"><span class="b">Planning</span><span>8. Central store below target<br>9. Will expire before use<br>10. Too much (transfer suggestions)</span></div>
+</div>
+<span>Within one type: therapeutic food first, then medication, then consumables, then non-consumables; then the most urgent (fewest days left, or the oldest alert); then bin card order. The same order applies on every screen. The logistics dashboard groups "Needs attention today" under the three headings with a count, for example "Stock-out risk (3)", and hides a heading with no alerts. The facility home and supervisor home use the same order without headings.</span>
+<h3 class="grp-h">Data checks (1)</h3>
+<div class="banner bn-low"><span class="chip chip-check"><span class="ic s-check" aria-hidden="true"></span>Count difference</span><p class="grow" style="margin: 0"><span class="b">Amoxicillin susp 60ml</span>: counted <span class="b">80</span>, expected <span class="b">86</span></p><button class="btn btn-secondary" type="button"><span class="ic b-recount" aria-hidden="true"></span>Plan a recount</button></div>
+<div class="two" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+<span class="small"><span class="b">Pills in "Needs attention"</span> use the summary pill size: 44px tall, 16px bold, 20px icon (class .needs on the section).</span>
+<span class="small"><span class="b">Bold rule:</span> in alert text, bold only the item name, the key number, the date and the person responsible, for example "sent to supervisor <span class="b">Hajara Nuhu</span> on <span class="b">30 Oct</span>".</span>
+<span class="small"><span class="b">Every button has an icon</span>, placed before the word (after it only for "Next"). White icons on filled buttons, navy icons on outline and text buttons, ink icons on disabled buttons. "Do not approve" and "Cancel" use the cross icon.</span>
+</div>
+</section>
+<section class="card col g8" aria-labelledby="nm">
+<h2 class="h3" id="nm">Item names</h2>
+<span>Item display names are the names written on the facility's bin card, with only misspellings corrected, for example "Multivite syrup (Fe/FA)", "Z AA (Toddler)", "Z Otomed", "Z Sups. Cefixime", "Z AA (Infant)" and "Zinc sulfate" (the spelling in Taimaka's ODK file and ITP item list). One item appears once: "TB Bucket" is not repeated as "Tom Brown container".</span>
+</section>
+<section class="card col g8" aria-labelledby="wr">
+<h2 class="h3" id="wr">Writing rules</h2>
+<span>Numbers always carry units and thousands separators: "4,331 sachets", "80 bottles". Dates read "Lasts until 19 Nov (20 days)". Every number shows when it was last updated: "Counted today 5:40 PM". Every entry shows who made it. Plain words, no codes or abbreviations a new staff member would not know.</span>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

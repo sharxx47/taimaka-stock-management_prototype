@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily count: cards vs compact rows</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/c9e5ce28784d19e9c6719cd6ca7ea026">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0}a{color:#1E5A9A}a:hover{color:#142A43}</style>
+</helmet>
+<div style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 2340px; box-sizing: border-box; padding: 40px; background: #E9E6DF; display: flex; flex-direction: column; gap: 32px">
+<div class="col g8"><h1 class="h1">Daily count: cards vs compact rows</h1><p class="lead" style="margin: 0">Jigawan Iro OTP, today's count, items 1 to 12 in bin card order. Same data both ways. In a test render the 12 cards need about 3,010 px of scrolling at laptop width. The compact rows need about 1,080 px at laptop width and about 1,780 px at phone width.</p></div>
+<div style="display: flex; gap: 48px; align-items: flex-start">
+<div class="col g16" style="width: 900px; flex: none">
+<div class="col g4"><h2 class="h2">Cards (current)</h2><span class="muted">Laptop width, as on the daily count today</span></div>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 900px; padding: 16px; box-sizing: border-box; border-radius: 16px">
+<div class="col g24">
+<section class="card col g16" aria-labelledby="a1">
+<div class="row sp"><div class="row"><span class="pic p-tube" role="img" aria-label="Cream tube"></span><div class="col g4"><h2 class="h3" id="a1">1. 20% Zinc oxide cream</h2><span class="faint">Expected 56 tubes</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:33 PM</span></div>
+<label class="field"><span class="label">Tubes on the shelf</span><input class="num" value="56" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a2">
+<div class="row sp"><div class="row"><span class="pic p-blister" role="img" aria-label="Tablet blister pack"></span><div class="col g4"><h2 class="h3" id="a2">2. ACT tablets AL 1</h2><span class="faint">Expected 76 sachets</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span></div>
+<label class="field"><span class="label">Sachets on the shelf</span><input class="num" value="76" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a3">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="a3">3. Amoxicillin susp 100ml</h2><span class="faint">Expected 82 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="82" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a4" style="border-color: #F0C47A">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="a4">4. Amoxicillin susp 60ml</h2><span class="faint">Expected 86 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:35 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num num-warn" value="80" inputmode="numeric"></label>
+<div class="prompt">
+<span class="chip chip-check chip-sm"><span class="ic ic-sm s-check" aria-hidden="true"></span>Check</span>
+<span class="grow">You counted 80, we expected 86. Please recount or add a note.</span>
+<div class="row g8"><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-recount" aria-hidden="true"></span>Recount</button><button class="btn btn-secondary btn-sm" type="button"><span class="ic b-note" aria-hidden="true"></span>Add a note</button></div>
+</div>
+</section>
+<section class="card col g16" aria-labelledby="a5">
+<div class="row sp"><div class="row"><span class="pic p-drops" role="img" aria-label="Dropper bottle"></span><div class="col g4"><h2 class="h3" id="a5">5. Ciprotap ear drop</h2><span class="faint">Expected 0 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="0" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a6">
+<div class="row sp"><div class="row"><span class="pic p-box" role="img" aria-label="Medicine box"></span><div class="col g4"><h2 class="h3" id="a6">6. Loratadine</h2><span class="faint">Expected 60 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="60" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a7">
+<div class="row sp"><div class="row"><span class="pic p-rdt" role="img" aria-label="Rapid test kit"></span><div class="col g4"><h2 class="h3" id="a7">7. Malaria RDT</h2><span class="faint">Expected 132 kits</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span></div>
+<label class="field"><span class="label">Kits on the shelf</span><input class="num" value="132" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a8">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="a8">8. Multivite syrup (Fe/FA)</h2><span class="faint">Expected 0 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="0" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a9">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="a9">9. Nystatin suspension</h2><span class="faint">Expected 26 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="26" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a10">
+<div class="row sp"><div class="row"><span class="pic p-ors" role="img" aria-label="ORS sachet"></span><div class="col g4"><h2 class="h3" id="a10">10. ORS</h2><span class="faint">Expected 96 pieces</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span></div>
+<label class="field"><span class="label">Pieces on the shelf</span><input class="num" value="96" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a11">
+<div class="row sp"><div class="row"><span class="pic p-bottle" role="img" aria-label="Medicine bottle"></span><div class="col g4"><h2 class="h3" id="a11">11. Paracetamol syrup</h2><span class="faint">Expected 58 bottles</span></div></div><span class="savedline"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:39 PM</span></div>
+<label class="field"><span class="label">Bottles on the shelf</span><input class="num" value="58" inputmode="numeric"></label>
+</section>
+<section class="card col g16" aria-labelledby="a12" style="border: 2px solid #292D3D">
+<div class="row sp"><div class="row"><span class="pic p-rutf" role="img" aria-label="RUTF sachet"></span><div class="col g4"><h2 class="h3" id="a12">12. RUTF</h2><span class="faint">Expected 4,331 sachets (28 cartons + 131 loose)</span></div></div><span class="row g8 small muted"><span class="spinner" style="width: 18px; height: 18px; border-width: 3px" aria-hidden="true"></span>Saving...</span></div>
+<div class="row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><span class="hint">150 sachets each</span><input class="num" value="28" inputmode="numeric" style="max-width: 160px"></label>
+<span style="font-size: 30px; font-weight: 700; padding-bottom: 12px" aria-hidden="true">+</span>
+<label class="field"><span class="label">Loose sachets</span><span class="hint">Any opened carton counts here</span><input class="num num-focus" value="131" inputmode="numeric" style="max-width: 160px"></label>
+</div>
+<div class="readback"><span class="ic b-tick" aria-hidden="true"></span>28 sealed cartons + 131 loose = 4,331 sachets</div>
+</section>
+</div>
+</div>
+</div>
+<div class="col g16" style="width: 900px; flex: none">
+<div class="col g4"><h2 class="h2">Compact rows</h2><span class="muted">Laptop width, one line per item</span></div>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 900px; padding: 16px; box-sizing: border-box; border-radius: 16px">
+<div class="crows">
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-tube" role="img" aria-label="Cream tube"></span>1. 20% Zinc oxide cream</span>
+<span class="cr-exp">Expected 56 tubes</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Tubes on the shelf</span><input class="num-c" value="56" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:33 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-blister" role="img" aria-label="Tablet blister pack"></span>2. ACT tablets AL 1</span>
+<span class="cr-exp">Expected 76 sachets</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sachets on the shelf</span><input class="num-c" value="76" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>3. Amoxicillin susp 100ml</span>
+<span class="cr-exp">Expected 82 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="82" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span>
+</div>
+<div class="crow crow-warn">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>4. Amoxicillin susp 60ml</span>
+<span class="cr-exp">Expected 86 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c num-warn" value="80" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:35 PM</span>
+<div class="prompt cr-full">
+<span class="chip chip-check chip-sm"><span class="ic ic-sm s-check" aria-hidden="true"></span>Check</span>
+<span class="grow">You counted 80, we expected 86. Please recount or add a note.</span>
+<div class="row g8"><button class="btn btn-secondary" type="button"><span class="ic b-recount" aria-hidden="true"></span>Recount</button><button class="btn btn-secondary" type="button"><span class="ic b-note" aria-hidden="true"></span>Add a note</button></div>
+</div></div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-drops" role="img" aria-label="Dropper bottle"></span>5. Ciprotap ear drop</span>
+<span class="cr-exp">Expected 0 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="0" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-box" role="img" aria-label="Medicine box"></span>6. Loratadine</span>
+<span class="cr-exp">Expected 60 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="60" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-rdt" role="img" aria-label="Rapid test kit"></span>7. Malaria RDT</span>
+<span class="cr-exp">Expected 132 kits</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Kits on the shelf</span><input class="num-c" value="132" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>8. Multivite syrup (Fe/FA)</span>
+<span class="cr-exp">Expected 0 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="0" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>9. Nystatin suspension</span>
+<span class="cr-exp">Expected 26 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="26" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-ors" role="img" aria-label="ORS sachet"></span>10. ORS</span>
+<span class="cr-exp">Expected 96 pieces</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Pieces on the shelf</span><input class="num-c" value="96" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>11. Paracetamol syrup</span>
+<span class="cr-exp">Expected 58 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="58" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:39 PM</span>
+</div>
+<div class="crow crow-now">
+<span class="cr-name"><span class="pic pic-sm p-rutf" role="img" aria-label="RUTF sachet"></span>12. RUTF</span>
+<span class="cr-exp">Expected 4,331 sachets (28 cartons + 131 loose)</span>
+<span class="cr-saved" style="color: #47555A"><span class="spinner" style="width: 18px; height: 18px; border-width: 3px" aria-hidden="true"></span>Saving...</span>
+<div class="cr-full row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><input class="num-c" value="28" inputmode="numeric"></label>
+<span style="font-size: 24px; font-weight: 700; padding-bottom: 8px" aria-hidden="true">+</span>
+<label class="field"><span class="label">Loose sachets</span><input class="num-c num-focus" value="131" inputmode="numeric"></label>
+</div>
+<div class="readback cr-full"><span class="ic b-tick" aria-hidden="true"></span>28 sealed cartons + 131 loose = 4,331 sachets</div>
+</div>
+</div>
+</div>
+</div>
+<div class="col g16" style="width: 375px; flex: none">
+<div class="col g4"><h2 class="h2">Compact rows</h2><span class="muted">Phone width (375px)</span></div>
+<div class="app" style="font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #1B2A2F; width: 375px; padding: 0; box-sizing: border-box; border-radius: 16px">
+<div class="crows">
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-tube" role="img" aria-label="Cream tube"></span>1. 20% Zinc oxide cream</span>
+<span class="cr-exp">Expected 56 tubes</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Tubes on the shelf</span><input class="num-c" value="56" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:33 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-blister" role="img" aria-label="Tablet blister pack"></span>2. ACT tablets AL 1</span>
+<span class="cr-exp">Expected 76 sachets</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sachets on the shelf</span><input class="num-c" value="76" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>3. Amoxicillin susp 100ml</span>
+<span class="cr-exp">Expected 82 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="82" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:34 PM</span>
+</div>
+<div class="crow crow-warn">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>4. Amoxicillin susp 60ml</span>
+<span class="cr-exp">Expected 86 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c num-warn" value="80" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:35 PM</span>
+<div class="prompt cr-full">
+<span class="chip chip-check" style="font-size: 16px"><span class="ic s-check" aria-hidden="true"></span>Check</span>
+<span class="grow">You counted 80, we expected 86. Please recount or add a note.</span>
+<div class="row g8"><button class="btn btn-secondary" type="button"><span class="ic b-recount" aria-hidden="true"></span>Recount</button><button class="btn btn-secondary" type="button"><span class="ic b-note" aria-hidden="true"></span>Add a note</button></div>
+</div></div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-drops" role="img" aria-label="Dropper bottle"></span>5. Ciprotap ear drop</span>
+<span class="cr-exp">Expected 0 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="0" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-box" role="img" aria-label="Medicine box"></span>6. Loratadine</span>
+<span class="cr-exp">Expected 60 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="60" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:36 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-rdt" role="img" aria-label="Rapid test kit"></span>7. Malaria RDT</span>
+<span class="cr-exp">Expected 132 kits</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Kits on the shelf</span><input class="num-c" value="132" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>8. Multivite syrup (Fe/FA)</span>
+<span class="cr-exp">Expected 0 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="0" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:37 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>9. Nystatin suspension</span>
+<span class="cr-exp">Expected 26 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="26" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-ors" role="img" aria-label="ORS sachet"></span>10. ORS</span>
+<span class="cr-exp">Expected 96 pieces</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Pieces on the shelf</span><input class="num-c" value="96" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:38 PM</span>
+</div>
+<div class="crow">
+<span class="cr-name"><span class="pic pic-sm p-bottle" role="img" aria-label="Medicine bottle"></span>11. Paracetamol syrup</span>
+<span class="cr-exp">Expected 58 bottles</span>
+<label class="cr-in"><span class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bottles on the shelf</span><input class="num-c" value="58" inputmode="numeric"></label>
+<span class="cr-saved"><span class="ic ic-sm s-ok" aria-hidden="true"></span>Saved 5:39 PM</span>
+</div>
+<div class="crow crow-now">
+<span class="cr-name"><span class="pic pic-sm p-rutf" role="img" aria-label="RUTF sachet"></span>12. RUTF</span>
+<span class="cr-exp">Expected 4,331 sachets (28 cartons + 131 loose)</span>
+<span class="cr-saved" style="color: #47555A"><span class="spinner" style="width: 18px; height: 18px; border-width: 3px" aria-hidden="true"></span>Saving...</span>
+<div class="cr-full row g16" style="align-items: flex-end">
+<label class="field"><span class="label">Sealed cartons</span><input class="num-c" value="28" inputmode="numeric"></label>
+<span style="font-size: 24px; font-weight: 700; padding-bottom: 8px" aria-hidden="true">+</span>
+<label class="field"><span class="label">Loose sachets</span><input class="num-c num-focus" value="131" inputmode="numeric"></label>
+</div>
+<div class="readback cr-full"><span class="ic b-tick" aria-hidden="true"></span>28 sealed cartons + 131 loose = 4,331 sachets</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2340,"height":3300}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

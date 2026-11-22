@@ -9,7 +9,7 @@
 | 4 | Amoxicillin susp 60ml | 80 | bottles | 54 | 23 Dec | 1.8 | OK |  | Check (expected 86) | Counted today 5:40 PM |
 | 5 | Ciprotap ear drop | 0 | bottles |  |  |  | Out of stock |  |  | Counted today 5:40 PM |
 | 6 | Loratadine | 60 | bottles | 243 | 30 Jun | 8.0 | Too much |  |  | Counted today 5:40 PM |
-| 7 | Malaria RDT | 132 | kits | 60 | 29 Dec | 2.0 | OK **MISMATCH** | Above target |  | Counted today 5:40 PM |
+| 7 | Malaria RDT | 132 | kits | 60 | 29 Dec | 2.0 | OK | Above target |  | Counted today 5:40 PM |
 | 8 | Multivite syrup (Fe/FA) | 0 | bottles |  |  |  | Out of stock |  |  | Counted today 5:40 PM |
 | 9 | Nystatin suspension | 26 | bottles | 69 | 7 Jan | 2.3 | OK | Above target |  | Counted today 5:40 PM |
 | 10 | ORS | 96 | pieces | 50 | 19 Dec | 1.7 | OK |  |  | Counted today 5:40 PM |
@@ -24,7 +24,7 @@
 | 19 | Zinc sulfate | 28.5 | sachets | 320 | 15 Sep | 10.6 | Too much |  |  | Counted today 5:40 PM |
 | 20 | Z Sups. Cefixime | 25 | units | 211 | 29 May | 6.9 | Too much |  |  | Counted today 5:40 PM |
 | 21 | Z AA (Infant) | 14 | units | 212 | 30 May | 7.0 | Too much |  |  | Counted today 5:40 PM |
-| 22 | TB Bucket |  | units |  |  |  | Not counted today |  |  | No count today |
+| 22 | TB Bucket |  | units |  |  |  | Not counted today |  |  | Last counted 29 Oct 5:20 PM |
 | 23 | BMS | 11 | units |  |  |  | Usage not tracked |  |  | Counted today 5:40 PM |
 | 24 | Benzyl benzoate | 33 | bottles |  |  |  | Usage not tracked |  |  | Counted today 5:40 PM |
 | 25 | Soap | 38 | units |  |  |  | Usage not tracked |  |  | Counted today 5:40 PM |
@@ -56,50 +56,56 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 | Central store RUTF | 410,000 + 40,000 on order = 2.4 months, below target true | 410,000 + 40,000 on order = 2.4 months, below target true | OK |
 | Other 23 OTPs RUTF combined | 230,000 | 230,000 | OK |
 | Network RUTF (stores + in transit), months incl. on order | 663,261 sachets, 3.7 months | (information) | |
-| Kurjale | 1 item with too much, counted today 5:25 PM | All items OK, counted today 5:25 PM | MISMATCH |
+| Kurjale (real use: Z AA (Toddler) about 0.1 a month) | 1 item with too much, counted today 5:25 PM | 1 item with too much, counted today 5:25 PM | OK |
 | Maikaho | Not counted today, last counted 29 Oct 5:15 PM | Not counted today, last counted 29 Oct 5:15 PM | OK |
 | Jigawan Iro escalation | supervisor, Hajara Nuhu, first flag 20 Oct, management on 19 Nov | supervisor, Hajara Nuhu, first flag 20 Oct, management on 19 Nov | OK |
 | Shipment 1042 | sent, 32 hours in Sent, 1,800 sachets (12 cartons) + 23 packs | sent, 32 hours in Sent, 1,800 sachets (12 cartons) + 23 packs | OK |
 | Shipment 1037 | sent, 100 hours, overdue true, 600 x 1000 ml + 100 vials | sent, 100 hours, overdue true, 600 x 1000 ml + 100 vials | OK |
 | OTPs with Estimated target | Barambu, Daban Fulani, Dukul, Jamari, Kalshingi, Zaune | Barambu, Daban Fulani, Dukul, Jamari, Kalshingi, Zaune | OK |
 | ITP items with Estimated target | GH Bajoga: 0, GH Deba: 0, GH Dukku: 0 | GH Bajoga: 0, GH Deba: 0, GH Dukku: 0 | OK |
-| RUTF use by month (chart) | 48,677 | 44,489 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705 | 48,677 | 44,488 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705 | MISMATCH |
+| RUTF use by month (chart) | 48,677 | 44,489 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705 | 48,677 | 44,489 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705 | OK |
 | RUTF display, exact cartons | 1,800 sachets (12 cartons) | 1,800 sachets (12 cartons) | OK |
 | RUTF display, under 150 | 131 sachets | 131 sachets | OK |
 | Count read-back | 12 sealed cartons + 37 loose = 1,837 sachets | 12 sealed cartons + 37 loose = 1,837 sachets | OK |
+| GH Deba log, F75 | 240 + 0 - 214 = 26 used (Running low) | 240 + 0 - 214 = 26 used (Running low) | OK |
+| GH Deba log, F100 | 410 + 120 - 468 = 62 used (Running low) | 410 + 120 - 468 = 62 used (Running low) | OK |
+| GH Deba log, Ceftriaxone 1g | 48 + 0 - 36 = 12 used (Running low) | 48 + 0 - 36 = 12 used (Running low) | OK |
+| GH Deba log, IV Artesunate 30mg | 6 + 0 - 0 = 6 used (Out of stock) | 6 + 0 - 0 = 6 used (Out of stock) | OK |
+| GH Deba log, Normal saline 500 ml | 75 + 0 - 68 = 7 used (Running low) | 75 + 0 - 68 = 7 used (Running low) | OK |
+| Will expire before use | GH Bajoga ITP, F100 batch F1-2501, expires 30 Nov, about 210 will not be used | GH Bajoga ITP, F100 batch F1-2501, expires 30 Nov, about 210 will not be used | OK |
+| Jigawan Iro RUTF history from the 27 Oct delivery (design: item history) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | OK |
+| Zaune emergency (planned by logistics) | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | OK |
+| Jigawan Iro emergency request | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | OK |
 | Every status appears somewhere | all | all | OK |
 
 ## Logistics: Needs attention today
 
 ### Stock-out risk (4)
-1. [Out of stock] Jigawan Iro OTP: Ciprotap ear drop, Multivite syrup (Fe/FA), Tabs ACT AL 2, Sponge  -> button: Send emergency stock (label TO CONFIRM)
-2. [Order now] Zaune OTP: RUTF (lasts until 7 Nov, 8 days)  -> button: Send emergency stock (label TO CONFIRM)
-3. [Order now] GH Dukku ITP: F75 (lasts until 7 Nov, 8 days), Ceftriaxone 1g (Tandak/Syceph) (lasts until 6 Nov, 7 days)  -> button: Send emergency stock (label TO CONFIRM)
-4. [Shipment overdue] Shipment 1037 to GH Dukku ITP: in Sent for 100 hours  -> button: Check shipment (label TO CONFIRM)
+1. [Out of stock] Jigawan Iro OTP: Ciprotap ear drop, Multivite syrup (Fe/FA), Tabs ACT AL 2, Sponge  -> button: Approve request
+2. [Out of stock] GH Deba ITP: IV Artesunate 30mg (Rekmal)  -> button: Send emergency shipment
+3. [Order now] Zaune OTP: RUTF (lasts until 7 Nov, 8 days)  -> button: Send emergency shipment
+4. [Sent over 72 hours] Shipment 1037 to GH Dukku ITP: in Sent for 100 hours  -> button: Check shipment
 
 ### Data checks (3)
-1. [Escalation] Jigawan Iro OTP: 3 count differences since 20 Oct (Amoxicillin susp 60ml), sent to supervisor Hajara Nuhu; goes to management on 19 Nov if it keeps happening  -> button: See history (label TO CONFIRM)
-2. [Not counted today] Tumfure OTP: last counted 29 Oct 4:40 PM  -> button: Contact facility (label TO CONFIRM)
-3. [Not counted today] Maikaho OTP: last counted 29 Oct 5:15 PM  -> button: Contact facility (label TO CONFIRM)
+1. [Escalation] Jigawan Iro OTP: 3 count differences since 20 Oct (Amoxicillin susp 60ml), sent to supervisor Hajara Nuhu; goes to management on 19 Nov if it keeps happening  -> button: View history
+2. [Not counted today] Maikaho OTP: last counted 29 Oct 5:15 PM; Tumfure OTP: last counted 29 Oct 5:20 PM  -> button: Send a reminder
+3. [Approval waiting] Jigawan Iro OTP: RUTF correction -180 sachets (1 carton + 30 loose) (damaged) by Muhammad S., waiting for Hajara Nuhu  -> button: Remind approver
 
 ### Planning (3)
-1. [Central store below target] Central store RUTF: 2.4 months, including 40,000 sachets (266 cartons + 100 loose) on order (target 564,615 sachets (3,764 cartons + 15 loose))  -> button: Receive at central store
-2. [Will expire before use] GH Bajoga ITP: F100, 230 x 1000 ml in 2 batch(es) (F10-2690, F10-2620), expires 21 Nov, lasts until 6 Dec  -> button: Move to another facility
-3. [Too much] Jigawan Iro OTP to Ashaka Gari OTP: 8 bottles of Z Otomed  -> button: Plan transfer (label TO CONFIRM)
+1. [Central store low] Central store RUTF: 2.4 months, including 40,000 sachets (266 cartons + 100 loose) on order (target 564,615 sachets (3,764 cartons + 15 loose))  -> button: Plan supplier order
+2. [Will expire before use] GH Bajoga ITP: F100 batch F1-2501 expires 30 Nov, 448 x 1000 ml on hand, about 210 x 1000 ml will not be used by then (lasts until 27 Dec)  -> button: Move to another facility
+3. [Too much] Jigawan Iro OTP to Ashaka Gari OTP: 8 bottles of Z Otomed  -> button: Plan transfer
 
 ## Actions (on a separate copy)
 
 - New RUTF count 4,200 after the 5:40 PM count: expected 4,331, difference -131, Check true, alerts logistics false; 25 blank rows listed
 - Correction of -150 sachets (theft or loss): needs approval true; on hand before approval 4,200
 - Same person approving: "A second person must approve this correction."
-- Approved by Hajara Nuhu: on hand 4,050, pending approvals 0
+- Approved by Hajara Nuhu: on hand 4,050, pending approvals 1
 - Shipment 1042 received: RUTF 5,850 sachets (39 cartons), in transit 0; Tom Brown 33 packs
 - ODK upload of the provided file: 27 of 27 OTPs, 19 items
 - Replaying the 5 saved events gives RUTF 5,850 (dropped 0)
 - Storage without a browser: available false, saved false (kept in memory instead); reset gives 0 events
 
-## Result: 3 mismatch(es)
+## Result: all values match
 
-- Malaria RDT logistics badge: got "Above target", expected ""
-- Kurjale: got "1 item with too much, counted today 5:25 PM", expected "All items OK, counted today 5:25 PM"
-- RUTF use by month (chart): got "48,677 | 44,489 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705", expected "48,677 | 44,488 | 72,249 | 146,179 | 140,694 | 205,652 | 211,573 | 187,420 | 188,990 | 117,705"
