@@ -131,6 +131,7 @@ ${btn({ label: 'Use another test user', icon: 'user', kind: 'secondary', act: 'o
 ${findSection(ctx, selId)}
 ${recent.length ? btn({ label: 'Back to recent users', icon: 'back', kind: 'ghost', act: 'recent-users', style: 'align-self: flex-start; padding-left: 0' }) : ''}`}
 </section>
+<div class="col g24 signin-right">
 <section class="card col g16" aria-labelledby="pinh">
 ${pinSection(ctx, sel)}
 <hr class="divider">
@@ -139,15 +140,16 @@ ${pinSection(ctx, sel)}
 <button type="button" class="link-btn small" data-act="reset-demo">Reset demo data</button>
 </div>
 </section>
+<section class="card qr-box" aria-label="Open on a phone">
+<img class="qr-img" src="Assets/qr-live-link.svg" width="130" height="130" alt="QR code of the prototype's live link">
+<p class="muted" style="margin: 0">Scan with your phone to view the prototype as a mobile web app.</p>
+</section>
+</div>
 </div>
 <div class="banner bn-low">
 ${ic('lock', 'i', 'lg')}
 <p class="grow" style="margin: 0">Prototype: test users with a test PIN, and demo data where real data was not provided. In the real app, each person signs in with their own username and PIN, and a device only remembers the people who have signed in on it.</p>
 </div>
-<section class="card qr-box" aria-label="Open on a phone">
-<img class="qr-img" src="Assets/qr-live-link.svg" width="130" height="130" alt="QR code of the prototype's live link">
-<p class="muted" style="margin: 0">Scan with your phone to view the prototype as a mobile web app.</p>
-</section>
 <div class="banner bn-info">
 ${ic('history', 'i', 'lg')}
 <p class="grow" style="margin: 0">Everything you enter is saved with your name and the time. Your name and role stay at the top of every screen.</p>
