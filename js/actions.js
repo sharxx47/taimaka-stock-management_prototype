@@ -30,8 +30,13 @@ function mustWorkAt(db, user, storeId) {
 
 // ---------- Daily count and ITP log (save as you go, then submit) ----------
 
-// drafts: { [storeId]: { kind, lines: { [itemId]: { qty, sealed, loose, ranOut, savedAt, by } } } }
-export function saveCountLine(db, drafts, user, storeId, itemId, { qty = null, sealed = null, loose = null, ranOut = false } = {}, kind = 'daily') {
+// drafts: { [key]: { kind, lines: { [itemId]: { qty, sealed, loose, ranOut, note, savedAt, by } } } }
+// key: the store id, or "<store id>|recount" for a logistics recount (so it never replaces the facility's own draft).
+export function draftKey(storeId, kind) {
+  return kind === 'recount' ? `${storeId}|recount` : storeId;
+}
+
+export function saveCountLine(db, drafts, user, storeId, itemId, { qty = null, sealed = null, loose = null, ranOut = false, note = undefined } = {}, kind = 'daily') {
   if (kind === 'recount') { if (!isLogistics(user)) fail('Only logistics can record a recount.'); } else mustWorkAt(db, user, storeId);
   const item = db.item(itemId);
   if (!db.holds(storeId, itemId)) fail(`${item.name} is not held at this store.`);
@@ -48,14 +53,18 @@ export function saveCountLine(db, drafts, user, storeId, itemId, { qty = null, s
   } else {
     value = null; // left blank
   }
-  const d = drafts[storeId] && drafts[storeId].kind === kind ? drafts[storeId] : { kind, lines: {} };
-  d.lines[itemId] = { qty: value, sealed, loose, ranOut: !!ranOut, savedAt: db.nowIso, by: user.id };
-  drafts[storeId] = d;
+  const key = draftKey(storeId, kind);
+  const d = drafts[key] && drafts[key].kind === kind ? drafts[key] : { kind, lines: {} };
+  const prev = d.lines[itemId] || {};
+  const same = prev.qty === value && !!prev.ranOut === !!ranOut;
+  d.lines[itemId] = { qty: value, sealed, loose, ranOut: !!ranOut, note: note === undefined ? prev.note || '' : note, savedAt: same && prev.savedAt ? prev.savedAt : db.nowIso, by: user.id };
+  drafts[key] = d;
   return d.lines[itemId];
 }
 
-export function submitCount(db, drafts, user, storeId, { storeCheck = false } = {}) {
-  const draft = drafts[storeId];
+export function submitCount(db, drafts, user, storeId, { storeCheck = false, kind: wanted = null } = {}) {
+  const key = draftKey(storeId, wanted || drafts[storeId]?.kind || 'daily');
+  const draft = drafts[key];
   if (!draft) fail('Nothing has been entered yet.');
   const kind = draft.kind;
   if (kind === 'recount') { if (!isLogistics(user)) fail('Only logistics can record a recount.'); } else mustWorkAt(db, user, storeId);
@@ -63,6 +72,7 @@ export function submitCount(db, drafts, user, storeId, { storeCheck = false } = 
   const sessionId = newId('count');
   const entries = [];
   const blanks = [];
+  const notes = [];
   for (const it of db.itemsForStore(storeId)) {
     const line = draft.lines[it.id];
     if (!line || line.qty === null) { blanks.push(it.id); continue; }
@@ -71,8 +81,9 @@ export function submitCount(db, drafts, user, storeId, { storeCheck = false } = 
     entries.push({
       id: newId('e'), kind: 'count', storeId, itemId: it.id, qty: line.qty, ts: line.savedAt, stamp: lineStamp,
       expected, sessionId, recount: kind === 'recount', itpLog: kind === 'itp_log',
-      sealed: line.sealed, loose: line.loose,
+      sealed: line.sealed, loose: line.loose, submittedAt: db.nowIso,
     });
+    if (line.note && line.note.trim()) notes.push({ entryId: entries.at(-1).id, text: line.note.trim() });
     // A stock-out day is recorded whenever the RUTF count is zero, and when an ITP marks "We ran out of this today".
     if ((it.isRutf && line.qty === 0) || line.ranOut) {
       entries.push({ id: newId('e'), kind: 'stockout_day', storeId, itemId: it.id, qty: 0, ts: line.savedAt, stamp: lineStamp, sessionId });
@@ -81,7 +92,8 @@ export function submitCount(db, drafts, user, storeId, { storeCheck = false } = 
   if (!entries.length) fail('Enter at least one count before submitting.');
   const session = { id: sessionId, storeId, kind, storeCheck: !!storeCheck, blanks, submittedAt: db.nowIso };
   db.apply({ type: 'count_submit', session, entries, stamp: st });
-  delete drafts[storeId];
+  for (const n of notes) db.apply({ type: 'note', targetId: n.entryId, text: n.text, stamp: st });
+  delete drafts[key];
   const results = entries.filter((e) => e.kind === 'count').map((e) => ({ entry: db.ledger.get(e.id), eval: evaluateCount(db, db.ledger.get(e.id)) }));
   return { session, blanks, results };
 }
@@ -141,14 +153,14 @@ export function addNote(db, user, targetId, text) {
 
 // ---------- Shipments ----------
 
-let shipmentNumber = 1100;
+let shipmentNumber = 1044;
 export function nextShipmentNumber(db) {
   const max = Math.max(shipmentNumber, ...[...db.shipments.values()].map((s) => s.number));
   return max + 1;
 }
 
 // Requested: lines with the target frozen at the time of the proposal.
-export function proposeShipment(db, user, { type, fromStoreId, toStoreId, monthKey = currentMonth(db), lines }) {
+export function proposeShipment(db, user, { type, fromStoreId, toStoreId, monthKey = currentMonth(db), lines, note = '' }) {
   if (!['monthly', 'emergency', 'transfer'].includes(type)) fail('Unknown shipment type.');
   if (type === 'emergency' && user.kind === 'facility') mustWorkAt(db, user, toStoreId);
   else if (!isLogistics(user)) fail('Only logistics can plan shipments.');
@@ -160,15 +172,17 @@ export function proposeShipment(db, user, { type, fromStoreId, toStoreId, monthK
       qtySent: null, batchesSent: null, qtyReceived: null, batchesReceived: null, reason: null,
     };
   });
-  const sh = { id: newId('sh'), number: nextShipmentNumber(db), type, fromStoreId, toStoreId, monthKey, lines: frozen };
+  const sh = { id: newId('sh'), number: nextShipmentNumber(db), type, fromStoreId, toStoreId, monthKey, lines: frozen, note: note.trim() || null };
   db.apply({ type: 'shipment_create', shipment: sh, stamp: stamp(user, db.stores, db.nowIso) });
   return db.shipments.get(sh.id);
 }
 
-export function requestEmergency(db, user, storeId) {
+// skipItemIds: items already in an open request. note: optional note for logistics.
+export function requestEmergency(db, user, storeId, { skipItemIds = [], note = '' } = {}) {
   const req = emergencyRequest(db, storeId);
-  if (!req.lines.length) fail('Nothing needs emergency stock right now.');
-  return proposeShipment(db, user, { type: 'emergency', fromStoreId: 'central', toStoreId: storeId, lines: req.lines });
+  const lines = req.lines.filter((l) => !skipItemIds.includes(l.itemId));
+  if (!lines.length) fail('Nothing needs emergency stock right now.');
+  return proposeShipment(db, user, { type: 'emergency', fromStoreId: 'central', toStoreId: storeId, lines, note });
 }
 
 // Approved: logistics can set quantities here (e.g. items with no usage data).
@@ -242,6 +256,18 @@ export function receiveAtCentral(db, user, { itemId, qty, batch, expiry, supplie
   db.apply({ type: 'ledger', entry, stamp: st });
 }
 
+// Supplier order for the central store (counts as stock on order).
+export function createSupplierOrder(db, user, { itemId, qty, supplier, due }) {
+  if (!isLogistics(user)) fail('Only logistics can order from suppliers.');
+  if (!(Number(qty) > 0)) fail('Enter the quantity to order.');
+  if (!supplier || !supplier.trim()) fail('Enter the supplier.');
+  if (!due) fail('Enter the date it is due.');
+  const st = stamp(user, db.stores, db.nowIso);
+  const po = { id: newId('po'), itemId, qty: Number(qty), supplier: supplier.trim(), orderedOn: db.nowIso.slice(0, 10), due };
+  db.apply({ type: 'po_create', po, stamp: st });
+  return po;
+}
+
 // ---------- ODK upload and settings (logistics) ----------
 
 export function uploadOdk(db, user, fileName, csvText) {
@@ -274,18 +300,20 @@ export function setTargetOverride(db, user, storeId, itemId, qty, reason) {
 
 // Add a facility: name, type, supervisor, linked ITP, starting stock. It shows "Estimated target"
 // until it has 3 months of data.
-export function addFacility(db, user, { label, type, supervisor, linkedItpId = null, lga = '', startingStock = {} }) {
+export function addFacility(db, user, { label, type, supervisor, linkedItpId = null, lga = '', startingStock = {}, reason = '' }) {
   if (!isLogistics(user)) fail('Only logistics can add a facility.');
   if (!label || !label.trim()) fail('Enter the facility name.');
   if (!['OTP', 'ITP'].includes(type)) fail('Pick OTP or ITP.');
+  label = label.trim().replace(/\s+(OTP|ITP)$/i, ''); // "Kafarati OTP" and "Kafarati" are the same name
   const id = siteIdFromLabel(label);
+  if (db.stores.some((s) => s.id === id)) fail(`A facility called ${label} already exists.`);
   const st = stamp(user, db.stores, db.nowIso);
   const store = {
     id, label: label.trim(), name: `${label.trim()} ${type}`, type, siteType: type === 'OTP' ? 'Outpatient site' : 'Inpatient site',
     lga, linkedItpId, linkedItpLabel: linkedItpId ? db.store(linkedItpId).label : null, supervisor: supervisor || null,
     odkSiteId: type === 'OTP' ? id : null,
   };
-  db.apply({ type: 'add_store', store, stamp: st });
+  db.apply({ type: 'add_store', store, reason: reason.trim(), stamp: st });
   const entries = Object.entries(startingStock).filter(([, q]) => q !== null && q !== '').map(([itemId, q]) => ({
     id: newId('e'), kind: 'opening', storeId: id, itemId, qty: Number(q), ts: db.nowIso, stamp: st,
   }));

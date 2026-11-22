@@ -1,0 +1,63 @@
+/* App additions on top of tm.css (the design stylesheet, copied unchanged).
+   Only layout and behavior the static artboards could not show; every color, size and radius
+   comes from the tm.css tokens or from values written in the design artboards. */
+html,body{background:var(--bg)}
+#root,#root>.app{min-height:100vh}
+.app .num-t,.app .qty,.app .kpi-v,.app td.r{font-variant-numeric:tabular-nums}
+.app{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{cursor:pointer}
+.user-card{cursor:pointer;font:inherit;color:inherit}
+.who .caps{white-space:nowrap}
+.hdr .btn-ghost{min-height:48px}
+/* PIN: one real input over the four boxes of the design */
+.pin-wrap{position:relative;align-self:flex-start}
+.pin-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:text}
+.pin-wrap:focus-within span.pin-now{border-color:var(--primary);box-shadow:0 0 0 4px var(--focus)}
+.pin-wrong span{border-color:var(--order-fg)}
+.link-btn{background:none;border:0;padding:0;color:#1E5A9A;text-decoration:underline;font:inherit;cursor:pointer}
+.link-btn:hover{color:#142A43}
+/* item card: the history link sits in the stamp line */
+.stamp a{color:inherit}
+.item .btn-sm{align-self:flex-start}
+/* phone home (PhoneHome artboard): footer actions stay on screen */
+.ph-page{display:flex;flex-direction:column;min-height:100vh}
+.ph-page .ph-body{overflow:visible;padding-bottom:14px}
+.ph-page .ph-foot{position:fixed;left:0;right:0;bottom:0;z-index:5}
+.ph-page .ph-body{padding-bottom:180px}
+.ph-page .ph-hdr{padding-top:12px}
+.ph-actions{display:flex;gap:8px}
+.ph-actions .btn{flex:1 1 0;padding:8px;white-space:normal;line-height:1.2}
+/* layout fix: button labels never wrap past two lines; on narrow phones the bottom actions stack */
+@media (max-width:359px){.ph-actions{flex-direction:column}.ph-actions .btn{flex:1 1 auto}}
+@container (max-width:640px){
+ .btn{white-space:normal;line-height:1.2}
+ .row.sp>.btn,.banner .btn{flex:1 1 auto}
+ .banner>.row{flex:1 1 100%}
+ .banner>.row .btn{flex:1 1 0}
+}
+/* layout fix: supervisor facility cards share one structure, equal heights, button pinned to the bottom */
+.fac-card{height:100%}
+.fac-card>.btn{margin-top:auto;width:100%}
+/* dialogs over the page */
+.overlay{position:fixed;inset:0;background:rgba(27,42,47,.45);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto;z-index:50}
+.overlay .dialog{margin:auto 0}
+/* switch as a real button */
+button.sw{padding:0;cursor:pointer}
+/* tables: clickable store rows */
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover td{background:var(--surface-2)}
+.tbl a.b{color:#1E5A9A}
+/* loading skeleton sizes (States artboard) */
+.skel-pic{width:56px;height:56px}
+.skel-line{height:18px;width:60%}
+.skel-line-2{height:14px;width:40%}
+/* daily count, compact rows: buttons inside the row prompt */
+.crow .prompt .btn{min-height:44px}
+.crow textarea{width:100%}
+.cr-name a{color:inherit;text-decoration:none}
+.flash{position:sticky;top:8px;z-index:20}
+textarea.input{font-family:inherit;resize:vertical}
+select.select,input.input{font-family:inherit;font-size:16px;color:var(--ink)}
+.inline-form{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.step-sub{font-size:14px;color:var(--ink-2)}

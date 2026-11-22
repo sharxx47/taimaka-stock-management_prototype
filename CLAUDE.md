@@ -17,6 +17,8 @@ A prototype for Taimaka's Operations Associate test task (Task 1). Taimaka treat
 - Before building, check that git and GitHub access work on this computer (e.g. `git --version`, `gh auth status`). If not, tell Shahzeb what to set up before going further.
 - Prefer a simple stack that deploys as static files to GitHub Pages. If a build tool is used, confirm Node is installed first.
 - American spelling. No em dashes or en dashes anywhere in the UI, code comments or docs. Use a plain hyphen with spaces for ranges.
+- No AI attribution anywhere: no "Co-Authored-By" lines or any other Claude or AI attribution in commit messages, files, code comments or docs.
+- The files in `design/` stay byte-identical to the canvas. Git must never change their line endings (`design/** -text` in `.gitattributes`).
 - No backend. A static web app. Data lives in the browser (localStorage), seeded from the CSV copies, with a "Reset demo data" button. Wrap storage access in try/catch.
 - One responsive web app: laptop-first, and every screen must reflow to a single column on a phone (check at 375px, 768px, 1280px).
 

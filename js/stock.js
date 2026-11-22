@@ -262,6 +262,18 @@ export function countCorrections(db, entry) {
   return d;
 }
 
+// A count not saved yet, judged with the same rules (daily count screen, as you type).
+export function previewDifference(db, storeId, itemId, qty) {
+  const store = db.store(storeId);
+  const item = db.item(itemId);
+  const expected = onHand(db, storeId, itemId);
+  if (store.type === 'ITP' || expected === null || qty === null) return { applicable: false, expected };
+  const diff = Math.round((qty - expected) * 1e6) / 1e6;
+  const daily = (amc(db, storeId, itemId) || 0) / DAYS_PER_MONTH;
+  const flagged = item.isRutf ? diff !== 0 : Math.abs(diff) > Math.max(OTHER_FLAG_PERCENT * expected, OTHER_FLAG_DAYS * daily);
+  return { applicable: true, expected, diff, flagged };
+}
+
 // ---------- Escalation ----------
 
 // First to the facility; 3 flags in 14 days goes to the named supervisor; still happening

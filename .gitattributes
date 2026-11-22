@@ -1,0 +1,4 @@
+*.svg -text
+*.woff2 binary
+*.jpeg binary
+*.png binary

@@ -173,6 +173,11 @@ const HANDLERS = {
   add_store(db, ev) {
     if (db.stores.some((s) => s.id === ev.store.id)) throw new Error(`A facility called ${ev.store.label} already exists`);
     db.stores.push({ ...ev.store, addedInDemo: true });
+    // A test user for the new facility, and the facility on its supervisor's list.
+    const role = ev.store.type === 'ITP' ? 'Pharmacy Technician' : 'Lead Triage Officer';
+    if (!db.users.some((u) => u.storeId === ev.store.id)) db.users.push({ id: `${ev.store.type === 'ITP' ? 'pharm' : 'lto'}_${ev.store.id}`, name: null, role, kind: 'facility', storeId: ev.store.id });
+    const sup = db.users.find((u) => u.kind === 'supervisor' && u.name === ev.store.supervisor);
+    if (sup && !sup.storeIds.includes(ev.store.id)) sup.storeIds.push(ev.store.id);
     db.settings.facilityLog.push({ storeId: ev.store.id, text: `Added ${ev.store.name}${ev.store.supervisor ? `, supervisor ${ev.store.supervisor}` : ''}`, reason: ev.reason || '', stamp: ev.stamp });
   },
   odk_upload(db, ev) {
