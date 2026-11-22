@@ -4,7 +4,7 @@ Working notes for the Taimaka stock management prototype. If a session stops par
 
 ## Summary (read this first)
 
-**Build steps 1 to 8 are done and committed locally.** Step 9 (GitHub repository, Pages, final walkthrough on the live link) waits for you. Nothing was pushed or deployed.
+**Build steps 1 to 8 are done and committed locally, with your answers of 22 Nov applied (round 2, decisions 43 to 52).** Step 9 (GitHub repository, Pages, final walkthrough on the live link) waits for you. Nothing was pushed or deployed. No commit message carries an attribution line (the history was rewritten, decision 52).
 
 ### What works
 
@@ -50,17 +50,21 @@ then open http://localhost:8080 (port 8080; pass another number as an argument i
 | GH Deba log (design) | F75 240 + 0 - 214 = 26 used; F100 410 + 120 - 468 = 62; Ceftriaxone 48 - 36 = 12; IV Artesunate 6 - 0 = 6 (Out of stock) |
 | Will expire before use (design) | GH Bajoga F100 batch F1-2501, expires 30 Nov, about 210 x 1000 ml unused |
 | Jigawan Iro RUTF history (design) | +600 (1029) = 4,660; -98 = 4,562; count 4,526 corrected to 4,562; -100 = 4,462; recount 4,432; -101 = 4,331; count 4,331; -180 waiting |
-| Today's requests (design) | Zaune 1043, 23,870 sachets, target locked 5:10 PM; Jigawan Iro 1044, 4 items, sent 5:55 PM |
-| Management (design) | 6 stock-out days (4 in Sept), 94% on time (846 of 900), accuracy 96.2%, 3 unexplained, 14% emergency (5 of 36), RUTF 3.7 months |
+| Today's requests | Zaune 1043, 23,870 sachets, target locked 5:10 PM (design). Jigawan Iro starts with no request; its Out of stock alert shows "Send emergency shipment". When Muhammad S. sends it: shipment 1044, 4 items, and logistics sees "Approve request" (round 2) |
+| Management | 6 stock-out days (4 in Sept), 94% on time (846 of 900), accuracy 96.2%, 3 unexplained, RUTF 3.7 months. Emergency orders 11% (4 of 35) at the start, 14% (5 of 36, the design's figure) once Muhammad S. sends his request (round 2) |
 | Every status appears somewhere | yes |
 
-Logistics "Needs attention today": Stock-out risk (4): Jigawan Iro out of stock (Approve request), GH Deba IV Artesunate out of stock, Zaune RUTF Order now (Send emergency shipment), shipment 1037 over 72 hours (Check shipment). Data checks (3): Jigawan Iro escalation (View history), Maikaho and Tumfure not counted (Send a reminder), RUTF correction waiting for Hajara Nuhu (Remind approver). Planning (3): central store RUTF low (Plan supplier order), GH Bajoga F100 will expire before use (Move to another facility), Jigawan Iro Otomed to Ashaka Gari (Plan transfer).
+Values the check changed in round 2, and why: the "Jigawan Iro emergency request" row now checks that no request is open at the start and that the alert button is "Send emergency shipment"; the management row now expects emergency orders 11% (4 of 35) at the start, because the request is no longer seeded; a new step in the actions part sends the request on a copy and checks shipment number 1044, the "Approve request" button and 14% (5 of 36). In the logistics list below, only the first button changed.
+
+Logistics "Needs attention today" at the start: Stock-out risk (4): Jigawan Iro out of stock (Send emergency shipment; "Approve request" once Muhammad S. has sent his request), GH Deba IV Artesunate out of stock, Zaune RUTF Order now (Send emergency shipment), shipment 1037 over 72 hours (Check shipment). Data checks (3): Jigawan Iro escalation (View history), Maikaho and Tumfure not counted (Send a reminder), RUTF correction waiting for Hajara Nuhu (Remind approver). Planning (3): central store RUTF low (Plan supplier order), GH Bajoga F100 will expire before use (Move to another facility), Jigawan Iro Otomed to Ashaka Gari (Plan transfer).
 
 Browser checks (built-in browser, local server): every route for every role renders with no error; no sideways overflow at 375px or 768px; no text under 16px on phones; all 728 icons and pictures on the checked screens render; the bundled font loads and nothing is fetched from Google; pill and button text measured centered (0.00px difference at every size after the fix in decision 23); the Jigawan Iro walkthrough (count, flags, submit, receive 1042 with a damaged carton, emergency request, approval by Hajara Nuhu, correction, logistics approve and send, transfer, central receipt, ODK upload, reminders) works, and survives a reload.
 
+Round 2 walkthrough (22 Nov), from a fresh "Reset demo data" through the sign-in screen, in the README's order: Muhammad S. counted 25 of 26 lines (TB Bucket left blank, no differences) and submitted; sent emergency request 1044 (4 items, with a note); received shipment 1042 (1,800 sachets and 23 packs, as sent). Hajara Nuhu saw the Amoxicillin escalation ("3 differences in 11 days") and approved the -180 correction. Nasiru Bello saw "Approve request" on Jigawan Iro, set the amounts, approved and sent 1044; the alert then read "Emergency shipment 1044 is on the way" with "Check shipment". Muhammad S. received 1044. After a reload: still signed in, 7 entries, 0 dropped, every quantity and shipment state the same. The "Needs attention today" list before and after the request followed the CLAUDE.md order (Out of stock: Jigawan Iro, then GH Deba; Order now; Shipment overdue; Escalation; Not counted today; Approval waiting, until Hajara approved it; Central store low; Will expire before use; Too much).
+
 ### Decisions
 
-All listed below under "Decisions I made while you were away" (1 to 18 from the seed step, 19 to 42 from the screens). The ones you may want to look at first: 3 (non-RUTF differences reach logistics only through escalation), 8 (Otomed transfer is 8 bottles, not 20), 9 and 10 (GH Deba), 12 (Jigawan Iro's emergency request is already sent), 16 (management figures), 19 (daily count is compact rows on phones too), 22 (only the latest count can be corrected) and 23 (pill centering).
+All listed below under "Decisions I made while you were away" (1 to 18 from the seed step, 19 to 42 from the screens, 43 to 52 from round 2). The ones you may want to look at first: 3 (non-RUTF differences reach logistics only through escalation), 8 (Otomed transfer is 8 bottles, not 20), 9 and 10 (GH Deba), 12 and 43 (Jigawan Iro's emergency request now starts unsent), 16 (management figures), 19 (daily count is compact rows on phones too), 22 (only the latest count can be corrected) and 23 (pill centering).
 
 ### Cut
 
@@ -72,7 +76,7 @@ See "Open questions for Shahzeb" at the end.
 
 ## Where things stand
 
-- Build steps 1 to 8: done (commits 48d019f, 22c2a37, 4d4a6f5, 175ed83, 8ad2970 and the final notes commit).
+- Build steps 1 to 8: done, plus round 2 (your answers of 22 Nov). See `git log` for the commits; their hashes changed when the attribution lines were removed (decision 52).
 - Next: step 9 (create the public repository, turn on GitHub Pages, test the Jigawan Iro walkthrough on the live link). Nothing in the app needs a build step: publish the folder as it is.
 
 ## Decisions I made while you were away
@@ -90,7 +94,7 @@ See "Open questions for Shahzeb" at the end.
 9. **GH Deba ITP shows IV Artesunate 30mg as Out of stock in "Needs attention".** The design's ITP log shows it running out today ("We ran out of this today"), so the seed records that, and the logistics list then has 4 stock-out risk alerts instead of the design's 3.
 10. **GH Deba daily use.** The design's GH Deba log ("used since yesterday": F75 26, F100 62, Ceftriaxone 12) is seeded exactly. If those were average days, F75, F100 and Ceftriaxone would last under 10 days (Order now). The seed treats 30 Oct as a busy day (average use about 10, 22 and 2.5 a day), so they show Running low and go in the next monthly shipment.
 11. **GH Dukku's Order now from step 1 is gone.** F75 and Ceftriaxone at GH Dukku now have about 15 days of stock (Running low), with shipment 1037 (600 and 100) on the way, as the design's 3 stock-out alerts imply. Shipment 1037 is an emergency shipment (GH Dukku's October monthly was 1033).
-12. **Jigawan Iro emergency request is already sent (5:55 PM by Muhammad S.)**, as the logistics design shows ("Approve request"). On Muhammad's screens the request shows as sent, with its step tracker. The empty request form can still be seen at GH Deba ITP (IV Artesunate is out of stock there).
+12. **Jigawan Iro emergency request.** First seeded as already sent (5:55 PM by Muhammad S.), as the logistics design shows. Replaced in round 2 by decision 43: it starts unsent.
 13. **Zaune's emergency shipment was planned by logistics (Nasiru Bello) at 5:10 PM** ("target locked 30 Oct 5:10 PM" in the design), so the alert button is "Send emergency shipment" and the suggested shipment waits for approval.
 14. **Daily use lines come from the ODK upload.** The design's item history shows "Daily use: -101 sachets, from ODK usage upload by Nasiru Bello, 30 Oct 9:10 AM". The seed records each day's use at 9:10 AM, stamped Nasiru Bello. The ODK file only has monthly totals; the daily split is sample data.
 15. **Jigawan Iro counts.** Full counts on 20, 26, 28, 29 and 30 Oct (no count on 27 Oct, so the history goes from the delivery straight to 28 Oct, as in the design). TB Bucket was counted on 29 Oct 5:20 PM (design: "Last counted 29 Oct 5:20 PM") and left blank today. The 29 Oct 5:20 PM count adds one line to the RUTF history that the design does not show.
@@ -122,6 +126,19 @@ See "Open questions for Shahzeb" at the end.
 41. **New facilities** get a test user on the sign-in screen and appear on their supervisor's home.
 42. **Lean season shading** on the chart is June to September, as the design's legend says, not worked out from the multipliers.
 
+Round 2 (your answers of 22 Nov):
+
+43. **Jigawan Iro's emergency request starts unsent** (your answer 1.1; CLAUDE.md "Decisions after the build"). Before Muhammad S. sends it, logistics' Out of stock alert for Jigawan Iro keeps its place in the agreed order (first in Stock-out risk: the same stock type as GH Deba's, both at 0 days, then bin card order) and its button is **"Send emergency shipment"**, the same as every other Out of stock or Order now alert with no request yet. Reason: every alert shows its next action as a button, and with no request the next action is logistics' own; the button plans an emergency shipment that tops up to target, and for items with no usage data logistics enters the amount (both CLAUDE.md rules). Once Muhammad S. sends his request, the button becomes **"Approve request"**, as in the design. If logistics plans the shipment first, Muhammad's emergency screen shows that shipment instead of the form, so the same items are never requested twice.
+44. **Shipment numbers.** Seeded shipments go up to 1043 (Zaune), so Muhammad's request becomes 1044, the number it had when it was seeded.
+45. **The emergency orders figure moves with the request.** With no seeded request, management shows 11% (4 of 35) at the start and the design's 14% (5 of 36) once Muhammad sends it. I kept the October baseline as it was rather than adjusting it, because the figure is meant to move with today's entries (decision 16).
+46. **Answers kept as built** (your answers 1.2 to 1.7): Otomed transfer of 8 bottles (decision 8), GH Deba's IV Artesunate stock-out and 4 stock-out alerts (decision 9), recounts left out of escalation (decision 4), the October management figures with the on-screen line (decision 16), no escalation on the facility home, the PDF file name left as it is. Decisions 20, 21 and 28 confirmed.
+47. **`.claude/` is out of the repository.** Added to `.gitignore`; `.claude/launch.json` (the local server setting for the preview) was tracked, so it is untracked with `git rm --cached` and kept on disk.
+48. **Line endings in `design/`.** Added `design/** -text` to `.gitattributes` (existing lines kept). `git add --renormalize design/` changed nothing, because the stored copies were already the same bytes as the files on disk.
+49. **Approving a correction after a later count.** In the walkthrough, Muhammad counted again at 6:05 PM, after the -180 correction of 5:48 PM. When Hajara approves it, the stock stays as counted (decision 24), so the message now says why ("the facility counted again after the correction was entered, and that count already shows the stock") instead of only giving the number.
+50. **Transfer alert wording.** "running low, 20 days left, until 19 Nov" instead of the doubled brackets "(running low, lasts until 19 Nov (20 days))".
+51. **README changes** (your step 4): the opening now says the app "runs entirely in the browser, with no server"; the local server line now says "Any local web server that serves this folder works" (the word you asked me to drop is gone from the README and these notes, apart from the Google font server's host name in decision 2); the demo clock sentence now says the clock moves on with real time until the end of 30 October; walkthrough step 1 describes the home in its real order (summary, three actions, "Needs attention", items) and has Muhammad submit the count, send the emergency request and receive 1042; step 2 says "3 differences in 11 days", from 20 to 30 October, and "approve it or not"; step 3 has Nasiru approve the request, set the amounts and send it; a new step 4 has Muhammad receive it (management and GH Deba moved to steps 5 and 6); "How it works" now mentions `kpis.js`, `tools/serve.mjs`, and what `css/app.css` holds (phone text sizes and the measured pill centering). Every other sentence was checked against the app and still matches.
+52. **No AI attribution.** The coding assistant's commit and pull request byline is turned off in `.claude/settings.local.json` (not in the repository). Every local commit message was rewritten without the "Co-Authored-By" lines, using `git filter-branch --msg-filter` (no editor); authors, dates and file contents are unchanged (the latest commit's tree hash is the same before and after). The backup refs under `refs/original` were deleted and the reflog entries for the old commits were expired, so the old messages cannot be pushed later.
+
 ## Demo values (not from the task files)
 
 All in `js/seed.js`. From the design files:
@@ -139,7 +156,7 @@ Mine (the design does not give them):
 - Shipment 1029 request 26 Oct 8:30 AM by Muhammad S. and approval 9:00 AM; type emergency.
 - Shipment 1037: requested 24 Oct 3:40 PM by the GH Dukku pharmacy technician, approved 25 Oct 9:00 AM by Nasiru Bello, sent by Abubakar Waziri; batches F7-2609 (28 Feb 2027) and CE-2610 (30 Sep 2027).
 - Shipment 1039, emergency, GH Deba ITP, F100 120 x 1000 ml (the design's "received today 120"): requested 28 Oct 3:00 PM, approved 29 Oct 9:00 AM, sent 29 Oct 1:00 PM, received 30 Oct 10:30 AM, batch F1-2610 (30 Apr 2027).
-- Shipment numbers 1043 (Zaune emergency) and 1044 (Jigawan Iro request).
+- Shipment number 1043 (Zaune emergency); Muhammad's request, once sent, is 1044.
 - The note on today's Amoxicillin difference: "Counted twice: 80 bottles on the shelf."
 - TB Bucket at Jigawan Iro on 29 Oct: 6 units.
 - Supplier order of 40,000 sachets: "Supplier order (demo)", ordered 15 Oct, due 20 Nov.
@@ -159,10 +176,14 @@ Mine (the design does not give them):
 
 ## Open questions for Shahzeb
 
-1. **Jigawan Iro's emergency request is already sent at 5:55 PM** (as the logistics design shows). So a tester signed in as Muhammad S. sees the request status, not the empty form (the form shows at GH Deba ITP). Would you rather leave it unsent, so the walkthrough starts with Muhammad sending it? It is one block in `js/seed.js` ("Jigawan Iro: emergency request").
-2. **Otomed transfer**: keep 8 bottles (the top-up rule) or force the design's 20?
-3. **GH Deba's IV Artesunate stock-out** (from the ITP log design) makes 4 stock-out alerts instead of the design's 3. Keep it?
-4. **Logistics recounts and escalation**: I left recounts out of the facility's escalation count (decision 4). Agree?
-5. **Management figures for 1 to 29 October** are fixed demo values plus live figures for today (decision 16). A line under the indicators says so. Enough?
-6. **Facility staff do not see their own escalation** on the facility home (the design does not show it; they see each Check). Should they?
-7. The task PDF's file name quoted in CLAUDE.md contains an en dash. It is the real file name, so I left it.
+All answered on 22 Nov:
+
+1. Jigawan Iro's emergency request already sent? **Answer: leave it unsent**, so the walkthrough starts with Muhammad S. sending it. Done (decisions 43 to 45).
+2. Otomed transfer of 8 or 20 bottles? **Answer: keep 8**; the top-up rule wins.
+3. GH Deba's IV Artesunate stock-out (4 stock-out alerts)? **Answer: keep it**; 4 is correct.
+4. Logistics recounts and escalation? **Answer: agreed**, recounts do not count.
+5. Management figures for 1 to 29 October? **Answer: fixed demo values plus today's live part, with the line on screen, is enough.**
+6. Facility staff and their own escalation? **Answer: keep it as built** (they see each Check).
+7. The en dash in the PDF file name in CLAUDE.md? **Answer: leave it.**
+
+No new open questions.

@@ -75,15 +75,15 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 | Will expire before use | GH Bajoga ITP, F100 batch F1-2501, expires 30 Nov, about 210 will not be used | GH Bajoga ITP, F100 batch F1-2501, expires 30 Nov, about 210 will not be used | OK |
 | Jigawan Iro RUTF history from the 27 Oct delivery (design: item history) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | OK |
 | Zaune emergency (planned by logistics) | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | OK |
-| Jigawan Iro emergency request | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | OK |
-| Management indicators (design: Management overview) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36) | OK |
+| Jigawan Iro emergency request (starts unsent) | open requests 0, Out of stock alert button: Send emergency shipment | open requests 0, Out of stock alert button: Send emergency shipment | OK |
+| Management indicators (design: Management overview) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35) | OK |
 | Network RUTF on hand (design: 661,461 + 40,000 on order) | 661,461 held + 1,800 in transit + 40,000 on order | 661,461 held + 1,800 in transit + 40,000 on order | OK |
 | Every status appears somewhere | all | all | OK |
 
 ## Logistics: Needs attention today
 
 ### Stock-out risk (4)
-1. [Out of stock] Jigawan Iro OTP: Ciprotap ear drop, Multivite syrup (Fe/FA), Tabs ACT AL 2, Sponge  -> button: Approve request
+1. [Out of stock] Jigawan Iro OTP: Ciprotap ear drop, Multivite syrup (Fe/FA), Tabs ACT AL 2, Sponge  -> button: Send emergency shipment
 2. [Out of stock] GH Deba ITP: IV Artesunate 30mg (Rekmal)  -> button: Send emergency shipment
 3. [Order now] Zaune OTP: RUTF (lasts until 7 Nov, 8 days)  -> button: Send emergency shipment
 4. [Sent over 72 hours] Shipment 1037 to GH Dukku ITP: in Sent for 100 hours  -> button: Check shipment
@@ -104,9 +104,10 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 - Correction of -150 sachets (theft or loss): needs approval true; on hand before approval 4,200
 - Same person approving: "A second person must approve this correction."
 - Approved by Hajara Nuhu: on hand 4,050, pending approvals 1
+- Muhammad S. sends the emergency request: shipment 1044, 4 items (amount set by logistics, amount set by logistics, amount set by logistics, amount set by logistics); logistics button "Approve request"; emergency orders 5 of 36
 - Shipment 1042 received: RUTF 5,850 sachets (39 cartons), in transit 0; Tom Brown 33 packs
 - ODK upload of the provided file: 27 of 27 OTPs, 19 items
-- Replaying the 5 saved events gives RUTF 5,850 (dropped 0)
+- Replaying the 6 saved events gives RUTF 5,850 (dropped 0)
 - Storage without a browser: available false, saved false (kept in memory instead); reset gives 0 events
 
 ## Result: all values match

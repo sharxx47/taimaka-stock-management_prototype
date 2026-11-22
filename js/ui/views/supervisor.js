@@ -125,9 +125,15 @@ export const views = { supervisor: { render, roles: ['supervisor'] } };
 export const actions = {
   approve: (ctx, el) => {
     const e = ctx.db.ledger.get(el.dataset.id);
+    const it = ctx.db.item(e.itemId);
+    const before = stockView(ctx.db, e.storeId, e.itemId).onHand;
     decideCorrection(ctx.db, ctx.user, e.id, 'approved');
     ctx.changed();
-    ctx.flash(`Correction approved. ${ctx.db.item(e.itemId).name} at ${ctx.db.store(e.storeId).name} is now ${qtyText(ctx.db.item(e.itemId), stockView(ctx.db, e.storeId, e.itemId).onHand)}.`);
+    const after = stockView(ctx.db, e.storeId, e.itemId).onHand;
+    // The correction counts from when it was entered; a count made after it already sets the stock.
+    ctx.flash(after === before
+      ? `Correction approved. ${it.name} at ${ctx.db.store(e.storeId).name} stays at ${qtyText(it, after)}: the facility counted again after the correction was entered, and that count already shows the stock.`
+      : `Correction approved. ${it.name} at ${ctx.db.store(e.storeId).name} is now ${qtyText(it, after)}.`);
     ctx.rerender();
   },
   reject: (ctx, el) => {

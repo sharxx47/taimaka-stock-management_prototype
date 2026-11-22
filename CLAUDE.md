@@ -192,12 +192,25 @@ Same numbering as the Claude Design brief:
 5. ITP pharmacy daily log ("We ran out of this today" toggle; the app calculates use). ITP home is the facility home with "Enter today's log".
 6. Supervisor home (their facilities, corrections waiting for approval, escalations).
 7. Logistics dashboard ("Needs attention today" first, including the central store below target; table of all 31 stores with an item selector, a stock-type filter and a click-through to every item at a store; suggested shipments; shipments in transit; record a recount; "Receive at central store"; "Upload ODK usage (CSV)").
-8. Management overview (stock-out days, counts submitted on time, count accuracy vs a 95% goal, unexplained adjustments, emergency orders share, network RUTF with months of stock, RUTF use by month chart).
+8. Management overview (stock-out days, counts submitted on time, count accuracy vs a 95% goal, unexplained differences, emergency orders share, network RUTF with months of stock, RUTF use by month chart).
 9. Item history (audit trail) with the "Correct this entry" dialog.
 10. Settings (facilities and items lists with stock type, "Add a facility", lean-season multiplier, overrides with reason).
 11. and 12. Phone layouts for facility home and daily count.
 
 The CSV upload must parse the provided ODK file format and update usage. The app must also load the bundled copy on first run.
+
+## Decisions after the build (22 Nov)
+
+- Transfers between facilities top the receiving facility up to its target, like every other shipment. Never a fixed amount or an amount copied from the design.
+- A stock-out recorded in the ITP daily log ("We ran out of this today") raises an Out of stock alert like any other, even where the design shows fewer alerts.
+- Only a facility's own counts count towards its escalation. A logistics recount is the follow-up to a difference, not a new flag.
+- Facility staff do not see their own escalation; they see each Check. (A possible addition, listed in the note.)
+- Management indicators: values before today are fixed demo values, today's part is worked out live from the data, and a line on screen says so.
+- "Unexplained differences" (management indicator): count differences in the month with no note and no correction.
+- The ITP daily log uses compact rows, and ITP items keep the names and order of the ITP item list.
+- Demo seed: Jigawan Iro's emergency request starts unsent, so the walkthrough begins with the Lead Triage Officer sending it.
+- The `.claude/` folder stays out of the repository.
+- Docs never call the app "static". Say it runs entirely in the browser, with no server.
 
 ## Build order (if time runs short, stop in this order and record what was cut)
 

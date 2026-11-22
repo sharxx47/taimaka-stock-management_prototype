@@ -103,7 +103,7 @@ export function alertBanner(ctx, a) {
     }
     case 'TRANSFER': {
       const to = stockView(db, a.toStoreId, a.itemId);
-      text = html`${sname(db, a.storeId)} has too much ${b(it.name)}. Move ${b(qtyText(it, a.qty))} to ${sname(db, a.toStoreId)} (${to.status.label.toLowerCase()}, lasts until ${lastsPlain(to)}).`;
+      text = html`${sname(db, a.storeId)} has too much ${b(it.name)}. Move ${b(qtyText(it, a.qty))} to ${sname(db, a.toStoreId)} (${to.status.label.toLowerCase()}${to.lastsUntil && !to.lastsMoreThanYear ? `, ${to.days} days left, until ${formatShortDate(to.lastsUntil)}` : ''}).`;
       button = btn({ label: act.label, icon: act.icon, act: 'plan-transfer', data: { from: a.storeId, to: a.toStoreId, item: a.itemId, qty: a.qty } });
       break;
     }

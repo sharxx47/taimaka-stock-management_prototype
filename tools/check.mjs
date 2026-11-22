@@ -1,6 +1,6 @@
 // Logic check: prints the Jigawan Iro results for all 26 bin card items, the facility summary,
 // Zaune and other agreed values, and the logistics "Needs attention" list, and compares each value
-// with the agreed check values (CLAUDE.md "Data facts" and Claude Design feedback 2, item 12).
+// with the agreed check values (CLAUDE.md "Data facts" and the second round of design feedback, item 12).
 // Run: node tools/check.mjs
 
 import fs from 'node:fs';
@@ -14,7 +14,7 @@ import { needsAttention } from '../js/alerts.js';
 import { monthKpis } from '../js/kpis.js';
 import { formatQty, formatRutf, formatNumber, rutfReadBack } from '../js/format.js';
 import { formatShortDate, formatTime } from '../js/time.js';
-import { saveCountLine, submitCount, correctEntry, decideCorrection, receiveShipment, uploadOdk, pendingApprovals } from '../js/actions.js';
+import { saveCountLine, submitCount, correctEntry, decideCorrection, receiveShipment, uploadOdk, pendingApprovals, requestEmergency } from '../js/actions.js';
 import { dateOf } from '../js/time.js'; // eslint-disable-line
 
 const src = Object.fromEntries(Object.entries(DATA_FILES).map(([k, p]) => [k, fs.readFileSync(p, 'utf8')]));
@@ -176,12 +176,12 @@ row('Jigawan Iro RUTF history from the 27 Oct delivery (design: item history)', 
   'received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting)');
 const z1043 = db.shipments.get('sh-1043');
 row('Zaune emergency (planned by logistics)', `${z1043.number}, ${z1043.state}, ${formatRutf(z1043.lines[0].qtyProposed)}, target locked ${formatTime(z1043.steps.requested.at)} by ${z1043.steps.requested.byName}`, '1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello');
-const j1044 = db.shipments.get('sh-1044');
-row('Jigawan Iro emergency request', `${j1044.number}, ${j1044.state}, ${j1044.lines.length} items, sent ${formatTime(j1044.steps.requested.at)} by ${j1044.steps.requested.byName}`, '1044, requested, 4 items, sent 5:55 PM by Muhammad S.');
+const jiOutBefore = needsAttention(db).flatMap((g) => g.alerts).find((a) => a.type === 'OUT' && a.storeId === 'jigawan_iro');
+row('Jigawan Iro emergency request (starts unsent)', `open requests ${[...db.shipments.values()].filter((sh) => sh.toStoreId === 'jigawan_iro' && sh.type === 'emergency' && sh.state === 'requested').length}, Out of stock alert button: ${jiOutBefore.action.label}`, 'open requests 0, Out of stock alert button: Send emergency shipment');
 
 const kp = monthKpis(db);
 row('Management indicators (design: Management overview)', `stock-out days ${kp.stockOutDays} (${kp.stockOutDaysLastMonth} in Sept), on time ${Math.round(kp.onTimeShare * 100)}% (${kp.countsOnTime} of ${kp.facilityDays}), accuracy ${(kp.accuracy * 100).toFixed(1)}%, unexplained ${kp.unexplained}, emergency ${Math.round(kp.emergencyShare * 100)}% (${kp.emergency} of ${kp.orders})`,
-  'stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36)');
+  'stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35)'); // 14% (5 of 36) once Muhammad S. sends his request (see Actions)
 row('Network RUTF on hand (design: 661,461 + 40,000 on order)', `${formatNumber(kp.rutf.held)} held + ${formatNumber(kp.rutf.inTransit)} in transit + ${formatNumber(kp.rutf.onOrder)} on order`, '661,461 held + 1,800 in transit + 40,000 on order');
 
 // Statuses that appear somewhere in the network.
@@ -239,6 +239,13 @@ console.log(`- Same person approving: "${blocked}"`);
 decideCorrection(t, t.user('sup_hajara_nuhu'), adj.id, 'approved');
 console.log(`- Approved by Hajara Nuhu: on hand ${formatNumber(stockView(t, 'jigawan_iro', 'rutf').onHand)}, pending approvals ${pendingApprovals(t).length}`);
 expect('Correction applies after approval', stockView(t, 'jigawan_iro', 'rutf').onHand, 4050);
+const req = requestEmergency(t, muhammad, 'jigawan_iro');
+const jiOutAfter = needsAttention(t).flatMap((g) => g.alerts).find((a) => a.type === 'OUT' && a.storeId === 'jigawan_iro');
+const kpAfter = monthKpis(t);
+console.log(`- Muhammad S. sends the emergency request: shipment ${req.number}, ${req.lines.length} items (${req.lines.map((l) => (l.qtyProposed === null ? 'amount set by logistics' : l.qtyProposed)).join(', ')}); logistics button "${jiOutAfter.action.label}"; emergency orders ${kpAfter.emergency} of ${kpAfter.orders}`);
+expect('Request number', req.number, 1044);
+expect('Out of stock alert after the request', jiOutAfter.action.label, 'Approve request');
+expect('Emergency orders after the request', `${Math.round(kpAfter.emergencyShare * 100)}% (${kpAfter.emergency} of ${kpAfter.orders})`, '14% (5 of 36)');
 const sh = [...t.shipments.values()].find((s) => s.number === 1042);
 receiveShipment(t, muhammad, sh.id, {
   rutf: { batches: [{ batch: 'RU-2604', expiry: '2027-03-31', qty: 1200 }, { batch: 'RU-TEST', expiry: '2027-05-31', qty: 600 }] },

@@ -153,7 +153,7 @@ export function addNote(db, user, targetId, text) {
 
 // ---------- Shipments ----------
 
-let shipmentNumber = 1044;
+let shipmentNumber = 1043; // the next new shipment is 1044 (seeded shipments go up to 1043)
 export function nextShipmentNumber(db) {
   const max = Math.max(shipmentNumber, ...[...db.shipments.values()].map((s) => s.number));
   return max + 1;

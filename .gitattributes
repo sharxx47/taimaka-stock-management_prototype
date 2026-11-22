@@ -2,3 +2,4 @@
 *.woff2 binary
 *.jpeg binary
 *.png binary
+design/** -text

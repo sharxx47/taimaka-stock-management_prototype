@@ -11,7 +11,7 @@ import { stamp } from './users.js';
 import { usageInfo, target } from './stock.js';
 import { DAYS_PER_MONTH } from './config.js';
 
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 // ---------- deterministic random numbers ----------
 
@@ -450,16 +450,8 @@ export function seedDemo(db) {
     shipment: blankLines({ id: 'sh-1043', number: 1043, type: 'emergency', fromStoreId: 'central', toStoreId: 'zaune', monthKey: '2026-10', lines: [{ itemId: 'rutf', qtyProposed: Math.max(0, Math.round(zTarget.exact - 3630)), targetFrozen: zTarget.qty }] }),
     stamp: st(NASIRU, at(TODAY, '17:10')),
   }, 'seed');
-  // Jigawan Iro: emergency request sent by Muhammad S. at 5:55 PM for its 4 out-of-stock items
-  // (no usage data for any of them, so logistics sets the amounts).
-  db.apply({
-    type: 'shipment_create',
-    shipment: blankLines({
-      id: 'sh-1044', number: 1044, type: 'emergency', fromStoreId: 'central', toStoreId: 'jigawan_iro', monthKey: '2026-10',
-      lines: ['ciprotap', 'multivite', 'act_al_2', 'sponge'].map((itemId) => ({ itemId, qtyProposed: null, targetFrozen: null, note: 'No usage data for this item. Logistics will set the amount.' })),
-    }),
-    stamp: st(MUHAMMAD, at(TODAY, '17:55')),
-  }, 'seed');
+  // Jigawan Iro's emergency request is not seeded: the walkthrough starts with Muhammad S. sending it
+  // (decision after the build, 22 Nov). It then gets shipment number 1044.
 
   // Jigawan Iro RUTF correction waiting for approval (decision after the step 1 check):
   // -180 sachets (1 carton + 30 loose), Damaged, entered by Muhammad S. at 5:48 PM, waiting for Hajara Nuhu.
