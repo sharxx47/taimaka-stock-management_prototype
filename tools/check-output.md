@@ -76,6 +76,8 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 | Jigawan Iro RUTF history from the 27 Oct delivery (design: item history) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | received 600 -> 4660, used 98 -> 4562, count 4526 -> 4526, adjustment 36 -> 4562, used 100 -> 4462, count (recount) 4432 -> 4432, count 4432 -> 4432, used 101 -> 4331, count 4331 -> 4331, adjustment -180 -> 4331 (waiting) | OK |
 | Zaune emergency (planned by logistics) | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | 1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello | OK |
 | Jigawan Iro emergency request | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | 1044, requested, 4 items, sent 5:55 PM by Muhammad S. | OK |
+| Management indicators (design: Management overview) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36) | OK |
+| Network RUTF on hand (design: 661,461 + 40,000 on order) | 661,461 held + 1,800 in transit + 40,000 on order | 661,461 held + 1,800 in transit + 40,000 on order | OK |
 | Every status appears somewhere | all | all | OK |
 
 ## Logistics: Needs attention today

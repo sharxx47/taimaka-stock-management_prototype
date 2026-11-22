@@ -11,6 +11,7 @@ import {
   hoursInSent, sentTooLong, latestCount, urgentFirst, topUp,
 } from '../js/stock.js';
 import { needsAttention } from '../js/alerts.js';
+import { monthKpis } from '../js/kpis.js';
 import { formatQty, formatRutf, formatNumber, rutfReadBack } from '../js/format.js';
 import { formatShortDate, formatTime } from '../js/time.js';
 import { saveCountLine, submitCount, correctEntry, decideCorrection, receiveShipment, uploadOdk, pendingApprovals } from '../js/actions.js';
@@ -177,6 +178,11 @@ const z1043 = db.shipments.get('sh-1043');
 row('Zaune emergency (planned by logistics)', `${z1043.number}, ${z1043.state}, ${formatRutf(z1043.lines[0].qtyProposed)}, target locked ${formatTime(z1043.steps.requested.at)} by ${z1043.steps.requested.byName}`, '1043, requested, 23,870 sachets (159 cartons + 20 loose), target locked 5:10 PM by Nasiru Bello');
 const j1044 = db.shipments.get('sh-1044');
 row('Jigawan Iro emergency request', `${j1044.number}, ${j1044.state}, ${j1044.lines.length} items, sent ${formatTime(j1044.steps.requested.at)} by ${j1044.steps.requested.byName}`, '1044, requested, 4 items, sent 5:55 PM by Muhammad S.');
+
+const kp = monthKpis(db);
+row('Management indicators (design: Management overview)', `stock-out days ${kp.stockOutDays} (${kp.stockOutDaysLastMonth} in Sept), on time ${Math.round(kp.onTimeShare * 100)}% (${kp.countsOnTime} of ${kp.facilityDays}), accuracy ${(kp.accuracy * 100).toFixed(1)}%, unexplained ${kp.unexplained}, emergency ${Math.round(kp.emergencyShare * 100)}% (${kp.emergency} of ${kp.orders})`,
+  'stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 14% (5 of 36)');
+row('Network RUTF on hand (design: 661,461 + 40,000 on order)', `${formatNumber(kp.rutf.held)} held + ${formatNumber(kp.rutf.inTransit)} in transit + ${formatNumber(kp.rutf.onOrder)} on order`, '661,461 held + 1,800 in transit + 40,000 on order');
 
 // Statuses that appear somewhere in the network.
 const seen = new Set();
