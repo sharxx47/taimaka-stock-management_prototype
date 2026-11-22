@@ -28,7 +28,7 @@ export const ALERT_TYPES = {
   OVERDUE: { rank: 3, group: 'stockout', label: 'Sent over 72 hours', pill: 'order', icon: 'transit', banner: 'order', action: { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary' } },
   ESCALATION: { rank: 4, group: 'data', label: 'Escalation', pill: 'order', banner: 'order', action: { id: 'history', label: 'View history', icon: 'history', kind: 'secondary' } },
   COUNT_DIFF: { rank: 5, group: 'data', label: 'Count difference', pill: 'check', banner: 'low', action: { id: 'recount', label: 'Plan a recount', icon: 'recount', kind: 'secondary' } },
-  STORE_PROBLEM: { rank: 6, group: 'data', label: 'Store problem', pill: 'order', icon: 'lock', banner: 'order', action: { id: 'note', label: 'Add a note', icon: 'note', kind: 'secondary' } },
+  STORE_PROBLEM: { rank: 6, group: 'data', label: 'Store problem', pill: 'order', banner: 'order', action: { id: 'note', label: 'Add a note', icon: 'note', kind: 'secondary' } },
   NOT_COUNTED: { rank: 7, group: 'data', label: 'Not counted today', pill: 'nc', banner: 'nc', action: { id: 'remind', label: 'Send a reminder', icon: 'bell', kind: 'secondary' } },
   APPROVAL: { rank: 8, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', action: { id: 'remind_approver', label: 'Remind approver', icon: 'bell', kind: 'secondary' } },
   CENTRAL_BELOW: { rank: 9, group: 'planning', label: 'Central store low', pill: 'low', banner: 'low', action: { id: 'supplier_order', label: 'Plan supplier order', icon: 'truck', kind: 'secondary' } },

@@ -23,6 +23,7 @@ export const PILL = {
   OK: { cls: 'ok', icon: 'ok', label: 'OK' },
   NOT_TRACKED: { cls: 'untr', icon: 'untr', label: 'Usage not tracked' },
   ABOVE_TARGET: { cls: 'above', icon: 'above', label: 'Above target' },
+  CENTRAL_LOW: { cls: 'low', icon: 'low', label: 'Below 3-month target' },
   ESTIMATED: { cls: 'est', icon: 'est', label: 'Estimated target' },
   EXPIRY: { cls: 'exp', icon: 'exp', label: 'Will expire before use' },
   TRANSIT: { cls: 'transit', icon: 'transit', label: 'In transit' },
@@ -83,8 +84,51 @@ export function linkBtn({ label, icon = null, kind = 'secondary', size = '', hre
   return html`<a class="btn btn-${kind}${size ? ` btn-${size}` : ''}${block ? ' btn-block' : ''}" href="${href}"${attrs({ style })}>${icon ? ic(icon, v, size === 'lg' ? 'lg' : '') : ''}${label}</a>`;
 }
 
-export function backLink(href, label) {
-  return html`<a href="${href}" class="btn btn-ghost" style="align-self: flex-start; padding-left: 0">${ic('back', 'b')}${label}</a>`;
+// Every screen other than the user's home gets one "Back" link from main.js (CLAUDE.md, navigation),
+// so views no longer add their own.
+export function backLink() {
+  return '';
+}
+
+export const HOME = { facility: '#/home', supervisor: '#/supervisor', logistics: '#/logistics', management: '#/management' };
+
+// Header tabs for each role: only screens the role can already open, the home first (CLAUDE.md, navigation).
+export function roleTabs(ctx) {
+  const { user, route } = ctx;
+  const n = route.name;
+  if (user.kind === 'logistics') {
+    const here = n === 'logistics' ? (route.parts[0] || 'today') : n;
+    return [
+      { href: '#/logistics', label: 'Today', on: here === 'today' || n === 'recount' || n === 'transfer' },
+      { href: '#/logistics/stores', label: 'Stores', on: here === 'stores' || n === 'facility' },
+      { href: '#/logistics/shipments', label: 'Shipments', on: here === 'shipments' || n === 'shipment' || n === 'monthly' },
+      { href: '#/history', label: 'History', on: n === 'history' },
+      { href: '#/settings', label: 'Settings', on: n === 'settings' },
+    ];
+  }
+  if (user.kind === 'facility') {
+    return [
+      { href: '#/home', label: 'Today', on: ['home', 'count', 'receive', 'emergency'].includes(n) },
+      { href: '#/history', label: 'History', on: n === 'history' },
+    ];
+  }
+  if (user.kind === 'supervisor') {
+    return [
+      { href: '#/supervisor', label: 'Today', on: n === 'supervisor' || n === 'facility' },
+      { href: '#/stores', label: 'Stores', on: n === 'stores' },
+      { href: '#/shipments', label: 'Shipments', on: n === 'shipments' },
+      { href: '#/history', label: 'History', on: n === 'history' },
+    ];
+  }
+  return [
+    { href: '#/management', label: 'Overview', on: n === 'management' },
+    { href: '#/facility/central', label: 'Central store', on: n === 'facility' },
+    { href: '#/history', label: 'History', on: n === 'history' },
+  ];
+}
+
+export function tabsNav(ctx, extraClass = '') {
+  return html`<nav class="nav${extraClass ? ` ${extraClass}` : ''}" aria-label="Main">${roleTabs(ctx).map((t) => html`<a href="${t.href}"${t.on ? raw(' class="on" aria-current="page"') : ''}>${t.label}</a>`)}</nav>`;
 }
 
 // ---------- quantities ----------
@@ -138,6 +182,8 @@ export function when(iso, todayDate, { capital = false } = {}) {
 
 // "Counted today 5:40 PM", "Last counted 29 Oct 5:15 PM"
 export function countStamp(view, todayDate) {
+  // The central store has no daily count: show when its stock was last updated, as in the logistics table.
+  if (view.isCentral) return view.lastUpdated ? `Updated ${when(view.lastUpdated.at, todayDate)}` : 'No stock recorded';
   if (view.countedToday) return `Counted today ${formatTime(view.countedAt)}`;
   if (view.lastCount) {
     const t = view.lastCount.submittedAt || view.lastCount.ts;
@@ -179,12 +225,13 @@ export function syncPill(sync, { compact = false } = {}) {
   if (sync.waiting) {
     return html`<span class="sync"${compact ? raw(' style="align-self: flex-start"') : ''}>${ic('saved', 'i', 'sm')}Saved on this ${device}, will send when online</span>`;
   }
-  return html`<span class="sync"${compact ? raw(' style="align-self: flex-start"') : ''}>${ic('saved', 'i', 'sm')}Sent. Last sync ${formatTime(sync.lastSync)}</span>`;
+  // Green when everything has been sent (CLAUDE.md); the OK status icon is drawn in the OK green.
+  return html`<span class="sync sync-sent"${compact ? raw(' style="align-self: flex-start"') : ''}>${ic('ok', 's', 'sm')}Sent. Last sync ${formatTime(sync.lastSync)}</span>`;
 }
 
 // ---------- header ----------
 // place: { name, type } or { label } for roles without one facility. nav: [{ href, label, on }].
-export function header(ctx, { place = null, nav = null, sync = true, dataAsOf = null } = {}) {
+export function header(ctx, { place = null, sync = true, dataAsOf = null } = {}) {
   const { user, db } = ctx;
   const ini = initials(user, db.stores);
   const store = user.storeId ? db.store(user.storeId) : null;
@@ -196,9 +243,9 @@ export function header(ctx, { place = null, nav = null, sync = true, dataAsOf = 
   const title = user.name || user.role;
   const p = place || (store ? { name: store.name, type: store.siteType } : null);
   return html`<header class="hdr">
-<div class="brand"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></div>
+<a class="brand brand-link" href="${HOME[user.kind]}" aria-label="Taimaka Stock Management, go to your home screen"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka"><span class="brand-div" aria-hidden="true"></span><span class="brand-name">Stock Management</span></a>
 ${p ? html`<div class="place-box">${p.icon === false ? '' : ic('store')}<span class="col" style="gap: 0"><span class="pb-name">${p.name || p.label}</span>${p.type ? html`<span class="pb-type">${p.type}</span>` : ''}</span></div>` : ''}
-${nav ? html`<nav class="nav" aria-label="Main">${nav.map((n) => html`<a href="${n.href}"${n.on ? raw(' class="on" aria-current="page"') : ''}>${n.label}</a>`)}</nav>` : ''}
+${tabsNav(ctx)}
 <div class="grow"></div>
 ${dataAsOf ? html`<span class="sync">${ic('history', 'i', 'sm')}Data as of ${dataAsOf}</span>` : sync ? html`<span data-slot="sync">${syncPill(ctx.sync)}</span>` : ''}
 <div class="who"><span class="avatar" aria-hidden="true">${ini ?? ic('eye')}</span><span class="col" style="gap: 0"><span class="b caps">${title}</span>${roleLine}</span></div>

@@ -10,11 +10,14 @@ import { formatShortDate, formatTime, dateOf, daysBetween } from '../../time.js'
 import { formatNumber, formatRutf, rutfReadBack } from '../../format.js';
 import {
   STATUS, storeItems, urgentFirst, facilitySummary, stockView, today, emergencyRequest, expiryFlags, suggestTransfers,
-  sentTooLong, hoursInSent,
+  sentTooLong, hoursInSent, nextMonth,
 } from '../../stock.js';
+import { alertBanner } from './logistics.js';
+import { STORE_PROBLEMS } from '../../actions.js';
 import { pendingApprovals, requestEmergency, receiveShipment, addNote, ActionError } from '../../actions.js';
 import { CORRECTION_REASONS, SACHETS_PER_CARTON } from '../../config.js';
-import { openEmergency, emergencyOnTheWay } from '../../alerts.js';
+import { openEmergency, emergencyOnTheWay, storeProblem, needsAttention } from '../../alerts.js';
+import { tabsNav, HOME } from '../parts.js';
 
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -54,10 +57,22 @@ function itemNote(db, v) {
     if (v.status === STATUS.OK && v.months !== null && v.months < 2) return `Below its 2-month target. Shipment ${nums} is on the way to top it up.`;
     return `On the way in shipment ${nums}.`;
   }
+  if (v.status === STATUS.LOW) return monthlyNote(db, v);
   if (v.status === STATUS.TOO_MUCH && suggestTransfers(db, [v.item.id]).some((t) => t.fromStoreId === v.store.id)) {
     return 'Logistics has been told. They may move some to another facility.';
   }
   return null;
+}
+
+// Running low needs no action from staff: logistics tops it up in the next monthly shipment. Once that
+// shipment is proposed, show its real quantity and state for the item.
+const MONTHLY_STATE = { requested: 'proposed', approved: 'approved', sent: 'sent', received: 'received' };
+export function monthlyNote(db, v) {
+  const sh = [...db.shipments.values()].find((x) => x.type === 'monthly' && x.monthKey === nextMonth(db) && x.toStoreId === v.store.id && x.lines.some((l) => l.itemId === v.item.id));
+  if (!sh) return 'In the next monthly shipment';
+  const l = sh.lines.find((x) => x.itemId === v.item.id);
+  const q = l.qtySent ?? l.qtyProposed;
+  return `Next monthly shipment: ${qtyText(v.item, q)}, ${MONTHLY_STATE[sh.state]}`;
 }
 
 function withBlank(db, v) {
@@ -101,26 +116,54 @@ ${note ? html`<p class="small muted" style="margin: 0">${note}</p>` : ''}
 
 // ---------- summary pills ----------
 
-export function summaryChips(db, storeId, size = '') {
+// Summary pills. With filter set (the current filter or ''), each pill is a button that filters the item list.
+// hasAlerts: never say "All OK" while an alert is showing.
+export function summaryChips(db, storeId, size = '', { filter = null, hasAlerts = false } = {}) {
   const { counts: c } = facilitySummary(db, storeId);
   const list = [];
   const add = (kind, n, text) => { if (n) list.push({ kind, n, text }); };
   add('OUT', c.out, 'out of stock');
   add('ORDER_NOW', c.orderNow, 'to order now');
   add('LOW', c.low, 'running low');
+  add('CENTRAL_LOW', c.centralLow, 'below 3-month target');
   add('TOO_MUCH', c.tooMuch, 'with too much');
   const first = list[0];
-  const out = list.map((x) => chip(x.kind, `${x.n} ${x === first ? (x.n === 1 ? 'item ' : 'items ') : ''}${x.text}`, size));
-  if (c.check) out.push(chip('CHECK', `${c.check} ${c.check === 1 ? 'count' : 'counts'} to check`, size));
-  if (c.ok) out.push(chip('OK', list.length || c.check ? `${c.ok} OK` : 'All OK', size));
-  if (!out.length && c.notCounted === c.total) out.push(chip('NOT_COUNTED', null, size));
-  return out;
+  const pills = list.map((x) => ({ kind: x.kind, label: `${x.n} ${x === first ? (x.n === 1 ? 'item ' : 'items ') : ''}${x.text}` }));
+  if (c.check) pills.push({ kind: 'CHECK', label: `${c.check} ${c.check === 1 ? 'count' : 'counts'} to check` });
+  if (c.ok) pills.push({ kind: 'OK', label: list.length || c.check || hasAlerts ? `${c.ok} OK` : 'All OK' });
+  if (!pills.length && c.notCounted === c.total) pills.push({ kind: 'NOT_COUNTED', label: null });
+  if (filter === null) return pills.map((p) => chip(p.kind, p.label, size));
+  return pills.map((p) => filterPill(p.kind, p.label, size, filter === p.kind));
 }
+
+function filterPill(kind, label, size, on) {
+  const P = { OUT: 'out', ORDER_NOW: 'order', LOW: 'low', CENTRAL_LOW: 'low', TOO_MUCH: 'much', CHECK: 'check', OK: 'ok', NOT_COUNTED: 'nc' }[kind];
+  const icon = { OUT: 'out', ORDER_NOW: 'order', LOW: 'low', CENTRAL_LOW: 'low', TOO_MUCH: 'much', CHECK: 'check', OK: 'ok', NOT_COUNTED: 'nc' }[kind];
+  const sm = size === 'sm';
+  return html`<button type="button" class="chip chip-${P}${sm ? ' chip-sm' : ''}" aria-pressed="${on ? 'true' : 'false'}" data-act="pill-filter" data-filter="${kind}">${ic(icon, 's', sm ? 'sm' : '')}${label ?? 'Not counted today'}</button>`;
+}
+
+// Items shown for a summary filter, and the list heading.
+const FILTER_WORDS = { OUT: 'out of stock', ORDER_NOW: 'to order now', LOW: 'running low', CENTRAL_LOW: 'below 3-month target', TOO_MUCH: 'with too much', CHECK: 'to check', OK: 'OK', NOT_COUNTED: 'not counted today' };
+export function applyFilter(views, filter) {
+  if (!filter) return views;
+  if (filter === 'CHECK') return views.filter((v) => v.needsCheck);
+  return views.filter((v) => v.status.code === filter);
+}
+export function filterHeading(n, filter) {
+  return `${n} ${n === 1 ? 'item' : 'items'} ${FILTER_WORDS[filter]}`;
+}
+const RUNNING_LOW_LINE = 'Logistics tops these up in the next monthly shipment. If one will run out sooner, use Request emergency stock.';
 
 // ---------- facility alerts (same order as everywhere, without headings) ----------
 
 export function facilityAlerts(ctx, storeId, { readOnly = false, skipChecks = false } = {}) {
   const { db, user } = ctx;
+  if (db.store(storeId).type === 'CENTRAL') {
+    // The central store's own alerts, with the same text as the logistics dashboard. Management is view only,
+    // so it gets no action button.
+    return needsAttention(db).flatMap((g) => g.alerts).filter((a) => a.storeId === 'central').map((a) => alertBanner(ctx, a, { noAction: user.kind !== 'logistics' }));
+  }
   const views = storeItems(db, storeId);
   const d = today(db);
   const unit = (v, q) => qtyText(v.item, q);
@@ -154,6 +197,12 @@ export function facilityAlerts(ctx, storeId, { readOnly = false, skipChecks = fa
     const said = v.todayCount.demo && !v.item.isRutf ? 'the bin card said' : 'we expected';
     out.push(html`<div class="banner bn-low">${chip('CHECK')}<p class="grow" style="margin: 0"><span class="b">${v.item.name}</span>: ${readOnly ? 'counted' : 'you counted'} <span class="b">${formatNumber(c.counted)}</span> ${v.item.unit.many}, ${said} <span class="b">${formatNumber(c.expected)}</span>.${notes.length ? html` Note: "${notes.at(-1).text}"` : ''}</p>${readOnly ? '' : html`<div class="row g8"><a class="btn btn-secondary btn-sm" href="#/count?item=${v.item.id}">${ic('recount', 'b')}Recount</a>${btn({ label: 'Add a note', icon: 'note', size: 'sm', act: 'note-open', data: { target: v.todayCount.id, label: v.item.name } })}</div>`}</div>`);
   }
+  const problem = storeProblem(db, storeId);
+  if (problem) out.push(storeProblemBanner(ctx, storeId, problem));
+  const blank = views.filter((v) => !v.countedToday);
+  if (views.some((v) => v.countedToday) && blank.length) {
+    out.push(html`<div class="banner bn-nc">${chip('NOT_COUNTED')}<p class="grow" style="margin: 0">Today's ${db.store(storeId).type === 'ITP' ? 'log' : 'count'} left <span class="b">${blank.length}</span> ${blank.length === 1 ? 'item' : 'items'} blank${blank.length <= 3 ? html`: ${joinAnd(blank.map((v) => html`<span class="b">${v.item.name}</span>`))}` : ''}. ${blank.length === 1 ? 'It shows' : 'They show'} "Not counted today".</p>${readOnly ? '' : html`<a class="btn btn-secondary" href="#/count">${ic('count', 'b')}${db.store(storeId).type === 'ITP' ? 'Log' : 'Count'} ${blank.length === 1 ? 'it' : 'them'} now</a>`}</div>`);
+  }
   if (!views.some((v) => v.countedToday)) {
     const last = views.map((v) => v.lastCount).filter(Boolean).map((c) => c.submittedAt || c.ts).sort().at(-1);
     out.push(html`<div class="banner bn-nc">${chip('NOT_COUNTED')}<p class="grow" style="margin: 0">Today's count is not in yet.${last ? html` Last count <span class="b">${formatShortDate(dateOf(last))}</span> ${formatTime(last)}.` : ''}</p>${readOnly ? '' : html`<a class="btn btn-primary" href="#/count">${ic('count', 'w')}Enter today's ${db.store(storeId).type === 'ITP' ? 'log' : 'count'}</a>`}</div>`);
@@ -172,6 +221,16 @@ export function facilityAlerts(ctx, storeId, { readOnly = false, skipChecks = fa
   return out;
 }
 
+// "Store problem": the storage check was not confirmed (not cool, not dry or not locked).
+export function storeProblemBanner(ctx, storeId, p) {
+  const { db, user } = ctx;
+  const d = today(db);
+  const words = p.problems.map((x) => STORE_PROBLEMS.find((s) => s.id === x)?.label.toLowerCase() || x);
+  const notes = db.notes.filter((n) => n.targetId === p.sessionId);
+  const canNote = user.kind !== 'management';
+  return html`<div class="banner bn-order">${chip('ORDER_NOW', 'Store problem')}<p class="grow" style="margin: 0">${user.storeId === storeId ? '' : html`${db.store(storeId).name} · `}Store reported <span class="b">${joinAnd(words)}</span> by ${personRef(p.byName, user)}, <span class="b">${when(p.at, d)}</span>.${p.note ? ` Note: "${p.note}"` : ''}${notes.length ? ` Latest note by ${notes.at(-1).stamp.byName}: "${notes.at(-1).text}"` : ''} It clears when a count confirms the store is cool, dry and locked.</p>${canNote ? btn({ label: 'Add a note', icon: 'note', act: 'note-open', data: { target: p.sessionId, label: `store problem at ${db.store(storeId).name}` } }) : ''}</div>`;
+}
+
 function transitBanners(ctx, storeId, readOnly) {
   const { db } = ctx;
   return inTransitShipments(db, storeId).filter((sh) => !sentTooLong(db, sh)).map((sh) => html`<div class="banner bn-info">${ic('truck', 'b', 'lg')}<p class="grow" style="margin: 0">Shipment <span class="b">${sh.number}</span> is on the way: the ${shipmentKind(sh).replace('Emergency', 'emergency shipment').replace(/ monthly$/, ' monthly shipment')} from the ${storeShort(db.store(sh.fromStoreId))}, sent <span class="b">${formatShortDate(dateOf(sh.steps.sent.at))}</span>.${readOnly ? '' : ' Mark it received when it arrives.'}</p>${readOnly ? '' : html`<a class="btn btn-secondary btn-sm" href="#/receive/${sh.id}">${ic('receive', 'b')}Receive a shipment</a>`}</div>`);
@@ -180,6 +239,10 @@ function transitBanners(ctx, storeId, readOnly) {
 // ---------- facility home ----------
 
 function lastCountLine(db, storeId) {
+  if (db.store(storeId).type === 'CENTRAL') {
+    const last = storeItems(db, storeId).map((v) => v.lastUpdated && v.lastUpdated.at).filter(Boolean).sort().at(-1);
+    return last ? `Stock updated ${when(last, today(db))}` : 'No stock recorded';
+  }
   const sess = [...db.countSessions.values()].filter((s) => s.storeId === storeId && s.kind !== 'recount' && s.submittedAt <= db.nowIso).sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)).at(-1);
   if (!sess) return 'No count yet';
   const by = sess.stamp?.byName;
@@ -192,9 +255,11 @@ function countLabel(store) {
 }
 
 function homeLaptop(ctx, storeId, { readOnly = false } = {}) {
-  const { db, user } = ctx;
+  const { db, user, vs } = ctx;
   const store = db.store(storeId);
   const views = storeItems(db, storeId);
+  const filter = vs.filterStore === storeId ? vs.filter || '' : '';
+  const shown = applyFilter(views, filter);
   const alerts = facilityAlerts(ctx, storeId, { readOnly });
   const transit = transitBanners(ctx, storeId, readOnly);
   const place = { name: store.name, type: store.siteType };
@@ -203,13 +268,12 @@ function homeLaptop(ctx, storeId, { readOnly = false } = {}) {
 ${header(ctx, { place, nav, sync: !readOnly || user.kind !== 'management', dataAsOf: user.kind === 'management' ? `${formatShortDate(today(db))} ${formatTime(db.nowIso)}` : null })}
 <main class="wrap">
 ${flashBanner(ctx)}
-${readOnly ? backLink(ctx.home, user.kind === 'supervisor' ? 'Back to your facilities' : 'Back') : ''}
 <div class="col g8">
 <p class="muted" style="margin: 0">${longDate(today(db))} · ${lastCountLine(db, storeId)}</p>
 <h1 class="h1">${readOnly ? `${store.name} today` : 'Your stock today'}</h1>
 ${readOnly ? html`<p class="muted" style="margin: 0">View only. ${store.type === 'CENTRAL' ? '' : `Supervisor ${store.supervisor}.`}</p>` : ''}
 </div>
-<div class="sum" aria-label="Summary">${summaryChips(db, storeId)}</div>
+<div class="sum" role="group" aria-label="Summary: tap to show only those items">${summaryChips(db, storeId, '', { filter, hasAlerts: alerts.length > 0 })}</div>
 ${readOnly ? '' : html`<div class="actions">
 <a class="btn btn-primary btn-lg" href="#/count">${ic('count', 'w', 'lg')}${countLabel(store)}</a>
 <a class="btn btn-secondary btn-lg" href="#/receive">${ic('receive', 'b', 'lg')}Receive a shipment</a>
@@ -220,8 +284,9 @@ ${alerts.length || transit.length ? html`<section class="col g8 needs" aria-labe
 ${alerts}${transit}
 </section>` : html`<div class="banner bn-ok">${chip('OK', 'All OK')}<p class="grow" style="margin: 0">Nothing needs attention right now.</p></div>`}
 <section class="col g8" aria-labelledby="all">
-<div class="row sp"><h2 class="sec-t" id="all">All items, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}</h2><span class="small muted">${views.length} items</span></div>
-<div class="items">${views.map((v) => itemCard(ctx, v, { readOnly }))}</div>
+<div class="row sp"><h2 class="sec-t" id="all">${filter ? `${filterHeading(shown.length, filter)}, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}` : `All items, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}`}</h2>${filter ? btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act: 'pill-filter', data: { filter: '' } }) : html`<span class="small muted">${views.length} items</span>`}</div>
+${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}</p>` : ''}
+<div class="items">${shown.map((v) => itemCard(ctx, v, { readOnly }))}</div>
 </section>
 </main>
 </div>`;
@@ -229,32 +294,36 @@ ${alerts}${transit}
 
 // Phone home (PhoneHome artboard): urgent-first list and the three actions at the bottom.
 function homePhone(ctx, storeId) {
-  const { db, user } = ctx;
+  const { db, user, vs } = ctx;
   const store = db.store(storeId);
   const views = storeItems(db, storeId);
+  const filter = vs.filterStore === storeId ? vs.filter || '' : '';
   const outs = views.filter((v) => v.status === STATUS.OUT);
-  const rest = urgentFirst(views.filter((v) => v.status !== STATUS.OUT));
+  // With a filter, the list shows only those items (urgent-first stays the order without one).
+  const rest = filter ? applyFilter(views, filter) : urgentFirst(views.filter((v) => v.status !== STATUS.OUT));
   // The urgent-first list already shows each Check, so the phone skips those banners.
   const alerts = facilityAlerts(ctx, storeId, { skipChecks: true }).slice(outs.length ? 1 : 0);
   const req = openEmergency(db, storeId);
   return html`<div class="app ph-page">
 <div class="ph-hdr">
-<div class="row sp"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka" style="height: 40px"><span class="row g8">${btn({ label: 'Sign out', icon: 'logout', kind: 'ghost', size: 'sm', act: 'signout' })}<span class="avatar" aria-label="${user.name || user.role}">${initials(user, db.stores)}</span></span></div>
+<div class="row sp"><a class="brand-link" href="${HOME[user.kind]}" aria-label="Taimaka Stock Management, go to your home screen"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka" style="height: 40px"></a><span class="row g8">${btn({ label: 'Sign out', icon: 'logout', kind: 'ghost', size: 'sm', act: 'signout' })}<span class="avatar" aria-label="${user.name || user.role}">${initials(user, db.stores)}</span></span></div>
 <div class="place-box">${ic('store')}<span class="col" style="gap: 0"><span class="pb-name">${store.name}</span><span class="pb-type">${store.siteType}</span></span></div>
 <span class="small muted">${user.name ? html`<span class="caps">${user.name}</span> · ` : ''}<span class="caps">${user.role}</span></span>
 <span data-slot="sync" data-compact="1">${syncPill(ctx.sync, { compact: true })}</span>
+${tabsNav(ctx)}
 </div>
 <div class="ph-body">
 ${flashBanner(ctx)}
 <div class="col g4"><span class="small muted">${dayName(today(db), true)} ${formatShortDate(today(db))} · ${lastCountLine(db, storeId).replace(/ by .*$/, '')}</span>
-<div class="row g8">${summaryChips(db, storeId, 'sm')}</div></div>
-${outs.length ? html`<article class="item" style="border: 2px solid var(--out-bg); padding: 12px; gap: 8px">
+<div class="row g8" role="group" aria-label="Summary: tap to show only those items">${summaryChips(db, storeId, 'sm', { filter, hasAlerts: true })}</div></div>
+${filter ? html`<div class="row sp"><h2 class="sec-t">${filterHeading(rest.length, filter)}</h2>${btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act: 'pill-filter', data: { filter: '' } })}</div>${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}</p>` : ''}` : ''}
+${outs.length && !filter ? html`<article class="item" style="border: 2px solid var(--out-bg); padding: 12px; gap: 8px">
 <div class="row sp"><span class="b" style="font-size: 18px">Out of stock</span>${chip('OUT')}</div>
 ${outs.map((v) => html`<div class="row g8" style="flex-wrap: nowrap">${pic(v.item, 'sm')}<span class="grow b">${v.item.name}</span><span>${qtyText(v.item, 0)}</span></div>`)}
 ${req ? html`<span class="muted">Emergency request sent ${when(req.steps.requested.at, today(db))} by ${req.steps.requested.byName === user.name ? 'you' : req.steps.requested.byName}.</span>` : ''}
 <a class="btn btn-primary btn-block" href="#/emergency">${ic('emergency', 'w')}Request emergency stock</a>
 </article>` : ''}
-${alerts.length ? html`<div class="col g8">${alerts}</div>` : ''}
+${alerts.length && !filter ? html`<div class="col g8 needs">${alerts}</div>` : ''}
 ${rest.map((v) => itemCard(ctx, v, { phone: true }))}
 </div>
 <div class="ph-foot">
@@ -322,7 +391,6 @@ function renderEmergency(ctx) {
 ${header(ctx)}
 <main class="wrap" style="max-width: 880px">
 ${flashBanner(ctx)}
-${backLink('#/home', 'Back to your stock')}
 <div class="col g8">
 <h1 class="h1">Request emergency stock</h1>
 <p class="lead muted">${lines.length ? 'We filled this in for you from today\'s count. Check it, then press Send.' : open.length ? 'Your request is with logistics. You can follow it here.' : 'Nothing is out of stock or running out within 10 days.'}</p>
@@ -435,7 +503,7 @@ function renderReceive(ctx, route) {
   const sent = inTransitShipments(db, storeId);
   const waiting = [...db.shipments.values()].filter((sh) => sh.toStoreId === storeId && (sh.state === 'requested' || sh.state === 'approved'));
   const sh = route.parts[0] ? db.shipments.get(route.parts[0]) : sent.length === 1 ? sent[0] : null;
-  const head = html`${header(ctx)}<main class="wrap" style="max-width: 1040px">${flashBanner(ctx)}${backLink('#/home', 'Back to your stock')}`;
+  const head = html`${header(ctx)}<main class="wrap" style="max-width: 1040px">${flashBanner(ctx)}`;
   if (!sh || sh.state !== 'sent' || sh.toStoreId !== storeId) {
     return html`<div class="app">${head}
 <div class="col g8"><h1 class="h1">Receive a shipment</h1><p class="lead muted">Shipments on the way to ${store.name}.</p></div>
@@ -483,6 +551,14 @@ export const views = {
 };
 
 export const actions = {
+  'pill-filter': (ctx, el) => {
+    const storeId = ctx.route.name === 'facility' ? ctx.route.parts[0] : ctx.user.storeId;
+    const f = el.dataset.filter;
+    ctx.vs.filter = ctx.vs.filter === f && ctx.vs.filterStore === storeId ? '' : f;
+    ctx.vs.filterStore = storeId;
+    ctx.rerender();
+    document.getElementById('all')?.scrollIntoView({ block: 'nearest' });
+  },
   'note-open': (ctx, el) => ctx.modal(noteDialog(el.dataset.target, el.dataset.label)),
   'note-save': (ctx, el) => {
     const text = document.getElementById('note-text')?.value || '';

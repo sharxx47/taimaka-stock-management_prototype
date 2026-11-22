@@ -21,11 +21,13 @@ const ACTIONS = Object.assign({}, ...MODULES.map((m) => m.actions || {}));
 const CHANGES = Object.assign({}, ...MODULES.map((m) => m.changes || {}));
 const INPUTS = Object.assign({}, ...MODULES.map((m) => m.inputs || {}));
 
-const HOME = { facility: '#/home', supervisor: '#/supervisor', logistics: '#/logistics', management: '#/management' };
+import { HOME } from './parts.js';
 const root = document.getElementById('root');
 let app = null;
 
-const ui = { flash: null, modal: null, view: {}, lastRoute: null };
+// navStack: the screens visited in this app session, for the Back link (empty after a reload or sign-in).
+const ui = { flash: null, modal: null, view: {}, lastRoute: null, navStack: [], goingBack: false };
+let lastHash = location.hash;
 
 function parseRoute() {
   const h = location.hash.replace(/^#\/?/, '');
@@ -104,6 +106,7 @@ function makeCtx(route) {
     modal(m) { ui.modal = m; render(); },
     closeModal() { ui.modal = null; render(); },
     signIn(userId) {
+      ui.navStack = [];
       app.state.session = { userId };
       persist();
       go(HOME[app.db.user(userId).kind]);
@@ -140,6 +143,11 @@ function render() {
       if (err instanceof ActionError) body = notAllowed(ctx, true, err.message);
       else { console.error(err); body = errorScreen(ctx, err); }
     }
+  }
+  if (user && route.name !== 'signin' && location.hash.split('?')[0] !== HOME[user.kind]) {
+    // Back: to the previous screen in the app, or to the user's home if this screen was opened directly.
+    const back = String(html`<a href="${HOME[user.kind]}" class="btn btn-ghost" data-act="go-back" style="align-self: flex-start; padding-left: 0">${ic('back', 'b')}Back</a>`);
+    body = raw(String(body).replace(/(<main class="wrap"[^>]*>)/, `$1${back}`));
   }
   const focus = captureFocus();
   const routeKey = location.hash.split('?')[0];
@@ -251,9 +259,18 @@ const BASE_ACTIONS = {
   go: (ctx, el) => ctx.go(el.dataset.href),
   'close-modal': (ctx) => ctx.closeModal(),
   'dismiss-flash': () => { ui.flash = null; render(); },
+  'go-back': (ctx) => {
+    const prev = ui.navStack.pop();
+    if (prev) { ui.goingBack = true; location.hash = prev; window.scrollTo(0, 0); } else ctx.go(ctx.home);
+  },
 };
 
-window.addEventListener('hashchange', () => { for (const v of Object.values(ui.view)) delete v.done; ui.flash = ui.flash && ui.flash.keep ? { ...ui.flash, keep: false } : null; ui.modal = null; render(); });
+window.addEventListener('hashchange', () => {
+  const h = location.hash;
+  if (ui.goingBack) ui.goingBack = false;
+  else if (lastHash && lastHash !== h && !lastHash.startsWith('#/signin')) ui.navStack.push(lastHash);
+  if (h.startsWith('#/signin')) ui.navStack = [];
+  lastHash = h; for (const v of Object.values(ui.view)) delete v.done; ui.flash = ui.flash && ui.flash.keep ? { ...ui.flash, keep: false } : null; ui.modal = null; render(); });
 window.addEventListener('online', () => { scheduleSend(); render(); });
 window.addEventListener('offline', () => render());
 let wasPhone = window.innerWidth < 640;
@@ -273,7 +290,7 @@ setInterval(() => { if (app) { app.tick(); updateSyncSlot(); } }, 30000);
     render();
     scheduleSend();
     // Test hook for the browser checks (switch the signed-in test user without the sign-in screen).
-    window.taimakaTest = { signInAs: (id) => { app.state.session = { userId: id }; ui.view = {}; location.hash = HOME[app.db.user(id).kind]; render(); }, app: () => app };
+    window.taimakaTest = { signInAs: (id) => { app.state.session = { userId: id }; ui.view = {}; ui.navStack = []; location.hash = HOME[app.db.user(id).kind]; render(); }, app: () => app };
   } catch (err) {
     console.error(err);
     root.innerHTML = String(html`<div class="app"><main class="wrap" style="max-width: 720px; padding-top: 40px">

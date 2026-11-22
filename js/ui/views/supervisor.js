@@ -2,7 +2,8 @@
 
 import { html, joinAnd } from '../dom.js';
 import { ic, chip, btn, linkBtn, header, longDate, when, personRef, qtyText, flashBanner } from '../parts.js';
-import { summaryChips, noteDialog, lastsPlain } from './facility.js';
+import { summaryChips, noteDialog, lastsPlain, storeProblemBanner, facilityAlerts } from './facility.js';
+import { storeProblem } from '../../alerts.js';
 import { formatShortDate, formatTime, dateOf, daysBetween } from '../../time.js';
 import { formatNumber, formatRutf } from '../../format.js';
 import { today, escalation, storeItems, stockView, rutfAlertLevel, evaluateCount, STATUS } from '../../stock.js';
@@ -76,7 +77,12 @@ function facilityCard(ctx, storeId) {
   } else {
     const all = summaryChips(db, storeId, 'sm');
     const nonOk = all.filter((c) => !String(c).includes('chip-ok') && !String(c).includes('chip-check'));
-    pills = nonOk.length ? nonOk : [chip('OK', 'All OK', 'sm')];
+    // Items left blank on today's count (CLAUDE.md: the supervisor's card says how many were not counted).
+    const blank = views.filter((v) => !v.countedToday).length;
+    if (blank) nonOk.push(chip('NOT_COUNTED', `${blank} ${blank === 1 ? 'item' : 'items'} not counted`, 'sm'));
+    // Never "All OK" while an alert is showing for the facility.
+    const anyAlert = facilityAlerts(ctx, storeId, { readOnly: true }).length > 0;
+    pills = nonOk.length ? nonOk : [anyAlert ? chip('OK', `${views.filter((v) => v.status === STATUS.OK).length} OK`, 'sm') : chip('OK', 'All OK', 'sm')];
     const monthFlags = escalation(db, storeId).flags.filter((f) => f.date.slice(0, 7) === d.slice(0, 7)).length;
     const key = views.find((v) => v.item.isRutf) || views.find((v) => v.item.type === 'therapeutic_food');
     const keyText = key && key.status !== STATUS.NOT_COUNTED ? `${key.item.name} lasts until ${lastsPlain(key)}` : null;
@@ -96,6 +102,7 @@ function render(ctx) {
   const d = today(db);
   const esc = user.storeIds.map((id) => ({ id, esc: escalation(db, id) })).filter((x) => x.esc.level === 'supervisor' || x.esc.level === 'management');
   const approvals = pendingApprovals(db, user);
+  const problems = user.storeIds.map((id) => ({ id, p: storeProblem(db, id) })).filter((x) => x.p);
   return html`<div class="app">
 ${header(ctx, { place: { name: 'Your facilities' } })}
 <main class="wrap">
@@ -108,6 +115,10 @@ ${flashBanner(ctx)}
 <h2 class="sec-t" id="es">Escalated to you (${esc.length})</h2>
 ${esc.length ? esc.map((x) => escalationBanner(ctx, x.id, x.esc)) : html`<p class="muted" style="margin: 0">Nothing has been escalated to you. Repeated count differences (3 in 14 days) show here.</p>`}
 </section>
+${problems.length ? html`<section class="col g8 needs" aria-labelledby="sp">
+<h2 class="sec-t" id="sp">Store problems (${problems.length})</h2>
+${problems.map((x) => storeProblemBanner(ctx, x.id, x.p))}
+</section>` : ''}
 <section class="col g8 needs" aria-labelledby="wa">
 <h2 class="sec-t" id="wa">Waiting for your approval (${approvals.length})</h2>
 ${approvals.length ? approvals.map((e) => approvalBanner(ctx, e)) : html`<p class="muted" style="margin: 0">No corrections are waiting for you.</p>`}

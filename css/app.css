@@ -80,3 +80,22 @@ select.select{max-width:100%}
 .chip-sm{--ty:.9px}
 .btn{--ty:0px}
 .btn-lg{--ty:.5px;padding:calc(12px + var(--ty)) 24px calc(12px - var(--ty))}
+/* Round 3 (fixes after the live review) */
+/* Header: the logo and "Stock Management" link to the user's home */
+a.brand-link{color:inherit;text-decoration:none;border-radius:var(--r-sm)}
+a.brand-link:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* Header tabs on phones: their own row under the header, 48px tap targets, no sideways scrolling */
+@media (max-width:640px){
+ .hdr .nav{order:10;flex:1 1 100%;gap:4px}
+ .hdr .nav a,.ph-hdr .nav a{flex:1 1 auto;justify-content:center;min-height:48px;padding:8px 10px}
+}
+.ph-hdr .nav{display:flex;flex-wrap:wrap;gap:4px}
+/* Sync indicator: green when everything has been sent (OK colors from tm.css) */
+.sync.sync-sent{background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-bd)}
+/* Daily count: a blank row is still to do, in the "no data" grey of tm.css, until a number is saved */
+.crow.crow-blank{background:var(--nc-bg);box-shadow:inset 0 0 0 1px var(--nc-bd)}
+.crow.crow-blank .cr-name,.crow.crow-blank .cr-exp,.crow.crow-blank .cr-saved{color:var(--nc-fg)}
+/* Summary pills as filters: the selected pill gets a navy ring */
+button.chip{font-family:inherit;cursor:pointer}
+button.chip[aria-pressed="true"]{box-shadow:0 0 0 3px var(--primary)}
+@media (max-width:640px){.app button.chip,.app button.chip.chip-sm{min-height:48px}}

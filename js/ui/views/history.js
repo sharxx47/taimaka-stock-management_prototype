@@ -5,7 +5,7 @@ import { ic, chip, statusChip, pic, btn, header, qtyBig, qtyText, flashBanner, w
 import { navFor, lastsPlain } from './facility.js';
 import { formatShortDate, formatTime, dateOf } from '../../time.js';
 import { formatNumber, formatRutf, rutfReadBack, formatMonths } from '../../format.js';
-import { stockView, today, rutfAlertLevel, evaluateCount, STATUS } from '../../stock.js';
+import { stockView, today, rutfAlertLevel, evaluateCount, STATUS, expiryFlags } from '../../stock.js';
 import { correctEntry, ActionError } from '../../actions.js';
 import { CORRECTION_REASONS, SACHETS_PER_CARTON } from '../../config.js';
 
@@ -70,7 +70,11 @@ function line(ctx, row, latestCountId) {
     case 'count': {
       const ev = evaluateCount(db, e);
       const sess = sessionOf(db, e);
-      if (e.recount) {
+      if (e.stockCheck) {
+        // The central store has no daily count: logistics checks its stock.
+        title = `Stock check by logistics: ${q(e.qty)}`;
+        small = `${by} · ${ev && ev.diff ? `difference ${q(ev.diff)}` : 'matches expected'}`;
+      } else if (e.recount) {
         title = `Recount by logistics: ${q(e.qty)}, expected ${q(e.expected)}`;
         icStyle = 'background: var(--primary)';
         if (ev && ev.applicable && ev.diff) extra.push(html`<span class="muted">Difference ${q(ev.diff)}.${e.reason ? ` Reason: ${reasonLabel(e.reason)}.` : ''}</span>`);
@@ -129,7 +133,8 @@ ${canCorrect(db, user, e, latestCountId) ? btn({ label: 'Correct this entry', ic
 
 function picker(ctx, storeId, itemId) {
   const { db, user } = ctx;
-  const stores = user.kind === 'supervisor' ? user.storeIds.map((id) => db.store(id)) : db.stores;
+  // Only the stores this role can see: one for facility staff, their facilities for a supervisor.
+  const stores = user.kind === 'facility' ? [db.store(user.storeId)] : user.kind === 'supervisor' ? user.storeIds.map((id) => db.store(id)) : db.stores;
   return html`<div class="inline-form">
 <label class="field"><span class="label">Store</span><select class="select" id="h-store" data-change="h-store">${stores.map((s) => html`<option value="${s.id}"${s.id === storeId ? ' selected' : ''}>${s.type === 'CENTRAL' ? 'Central store, Gombe' : s.name}</option>`)}</select></label>
 <label class="field"><span class="label">Item</span><select class="select" id="h-item" data-change="h-item">${db.itemsForStore(storeId).map((it) => html`<option value="${it.id}"${it.id === itemId ? ' selected' : ''}>${it.name}</option>`)}</select></label>
@@ -156,13 +161,15 @@ function render(ctx, route) {
 ${header(ctx, { place: { name: store.type === 'CENTRAL' ? 'Central store, Gombe' : store.name, type: store.siteType }, nav: navFor(ctx), sync: user.kind !== 'management', dataAsOf: user.kind === 'management' ? `${formatShortDate(today(db))} ${formatTime(db.nowIso)}` : null })}
 <main class="wrap">
 ${flashBanner(ctx)}
-${facilityUser ? html`<a href="#/home" class="btn btn-ghost" style="align-self: flex-start; padding-left: 0">${ic('back', 'b')}Back to your stock</a>` : picker(ctx, storeId, itemId)}
+${picker(ctx, storeId, itemId)}
 <div class="row g16">
 ${pic(it, 'lg')}
 <div class="col g4 grow">
 <span class="muted">Item history</span>
 <h1 class="h1">${it.name} at ${store.type === 'CENTRAL' ? 'the central store' : store.name}</h1>
-<span class="row g8">${nc ? html`<span class="qty" style="font-size: 22px">Not counted today</span>` : html`<span class="qty">${it.isRutf ? html`${formatNumber(v.onHand)} <small>sachets now${v.onHand >= SACHETS_PER_CARTON ? formatRutf(v.onHand).slice(formatRutf(v.onHand).indexOf(' (')) : ''}</small>` : html`${formatNumber(v.onHand ?? 0)} <small>${it.unit.multiply ? `x ${it.unit.one}` : it.unit.many} now</small>`}</span>`}${statusChip(v, { logistics: !facilityUser })}${v.tracked && !nc ? html`<span class="muted">${v.onHand > 0 ? `Lasts until ${lastsPlain(v)}` : 'None left'}${facilityUser || !Number.isFinite(v.months) ? '' : ` · ${formatMonths(v.months)}`}</span>` : ''}</span>
+<span class="row g8">${nc ? html`<span class="qty" style="font-size: 22px">Not counted today</span>` : html`<span class="qty">${it.isRutf ? html`${formatNumber(v.onHand)} <small>sachets now${v.onHand >= SACHETS_PER_CARTON ? formatRutf(v.onHand).slice(formatRutf(v.onHand).indexOf(' (')) : ''}</small>` : html`${formatNumber(v.onHand ?? 0)} <small>${it.unit.multiply ? `x ${it.unit.one}` : it.unit.many} now</small>`}</span>`}${statusChip(v, { logistics: !facilityUser })}${v.tracked && !nc ? html`<span class="muted">${v.onHand > 0 ? `Lasts until ${lastsPlain(v)}` : 'None left'}${facilityUser || !Number.isFinite(v.months) || v.months === null ? '' : ` · ${formatMonths(v.months)}${v.isCentral ? ' including stock on order' : ''}`}</span>` : ''}</span>
+${v.isCentral && v.target ? html`<span class="small muted">Target ${qtyText(it, v.target.qty)} (3 months of network use)${v.onOrder ? ` · ${qtyText(it, v.onOrder)} on order` : ''}</span>` : ''}
+${v.onHand > 0 ? expiryFlags(db, storeId, itemId).map((b) => html`<div class="banner bn-exp">${chip('EXPIRY')}<p class="grow" style="margin: 0">Batch ${b.batch} ${b.expired ? 'has expired' : 'expires'} <span class="b">${formatShortDate(b.expiry)}</span>. About <span class="b">${qtyText(it, b.unusedAtExpiry)}</span> will not be used by then.</p></div>`) : ''}
 ${v.target && v.target.explanations.length ? html`<span class="small muted">${v.target.explanations.join('. ')}</span>` : ''}
 </div>
 </div>

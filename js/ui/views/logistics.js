@@ -12,11 +12,11 @@ import { formatShortDate, formatTime, dateOf, addDays } from '../../time.js';
 import { formatNumber, formatRutf, formatMonths } from '../../format.js';
 import {
   STATUS, storeItems, stockView, today, nextMonth, suggestMonthly, suggestTransfers, sentTooLong, hoursInSent,
-  batchesOnHand, onHand, target, topUp, usageInfo,
+  batchesOnHand, onHand, target, topUp, usageInfo, expiryFlags,
 } from '../../stock.js';
 import { needsAttention, openEmergency } from '../../alerts.js';
 import {
-  approveShipment, sendShipment, proposeShipment, receiveAtCentral, uploadOdk, createSupplierOrder, addNote, ActionError,
+  approveShipment, sendShipment, proposeShipment, receiveAtCentral, uploadOdk, createSupplierOrder, addNote, ActionError, STORE_PROBLEMS,
 } from '../../actions.js';
 import { STOCK_TYPES, CORRECTION_REASONS } from '../../config.js';
 
@@ -42,7 +42,8 @@ function monthsText(v) {
 
 // ---------- Needs attention ----------
 
-export function alertBanner(ctx, a) {
+// noAction: show the alert without its button (management is view only).
+export function alertBanner(ctx, a, { noAction = false } = {}) {
   const { db, user } = ctx;
   const d = today(db);
   const it = a.itemId ? db.item(a.itemId) : null;
@@ -79,8 +80,15 @@ export function alertBanner(ctx, a) {
     case 'NOT_COUNTED': {
       const names = a.stores.map((x) => sname(db, x.storeId));
       const lasts = a.stores.map((x) => (x.lastCountAt ? html`${b(formatShortDate(dateOf(x.lastCountAt)))} ${formatTime(x.lastCountAt)}` : 'never'));
-      text = html`${joinAnd(names)} ${names.length > 1 ? 'have' : 'has'} not sent today's count. Last ${names.length > 1 ? 'counts' : 'count'} ${joinAnd(lasts)}.`;
+      const blanks = a.partial.map((x) => html`${shortName(db, x.storeId)} left ${b(x.itemIds.length)} ${x.itemIds.length === 1 ? 'item' : 'items'} blank${x.itemIds.length <= 3 ? html`: ${joinAnd(x.itemIds.map((i) => b(db.item(i).name)))}` : ''}.`);
+      text = html`${names.length ? html`${joinAnd(names)} ${names.length > 1 ? 'have' : 'has'} not sent today's count. Last ${names.length > 1 ? 'counts' : 'count'} ${joinAnd(lasts)}.` : ''}${names.length && blanks.length ? ' ' : ''}${blanks.map((x, i) => html`${i ? ' ' : ''}${x}`)}`;
       button = btn({ label: act.label, icon: act.icon, act: 'remind', data: { stores: a.storeIds.join(','), what: 'today\'s count' } });
+      break;
+    }
+    case 'STORE_PROBLEM': {
+      const words = a.problem.problems.map((x) => STORE_PROBLEMS.find((p) => p.id === x)?.label.toLowerCase() || x);
+      text = html`${sname(db, a.storeId)} · store reported ${b(joinAnd(words))} by ${personRef(a.problem.byName, user)}, ${b(when(a.problem.at, d))}.${a.problem.note ? ` Note: "${a.problem.note}"` : ''}`;
+      button = btn({ label: act.label, icon: act.icon, act: 'note-open', data: { target: a.problem.sessionId, label: `store problem at ${sname(db, a.storeId)}` } });
       break;
     }
     case 'APPROVAL': {
@@ -110,7 +118,7 @@ export function alertBanner(ctx, a) {
     default:
       text = a.label;
   }
-  return html`<div class="banner bn-${a.banner}">${pill}<p class="grow" style="margin: 0">${text}</p>${button}</div>`;
+  return html`<div class="banner bn-${a.banner}">${pill}<p class="grow" style="margin: 0">${text}</p>${noAction ? '' : button}</div>`;
 }
 
 function needsSection(ctx) {
@@ -127,14 +135,16 @@ function itemsForFilter(db, type) {
   return db.items.filter((it) => type === 'all' || it.type === type);
 }
 
-function storesTable(ctx) {
+// scope: { storeIds, readOnly, base } for the supervisor's view-only Stores (their facilities only).
+function storesTable(ctx, scope = {}) {
   const { db, vs } = ctx;
+  const base = scope.base || '#/logistics/stores';
   const d = today(db);
   const type = vs.type || 'all';
   const list = itemsForFilter(db, type);
   const itemId = list.some((x) => x.id === vs.itemId) ? vs.itemId : (list.find((x) => x.isRutf) || list[0])?.id;
   const it = itemId ? db.item(itemId) : null;
-  const rows = db.stores.map((s, i) => {
+  const rows = db.stores.filter((s) => !scope.storeIds || scope.storeIds.includes(s.id)).map((s, i) => {
     const holds = it && db.holds(s.id, it.id);
     const v = holds ? stockView(db, s.id, it.id) : null;
     const rank = s.type === 'CENTRAL' ? -1 : !holds ? 99 : v.sortRank;
@@ -146,8 +156,8 @@ function storesTable(ctx) {
     if (!r.holds) return html`<td class="r muted">Not held here</td><td class="r muted">Not held</td><td class="small muted">No status</td>`;
     if (v.status === STATUS.NOT_COUNTED) return html`<td class="r muted">Waiting for today's count</td><td class="r muted">Not shown</td><td>${chip('NOT_COUNTED', null, 'sm')}</td>`;
     if (s.type === 'CENTRAL') {
-      const pill = v.belowCentralTarget ? chip('LOW', 'Below 3-month target', 'sm') : v.tracked ? chip('OK', null, 'sm') : chip('NOT_TRACKED', null, 'sm');
-      return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${v.monthsInclPipeline !== null ? v.monthsInclPipeline.toFixed(1) : 'n/a'}${v.onOrder ? html` <span class="small muted">incl. ${qtyText(it, v.onOrder)} on order</span>` : ''}</td><td>${pill}</td>`;
+      // One rule for the central store: its status comes from the stock view, as on every other screen.
+      return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${v.months !== null && Number.isFinite(v.months) ? v.months.toFixed(1) : 'n/a'}${v.onOrder ? html` <span class="small muted">incl. ${qtyText(it, v.onOrder)} on order</span>` : ''}</td><td>${statusChip(v, { size: 'sm' })}</td>`;
     }
     return html`<td class="r">${qtyText(it, v.onHand)}</td><td class="r">${monthsText(v)}</td><td><span class="row g8">${v.needsCheck && v.status !== STATUS.OUT ? chip('CHECK', null, 'sm') : ''}${statusChip(v, { size: 'sm', logistics: true })}${v.estimated ? chip('ESTIMATED', null, 'sm') : ''}</span></td>`;
   };
@@ -161,33 +171,33 @@ function storesTable(ctx) {
     const c = v.countedToday ? v.countedAt : v.lastCount ? (v.lastCount.submittedAt || v.lastCount.ts) : null;
     return c ? when(c, d, { capital: true }) : 'Never';
   };
-  const sel = vs.storeId || 'jigawan_iro';
+  const sel = vs.storeId || (scope.storeIds ? scope.storeIds[0] : 'jigawan_iro');
   return html`<section class="col g16" id="stores" aria-labelledby="st">
-<div class="row sp"><h2 class="h2" id="st">All stores</h2>
+<div class="row sp"><h2 class="h2" id="st">${scope.storeIds ? 'Your stores' : 'All stores'}</h2>
 <label class="row g8"><span class="label">Item</span><select class="select" id="store-item" data-change="store-item">${list.map((x) => html`<option value="${x.id}"${x.id === itemId ? ' selected' : ''}>${x.name}${x.isRutf ? ' (sachets)' : ''}</option>`)}</select></label></div>
 <div class="tabs" role="group" aria-label="Stock type">${TYPE_TABS.map((t) => html`<button type="button" class="tab${type === t.id ? ' tab-on' : ''}" aria-pressed="${type === t.id}" data-act="store-type" data-type="${t.id}">${t.label}</button>`)}</div>
 ${it ? html`<div class="tbox">
 <table class="tbl">
 <thead><tr><th>Store</th><th>Type</th><th class="r">${it.name} on hand</th><th class="r">Months of stock</th><th>Status</th><th>Last updated</th></tr></thead>
 <tbody>
-${shown.map((r) => html`<tr class="click${r.s.id === sel ? ' sel' : ''}" data-act="pick-store" data-store="${r.s.id}"><td class="b"><a class="b" href="#/logistics/stores?store=${r.s.id}" data-act="pick-store" data-store="${r.s.id}">${r.s.type === 'CENTRAL' ? 'Central store, Gombe' : r.s.name}</a></td><td>${r.s.type === 'CENTRAL' ? 'Central' : r.s.type}</td>${cell(r)}<td class="small muted">${updated(r)}</td></tr>`)}
-${vs.allStores ? '' : html`<tr><td colspan="6">${btn({ label: `Show ${rows.length - shown.length} more stores`, icon: 'chev', kind: 'ghost', size: 'sm', act: 'all-stores' })}</td></tr>`}
+${shown.map((r) => html`<tr class="click${r.s.id === sel ? ' sel' : ''}" data-act="pick-store" data-store="${r.s.id}"><td class="b"><a class="b" href="${base}?store=${r.s.id}" data-act="pick-store" data-store="${r.s.id}">${r.s.type === 'CENTRAL' ? 'Central store, Gombe' : r.s.name}</a></td><td>${r.s.type === 'CENTRAL' ? 'Central' : r.s.type}</td>${cell(r)}<td class="small muted">${updated(r)}</td></tr>`)}
+${vs.allStores || rows.length <= shown.length ? '' : html`<tr><td colspan="6">${btn({ label: `Show ${rows.length - shown.length} more stores`, icon: 'chev', kind: 'ghost', size: 'sm', act: 'all-stores' })}</td></tr>`}
 </tbody>
 </table>
 </div>` : html`<p class="muted">No items of this type yet.</p>`}
 </section>`;
 }
 
-function storeDetail(ctx) {
+function storeDetail(ctx, scope = {}) {
   const { db, vs } = ctx;
-  const sid = vs.storeId || 'jigawan_iro';
+  const sid = vs.storeId && (!scope.storeIds || scope.storeIds.includes(vs.storeId)) ? vs.storeId : scope.storeIds ? scope.storeIds[0] : 'jigawan_iro';
   const store = db.store(sid);
   const views = storeItems(db, sid).filter((v) => (vs.type || 'all') === 'all' || v.item.type === vs.type);
   const last = views.filter((v) => v.countedToday).map((v) => v.todayCount).sort((a, z) => (a.submittedAt || a.ts).localeCompare(z.submittedAt || z.ts)).at(-1);
   const d = today(db);
   return html`<section class="card col g16" id="detail" aria-labelledby="dt">
 <div class="row sp"><h2 class="h3" id="dt">${store.type === 'CENTRAL' ? 'Central store, Gombe' : store.name} · every item today</h2><span class="small muted">${last ? `Counted today ${formatTime(last.submittedAt || last.ts)} by ${last.stamp.byName}` : store.type === 'CENTRAL' ? 'Run by logistics' : 'Not counted today'} · supervisor ${store.supervisor}</span></div>
-<div class="row g8">${store.type !== 'CENTRAL' ? html`<a class="btn btn-secondary btn-sm" href="#/facility/${sid}">${ic('eye', 'b')}Open facility view</a><a class="btn btn-secondary btn-sm" href="#/recount/${sid}">${ic('recount', 'b')}Record a recount</a>` : ''}</div>
+<div class="row g8">${store.type !== 'CENTRAL' ? html`<a class="btn btn-secondary btn-sm" href="#/facility/${sid}">${ic('eye', 'b')}Open facility view</a>${scope.readOnly ? '' : html`<a class="btn btn-secondary btn-sm" href="#/recount/${sid}">${ic('recount', 'b')}Record a recount</a>`}` : ''}</div>
 <div class="tbox">
 <table class="tbl">
 <thead><tr><th>Item</th><th class="r">On hand</th><th class="r">Months</th><th>Lasts until</th><th>Status</th></tr></thead>
@@ -220,7 +230,7 @@ function firstBatch(db, storeId, itemId) {
   return bt && bt.batch ? `batch ${bt.batch} (expires ${formatShortDate(bt.expiry)} ${bt.expiry.slice(0, 4)}) first` : null;
 }
 
-function proposalCard(ctx, sh) {
+function proposalCard(ctx, sh, { readOnly = false } = {}) {
   const { db, user, vs } = ctx;
   const d = today(db);
   const toName = sh.type === 'transfer' ? `${sname(db, sh.fromStoreId)} → ${sname(db, sh.toStoreId)}` : sname(db, sh.toStoreId);
@@ -231,23 +241,42 @@ function proposalCard(ctx, sh) {
   return html`<article class="card col g16">
 <div class="row sp"><a class="h3" href="#/shipment/${sh.id}" style="color: inherit">${toName}</a>${pill}</div>
 ${unset ? html`<span class="b">No usage data for ${unset === 1 ? 'this item' : 'these items'}. Logistics will set the amount.</span>` : ''}
-${sh.lines.map((l) => {
+${lowFirst(db, sh.toStoreId, sh.lines).map((l) => {
     const it = db.item(l.itemId);
     const v = stockView(db, sh.toStoreId, l.itemId);
     const key = `${sh.id}|${l.itemId}`;
+    if (l.qtyProposed === null && readOnly) {
+      return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · amount not set yet</span>${statusChip(v, { size: 'sm', logistics: true })}</div>`;
+    }
     if (l.qtyProposed === null) {
       return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<label class="grow" for="amt-${sh.id}-${l.itemId}">${it.name}<span class="small muted"> · amount to send (${it.unit.multiply ? it.unit.one : it.unit.many})</span></label><input class="input" id="amt-${sh.id}-${l.itemId}" value="${amounts[key] ?? ''}" placeholder="Set amount" inputmode="decimal" style="width: 130px" data-change="amount" data-key="${key}"></div>`;
     }
     const t = l.targetFrozen;
     const fb = firstBatch(db, sh.fromStoreId, l.itemId);
-    return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span></div>
+    return html`<div class="row g8" style="flex-wrap: nowrap">${pic(it, 'sm')}<span class="grow">${it.name} · <span class="b">${qtyText(it, l.qtyProposed)}</span>${sh.type === 'transfer' ? ' from "Too much" stock' : ''}</span>${statusChip(v, { size: 'sm', logistics: true })}</div>
 ${sh.type !== 'transfer' && t ? html`<span class="small muted">Tops up to its ${v.estimated ? 'estimated ' : ''}2-month target of ${qtyText(it, t)}, less ${qtyText(it, v.onHand ?? 0)} on hand${v.inTransit ? `, less ${qtyText(it, v.inTransit)} on the way` : ''}${fb ? ` · ${fb}` : ''} · <span class="row g4" style="display: inline-flex">${ic('lock', 'i', 'sm')}target locked ${formatShortDate(dateOf(sh.steps.requested.at))} ${formatTime(sh.steps.requested.at)}</span></span>` : ''}`;
   })}
 ${sh.type === 'transfer' ? html`<span class="small muted">Leaves ${shortName(db, sh.fromStoreId)} when Sent, arrives at ${shortName(db, sh.toStoreId)} when Received</span>` : ''}
 ${sh.note ? html`<span class="small">Note: "${sh.note}"</span>` : ''}
 <span class="small muted">${byFacility ? 'Requested' : 'Planned'} by ${sh.steps.requested.byName} ${when(sh.steps.requested.at, d)}${sh.state === 'approved' ? ` · approved by ${sh.steps.approved.byName} ${when(sh.steps.approved.at, d)}` : ''}</span>
-<div class="row g8">${btn({ label: 'Approve', icon: 'tick', kind: sh.state === 'requested' ? 'primary' : 'secondary', act: 'ship-approve', data: { sh: sh.id }, disabled: sh.state !== 'requested' })}${btn({ label: 'Send', icon: 'truck', kind: sh.state === 'approved' ? 'primary' : 'secondary', act: 'ship-send', data: { sh: sh.id }, disabled: sh.state !== 'approved' })}</div>
+${readOnly ? html`<span class="small muted">${sh.state === 'requested' ? 'Waiting for logistics to approve' : 'Approved, waiting to be sent'}</span>` : html`<div class="row g8">${btn({ label: 'Approve', icon: 'tick', kind: sh.state === 'requested' ? 'primary' : 'secondary', act: 'ship-approve', data: { sh: sh.id }, disabled: sh.state !== 'requested' })}${btn({ label: 'Send', icon: 'truck', kind: sh.state === 'approved' ? 'primary' : 'secondary', act: 'ship-send', data: { sh: sh.id }, disabled: sh.state !== 'approved' })}</div>`}
 </article>`;
+}
+
+// Running low lines first, then the rest in item order (CLAUDE.md: Running low is logistics' action through the round).
+function lowFirst(db, storeId, lines) {
+  return lines.map((l, i) => ({ l, i, low: stockView(db, storeId, l.itemId).status === STATUS.LOW ? 0 : 1 })).sort((a, z) => a.low - z.low || a.i - z.i).map((x) => x.l);
+}
+
+// Items running low across facilities, from the real data (the monthly round card).
+function runningLow(db) {
+  const out = [];
+  for (const s of db.stores) {
+    if (s.type !== 'OTP' && s.type !== 'ITP') continue;
+    const n = storeItems(db, s.id).filter((v) => v.status === STATUS.LOW).length;
+    if (n) out.push({ storeId: s.id, n });
+  }
+  return { items: out.reduce((t, x) => t + x.n, 0), facilities: out.length };
 }
 
 function monthlyRoundCard(ctx) {
@@ -258,6 +287,8 @@ function monthlyRoundCard(ctx) {
   const waiting = db.stores.filter((s) => (s.type === 'OTP' || s.type === 'ITP') && !storeItems(db, s.id).some((v) => v.countedToday));
   const ready = suggestMonthly(db, month).filter((x) => !waiting.some((w) => w.id === x.toStoreId));
   const count = (st) => proposed.filter((s) => s.state === st).length;
+  const low = runningLow(db);
+  const lowLine = low.items ? html`<span>${chip('LOW', `${low.items} ${low.items === 1 ? 'item' : 'items'} running low at ${low.facilities} ${low.facilities === 1 ? 'facility' : 'facilities'}`, 'sm')}</span>` : '';
   let body;
   let button;
   if (!proposed.length) {
@@ -271,6 +302,7 @@ function monthlyRoundCard(ctx) {
   }
   return html`<article class="card col g16">
 <div class="row sp"><span class="h3">${monthName} monthly round</span><span class="tag">${ic('truck', 'i', 'sm')}Monthly</span></div>
+${lowLine}
 ${body}
 <span class="small muted">Planned dispatch ${formatShortDate(`${month}-02`)} · targets locked once proposed</span>
 <div class="row g8">${button}</div>
@@ -300,12 +332,12 @@ ${monthlyRoundCard(ctx)}
 </section>`;
 }
 
-function transitCard(ctx, sh) {
+function transitCard(ctx, sh, { readOnly = false } = {}) {
   const { db } = ctx;
   const d = today(db);
   const late = sentTooLong(db, sh);
   return html`<article class="card col g16"${late ? raw(' style="border: 2px solid var(--order-fg)"') : ''}>
-<div class="row sp"><a class="b" href="#/shipment/${sh.id}" style="color: inherit">${sh.number} · ${shipmentKind(sh)} · ${storeShort(db.store(sh.fromStoreId))} → ${sname(db, sh.toStoreId)}</a>${late ? chip('ORDER_NOW', `${hoursInSent(db, sh)} hours in Sent`, 'sm') : html`<span class="small muted">Sent ${hoursInSent(db, sh)} hours ago</span>`}</div>
+<div class="row sp">${readOnly ? html`<span class="b">${sh.number} · ${shipmentKind(sh)} · ${storeShort(db.store(sh.fromStoreId))} → ${sname(db, sh.toStoreId)}</span>` : html`<a class="b" href="#/shipment/${sh.id}" style="color: inherit">${sh.number} · ${shipmentKind(sh)} · ${storeShort(db.store(sh.fromStoreId))} → ${sname(db, sh.toStoreId)}</a>`}${late ? chip('ORDER_NOW', `${hoursInSent(db, sh)} hours in Sent`, 'sm') : html`<span class="small muted">Sent ${hoursInSent(db, sh)} hours ago</span>`}</div>
 ${stepTracker(sh, d, { detail: false })}
 <span class="small muted">${sh.lines.map((l) => `${db.item(l.itemId).name} ${lineText(db, sh, l)}`).join(' · ')}</span>
 </article>`;
@@ -384,7 +416,6 @@ function renderShipment(ctx, route) {
 ${header(ctx, { nav: navFor(ctx) })}
 <main class="wrap" style="max-width: 1040px">
 ${flashBanner(ctx)}
-${backLink('#/logistics/shipments', 'Back to shipments')}
 <div class="col g8">
 <h1 class="h1">Shipment ${sh.number}</h1>
 <p class="lead muted">${shipmentKind(sh)} · ${storeShort(db.store(sh.fromStoreId))} → ${sname(db, sh.toStoreId)}</p>
@@ -433,17 +464,23 @@ function renderMonthly(ctx) {
 ${header(ctx, { nav: navFor(ctx) })}
 <main class="wrap">
 ${flashBanner(ctx)}
-${backLink('#/logistics/shipments', 'Back to shipments')}
 <div class="col g8"><h1 class="h1">${monthName} monthly round</h1>
 <p class="lead muted">Each shipment tops every item up to its 2-month target for ${monthName}, less what is on hand and on the way. Targets lock when you propose.</p></div>
 ${waiting.length && !proposed.length ? html`<div class="banner bn-nc">${chip('NOT_COUNTED')}<p class="grow" style="margin: 0">Waiting for today's count: ${waiting.map((s) => s.name).join(', ')}. They are left out until they count.</p></div>` : ''}
-<div class="tbox"><table class="tbl">
-<thead><tr><th>Facility</th><th class="r">Items</th><th class="r">RUTF</th><th>Status</th></tr></thead>
-<tbody>${list.map((x) => {
+${(() => { const low = runningLow(db); return low.items ? html`<p style="margin: 0">${chip('LOW', `${low.items} ${low.items === 1 ? 'item' : 'items'} running low at ${low.facilities} ${low.facilities === 1 ? 'facility' : 'facilities'}`, 'sm')} Running low items are listed first in each facility.</p>` : ''; })()}
+<div class="col g8">${list.map((x) => {
     const rutf = x.lines.find((l) => l.itemId === 'rutf');
     const est = x.lines.some((l) => l.estimated || (usageInfo(db, x.toStoreId, l.itemId)?.estimated));
-    return html`<tr${x.id ? raw(` class="click" data-act="go" data-href="#/shipment/${x.id}"`) : ''}><td class="b">${sname(db, x.toStoreId)}</td><td class="r">${x.lines.length}</td><td class="r">${rutf ? formatRutf(rutf.qty) : 'n/a'}</td><td>${x.state ? html`<span class="small">${x.state}</span>` : est ? chip('ESTIMATED', null, 'sm') : ''}</td></tr>`;
-  })}</tbody></table></div>
+    const lines = lowFirst(db, x.toStoreId, x.lines);
+    const nLow = lines.filter((l) => stockView(db, x.toStoreId, l.itemId).status === STATUS.LOW).length;
+    return html`<details class="card card-tight"${nLow ? raw(' open') : ''}>
+<summary class="row sp" style="cursor: pointer"><span class="b">${sname(db, x.toStoreId)}</span><span class="row g8">${nLow ? chip('LOW', `${nLow} running low`, 'sm') : ''}${est ? chip('ESTIMATED', null, 'sm') : ''}<span class="small muted">${x.lines.length} ${x.lines.length === 1 ? 'item' : 'items'}${rutf ? ` · RUTF ${formatRutf(rutf.qty)}` : ''}${x.state ? ` · ${x.state}` : ''}</span></span></summary>
+<div class="tbox" style="margin-top: 12px"><table class="tbl"><thead><tr><th>Item</th><th class="r">To send</th><th>Status now</th></tr></thead><tbody>
+${lines.map((l) => { const it = db.item(l.itemId); const v = stockView(db, x.toStoreId, l.itemId); return html`<tr><td><span class="row g8">${pic(it, 'sm')}${it.name}</span></td><td class="r">${qtyText(it, l.qty)}</td><td>${statusChip(v, { size: 'sm', logistics: true })}</td></tr>`; })}
+</tbody></table></div>
+${x.id ? html`<a class="btn btn-ghost btn-sm" href="#/shipment/${x.id}" style="padding-left: 0">${ic('chev', 'b')}Open shipment ${db.shipments.get(x.id).number}</a>` : ''}
+</details>`;
+  })}</div>
 ${proposed.length ? '' : btn({ label: `Propose ${list.length} shipments`, icon: 'truck', kind: 'primary', size: 'lg', act: 'monthly-propose', style: 'align-self: flex-start' })}
 </main></div>`;
 }
@@ -464,8 +501,8 @@ function renderTransfer(ctx, route) {
 ${header(ctx, { nav: navFor(ctx) })}
 <main class="wrap" style="max-width: 1040px">
 ${flashBanner(ctx)}
-${backLink('#/logistics', 'Back to today')}
 <div class="col g8"><h1 class="h1">Move ${it.name} to another facility</h1>
+${(() => { const f = q.batch ? expiryFlags(db, from, it.id).find((x) => x.batch === q.batch) : null; return f ? html`<div class="banner bn-exp">${chip('EXPIRY')}<p class="grow" style="margin: 0">${sname(db, from)} · <span class="b">${it.name}</span> batch ${f.batch} expires <span class="b">${formatShortDate(f.expiry)}</span>. About <span class="b">${qtyText(it, f.unusedAtExpiry)}</span> will not be used by then.</p></div>` : ''; })()}
 <p class="lead muted">From ${sname(db, from)}${q.batch ? `, batch ${q.batch}` : ''}. Pick the facility that can use it soonest. Stock leaves ${sname(db, from)} when Sent and arrives when Received.</p></div>
 <div class="tbox"><table class="tbl">
 <thead><tr><th></th><th>Facility</th><th class="r">On hand</th><th class="r">Months</th><th>Status</th><th class="r">Room up to target</th></tr></thead>
@@ -535,7 +572,46 @@ function amountsFor(ctx, sh) {
   return out;
 }
 
+// ---------- supervisor: view-only Stores and Shipments for their facilities ----------
+
+function renderSupStores(ctx, route) {
+  const { user, vs } = ctx;
+  if (route.query.store && user.storeIds.includes(route.query.store)) vs.storeId = route.query.store;
+  const scope = { storeIds: user.storeIds, readOnly: true, base: '#/stores' };
+  return html`<div class="app">
+${header(ctx, { place: { name: 'Your facilities' } })}
+<main class="wrap">
+${flashBanner(ctx)}
+<div class="col g4"><h1 class="h1">Your stores</h1><p class="muted" style="margin: 0">View only. The same table logistics sees, for your ${user.storeIds.length} facilities.</p></div>
+${storesTable(ctx, scope)}${storeDetail(ctx, scope)}
+</main></div>`;
+}
+
+function renderSupShipments(ctx) {
+  const { db, user } = ctx;
+  const mine = (sh) => user.storeIds.includes(sh.toStoreId) || user.storeIds.includes(sh.fromStoreId);
+  const all = [...db.shipments.values()].filter(mine);
+  const open = all.filter((s) => s.state === 'requested' || s.state === 'approved').sort((a, z) => a.steps.requested.at.localeCompare(z.steps.requested.at));
+  const transit = all.filter((s) => s.state === 'sent').sort((a, z) => a.steps.sent.at.localeCompare(z.steps.sent.at));
+  const received = all.filter((s) => s.state === 'received').sort((a, z) => z.steps.received.at.localeCompare(a.steps.received.at)).slice(0, 10);
+  const d = today(db);
+  return html`<div class="app">
+${header(ctx, { place: { name: 'Your facilities' } })}
+<main class="wrap">
+${flashBanner(ctx)}
+<div class="col g4"><h1 class="h1">Shipments</h1><p class="muted" style="margin: 0">View only. Shipments to and from your facilities; logistics approves and sends them.</p></div>
+<section class="col g16"><h2 class="h2">Waiting to be sent (${open.length})</h2>
+${open.length ? html`<div class="two">${open.map((sh) => proposalCard(ctx, sh, { readOnly: true }))}</div>` : html`<p class="muted" style="margin: 0">No requests or planned shipments for your facilities.</p>`}</section>
+<section class="col g16"><h2 class="h2">In transit (${transit.length})</h2>
+${transit.length ? html`<div class="two">${transit.map((sh) => transitCard(ctx, sh, { readOnly: true }))}</div>` : html`<p class="muted" style="margin: 0">Nothing on the way to your facilities.</p>`}</section>
+<section class="col g16"><h2 class="h2">Received recently</h2>
+${received.length ? html`<div class="tbox"><table class="tbl"><thead><tr><th>Shipment</th><th>To</th><th>Received</th><th>What</th></tr></thead><tbody>${received.map((sh) => html`<tr><td class="b">${sh.number} · ${shipmentKind(sh)}</td><td>${sname(db, sh.toStoreId)}</td><td class="small">${when(sh.steps.received.at, d, { capital: true })} by ${sh.steps.received.byName}</td><td class="small">${sh.lines.map((l) => `${db.item(l.itemId).name} ${qtyText(db.item(l.itemId), l.qtyReceived ?? l.qtySent)}`).join(' · ')}</td></tr>`)}</tbody></table></div>` : html`<p class="muted" style="margin: 0">None yet.</p>`}</section>
+</main></div>`;
+}
+
 export const views = {
+  stores: { render: renderSupStores, roles: ['supervisor'] },
+  shipments: { render: renderSupShipments, roles: ['supervisor'] },
   logistics: { render: renderDashboard, roles: ['logistics'] },
   shipment: { render: renderShipment, roles: ['logistics'] },
   monthly: { render: renderMonthly, roles: ['logistics'] },
@@ -545,8 +621,7 @@ export const views = {
 export const actions = {
   'store-type': (ctx, el) => { ctx.vs.type = el.dataset.type; ctx.rerender(); },
   'pick-store': (ctx, el) => {
-    ctx.ui.view.logistics ||= {};
-    ctx.ui.view.logistics.storeId = el.dataset.store;
+    ctx.vs.storeId = el.dataset.store;
     ctx.rerender();
     document.getElementById('detail')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   },
