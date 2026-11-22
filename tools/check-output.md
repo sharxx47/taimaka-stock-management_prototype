@@ -113,5 +113,32 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 - Replaying the 6 saved events gives RUTF 5,850 (dropped 0)
 - Storage without a browser: available false, saved false (kept in memory instead); reset gives 0 events
 
+## Round 4
+
+| Management detail records add up (start) | stock-out days 6 of 6; days not on time 54 of 54; counts 756 of 756, matched 727 of 727; unexplained 3 of 3; emergency 4 of 4 | stock-out days 6 of 6; days not on time 54 of 54; counts 756 of 756, matched 727 of 727; unexplained 3 of 3; emergency 4 of 4 | OK |
+| Demo records stay the same on every load | yes | yes | OK |
+| Unexplained differences (worst first) | Jamari ORS 3 Oct 85 vs 93; Jigawan Iro Amoxicillin susp 60ml 26 Oct 91 vs 98; Jigawan Iro Amoxicillin susp 60ml 20 Oct 108 vs 116 | Jamari ORS 3 Oct 85 vs 93; Jigawan Iro Amoxicillin susp 60ml 26 Oct 91 vs 98; Jigawan Iro Amoxicillin susp 60ml 20 Oct 108 vs 116 | OK |
+| Management detail records add up (after the walkthrough copy) | yes | yes | OK |
+  (after: stock-out days 6 of 6; days not on time 54 of 54; counts 756 of 756, matched 727 of 727; unexplained 3 of 3; emergency 5 of 5)
+| Receipt difference alert (1042 short, expiry changed) | rank 5 data 1042 RUTF: qty 1800 -> 1650, expiry 2027-06-30 -> 2027-05-31 | rank 5 data 1042 RUTF: qty 1800 -> 1650, expiry 2027-06-30 -> 2027-05-31 | OK |
+| The stock record keeps the confirmed expiry and what logistics entered | RU-2604 2027-03-31; RU-2611 2027-05-31 (sent 2027-06-30, "Different date on the cartons") | RU-2604 2027-03-31; RU-2611 2027-05-31 (sent 2027-06-30, "Different date on the cartons") | OK |
+| Receipt difference clears after a logistics note | 0 | 0 | OK |
+| Wrong PIN tries | wrong, 2 left; wrong, 1 left; locked | wrong, 2 left; wrong, 1 left; locked | OK |
+| Right PIN while locked | locked | locked | OK |
+| Unlock request for logistics | rank 8, Approval waiting, button Unlock now, logistics only true | rank 8, Approval waiting, button Unlock now, logistics only true | OK |
+| Unlock request not on the supervisor home | not shown | not shown | OK |
+| After Unlock now | true, alerts 0 | true, alerts 0 | OK |
+| Lock ends by itself after 1 minute | false, sign in true | false, sign in true | OK |
+| Removed access | removed; log: Access removed by Nasiru Bello (Left Taimaka) | removed; log: Access removed by Nasiru Bello (Left Taimaka) | OK |
+| Restored access | true | true | OK |
+| Account events replay | 0 dropped, 2 log lines | 0 dropped, 2 log lines | OK |
+| ODK preview, bundled file | 27 sites, 19 items, 10 months, 0 problems, ignored total_jan_oct | 27 sites, 19 items, 10 months, 0 problems, ignored total_jan_oct | OK |
+| ODK preview, misspelled site and item | row 2: Unknown site "ashaka_garri". Did you mean ashaka_gari? | row 22: Unknown item name "Tom Brwn". Closest known name: Tom Brown | row 2: Unknown site "ashaka_garri". Did you mean ashaka_gari? | row 22: Unknown item name "Tom Brwn". Closest known name: Tom Brown | OK |
+| ODK preview, September missing | months 9, has Sep false | months 9, has Sep false | OK |
+| Upload without September keeps September (Zaune RUTF a month) | 13,750 | 13,750 | OK |
+| Upload with unreadable rows keeps their numbers (Ashaka Gari RUTF a month) | 5,516 | 5,516 | OK |
+| A file without site and item columns is refused | The file needs a "site" column and an "item" column. | The file needs a "site" column and an "item" column. | OK |
+| Service worker caches every file the app loads | yes (42 files) | yes (42 files) | OK |
+
 ## Result: all values match
 
