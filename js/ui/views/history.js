@@ -52,7 +52,9 @@ function line(ctx, row, latestCountId) {
       const sh = e.shipmentId ? db.shipments.get(e.shipmentId) : null;
       const from = sh ? (db.store(sh.fromStoreId).type === 'CENTRAL' ? 'Central store' : db.store(sh.fromStoreId).name) : e.supplier ? `supplier (${e.supplier})` : 'supplier';
       title = `${sh ? 'Shipment' : 'Stock'} received from ${from}: +${q(e.qty)}`;
-      const bt = (e.batches || []).map((b) => `batch ${b.batch}${b.expiry ? `, expires ${formatShortDate(b.expiry)} ${b.expiry.slice(0, 4)}` : ''}`).join('; ');
+      // Both values stay: what logistics entered when sending, and what the receiver confirmed (round 4).
+      const ex = (iso) => (iso ? `${formatShortDate(iso)} ${iso.slice(0, 4)}` : 'none');
+      const bt = (e.batches || []).map((b) => `batch ${b.batch}${b.sentBatch !== undefined && b.sentBatch !== b.batch ? ` (logistics entered ${b.sentBatch || 'none'})` : ''}${b.expiry ? `, expires ${ex(b.expiry)}` : ''}${b.sentExpiry !== undefined && b.sentExpiry !== b.expiry ? ` (logistics entered ${ex(b.sentExpiry)})` : ''}${b.editReason ? `, reason: "${b.editReason}"` : ''}`).join('; ');
       const recvLine = sh ? sh.lines.find((l) => l.itemId === e.itemId) : null;
       extra.push(html`<span class="muted">${sh ? `Shipment ${sh.number} · ` : ''}${bt}${it.isRutf && e.qty >= SACHETS_PER_CARTON && cartonsSplit(e.qty).loose === 0 ? ` · ${cartonsSplit(e.qty).sealed} sealed cartons` : ''}${recvLine && recvLine.reason ? ` · ${recvLine.reason}` : ''}</span>`);
       small = sh && sh.steps.sent ? `Sent by ${sh.steps.sent.byName} ${formatShortDate(dateOf(sh.steps.sent.at))} · received by ${e.stamp.byName}, ${formatShortDate(dateOf(e.ts))} ${formatTime(e.ts)}` : by;
@@ -209,12 +211,12 @@ function correctDialog(entryId) {
 <legend class="label" style="margin-bottom: 8px">Why are you correcting it?</legend>
 ${CORRECTION_REASONS.map((r) => html`<label class="radio${s.reason === r.id ? ' radio-on' : ''}"><input type="radio" name="reason" value="${r.id}" data-change="c-reason"${s.reason === r.id ? ' checked' : ''}>${r.id === 'other' ? 'Other (please explain)' : r.label}</label>`)}
 </fieldset>
-${it.isRutf ? html`<div class="row g16" style="align-items: flex-end">
-<label class="field"><span class="label">Sealed cartons</span><input class="num" id="c-sealed" value="${sealed}" inputmode="numeric" style="max-width: 120px" data-change="c-field" data-f="sealed"></label>
-<label class="field"><span class="label">Loose sachets</span><input class="num" id="c-loose" value="${loose}" inputmode="numeric" style="max-width: 120px" data-change="c-field" data-f="loose"></label>
+${it.isRutf ? html`<div class="fld-row">
+<label class="field"><span class="label">Sealed cartons</span><input class="num-c" id="c-sealed" value="${sealed}" inputmode="numeric" data-change="c-field" data-f="sealed"></label>
+<label class="field"><span class="label">Loose sachets</span><input class="num-c" id="c-loose" value="${loose}" inputmode="numeric" data-change="c-field" data-f="loose"></label>
 </div>
 <div class="readback">${rutfReadBack(Number(sealed || 0), Number(loose || 0)).text}${delta ? ` (${delta > 0 ? '+' : ''}${formatNumber(delta)})` : ''}</div>`
-    : html`<label class="field"><span class="label">Corrected amount (${it.unit.multiply ? it.unit.one : it.unit.many})</span><input class="num" id="c-qty" value="${s.qty ?? e.qty}" inputmode="decimal" data-change="c-field" data-f="qty"></label>${delta ? html`<div class="readback">${qtyText(it, newQty)} (${delta > 0 ? '+' : ''}${formatNumber(delta)})</div>` : ''}`}
+    : html`<label class="field"><span class="label">Corrected amount (${it.unit.multiply ? it.unit.one : it.unit.many})</span><input class="num-c" id="c-qty" value="${s.qty ?? e.qty}" inputmode="decimal" style="width: 140px" data-change="c-field" data-f="qty"></label>${delta ? html`<div class="readback">${qtyText(it, newQty)} (${delta > 0 ? '+' : ''}${formatNumber(delta)})</div>` : ''}`}
 ${needsApproval ? html`<div class="banner bn-wait"><span class="grow small">Above the alert level of ${formatRutf(Math.round(level))}. This will show "Waiting for approval by a second person" until ${store.supervisor} confirms.</span></div>` : ''}
 <label class="field"><span class="label">Note${s.reason === 'other' ? '' : ' (optional)'}</span><textarea class="input" rows="2" id="c-text" data-input="c-text">${s.text}</textarea></label>
 <div class="row g8">${btn({ label: 'Save correction', icon: 'tick', kind: 'primary', act: 'correct-save', data: { id: entryId } })}${btn({ label: 'Cancel', icon: 'x', act: 'close-modal' })}</div>

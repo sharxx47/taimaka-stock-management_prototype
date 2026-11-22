@@ -8,17 +8,22 @@ import {
   shipmentKind, storeShort, flashBanner, unitLabel,
 } from '../parts.js';
 import { navFor, lastsPlain } from './facility.js';
-import { formatShortDate, formatTime, dateOf, addDays } from '../../time.js';
+import { formatShortDate, formatTime, dateOf, addDays, MONTH_NAMES } from '../../time.js';
 import { formatNumber, formatRutf, formatMonths } from '../../format.js';
 import {
   STATUS, storeItems, stockView, today, nextMonth, suggestMonthly, suggestTransfers, sentTooLong, hoursInSent,
-  batchesOnHand, onHand, target, topUp, usageInfo, expiryFlags,
+  batchesOnHand, onHand, target, topUp, usageInfo, expiryFlags, currentMonth,
 } from '../../stock.js';
+import { completeMonths, odkAmc } from '../../usage.js';
+import { mergeUsage } from '../../db.js';
+import { DATA_FILES } from '../../app-data.js';
+import { userDisplayName } from '../../users.js';
 import { needsAttention, openEmergency } from '../../alerts.js';
 import {
   approveShipment, sendShipment, proposeShipment, receiveAtCentral, uploadOdk, createSupplierOrder, addNote, ActionError, STORE_PROBLEMS,
+  unlockAccount, receiptDifferences, pinState,
 } from '../../actions.js';
-import { STOCK_TYPES, CORRECTION_REASONS } from '../../config.js';
+import { STOCK_TYPES, CORRECTION_REASONS, AMC_MONTHS } from '../../config.js';
 
 const TYPE_TABS = [{ id: 'all', label: 'All types' }, ...STOCK_TYPES.map((t) => ({ id: t.id, label: t.id === 'consumable' ? 'Consumables' : t.label }))];
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -77,6 +82,24 @@ export function alertBanner(ctx, a, { noAction = false } = {}) {
       text = html`${sname(db, a.storeId)} · ${b(it.name)}: counted ${b(formatNumber(a.counted))}, expected ${b(formatNumber(a.expected))} (${qtyText(it, a.diff)}).`;
       button = goBtn(act.label, act.icon, `#/recount/${a.storeId}?item=${a.itemId}`);
       break;
+    case 'RECEIPT_DIFF': {
+      const exp = (iso) => (iso ? `${formatShortDate(iso)} ${iso.slice(0, 4)}` : 'none');
+      const parts = a.diffs.map((x) => (x.kind === 'qty'
+        ? html`sent ${b(qtyText(it, x.sent))}, received ${b(qtyText(it, x.received))}${x.reason ? ` (${x.reason})` : ''}`
+        : x.kind === 'batch'
+          ? html`batch entered by logistics ${b(x.sent || 'none')}, confirmed ${b(x.received)}${x.reason ? ` ("${x.reason}")` : ''}`
+          : html`expiry entered by logistics ${b(exp(x.sent))}, confirmed ${b(exp(x.received))}${x.reason ? ` ("${x.reason}")` : ''}`));
+      text = html`${sname(db, a.storeId)} · ${b(`Shipment ${a.number}`)}, ${b(it.name)}: ${parts.map((x, i) => html`${i ? '; ' : ''}${x}`)}. Received by ${personRef(a.receivedBy, user)}, ${b(when(a.at, d))}.`;
+      button = goBtn(act.label, act.icon, `#/shipment/${a.shipmentId}`);
+      break;
+    }
+    case 'UNLOCK': {
+      const u = db.user(a.userId);
+      const p = pinState(db, a.userId);
+      text = html`${b(userDisplayName(u, db.stores))}${u.name ? ` (${u.role}${u.storeId ? `, ${db.store(u.storeId).name}` : ''})` : ''} is locked out after 3 wrong PINs and asked for an unlock at ${b(formatTime(a.at))}. It also unlocks by itself at ${formatTime(p.lockedUntil)}.`;
+      button = btn({ label: act.label, icon: act.icon, act: 'unlock-user', data: { user: a.userId } });
+      break;
+    }
     case 'NOT_COUNTED': {
       const names = a.stores.map((x) => sname(db, x.storeId));
       const lasts = a.stores.map((x) => (x.lastCountAt ? html`${b(formatShortDate(dateOf(x.lastCountAt)))} ${formatTime(x.lastCountAt)}` : 'never'));
@@ -395,7 +418,7 @@ ${btn({ label: 'Record a recount', icon: 'recount', act: 'recount-open' })}
 <a class="btn btn-secondary" href="#/logistics/shipments?at=central">${ic('receive', 'b')}Receive at central store</a>
 </div>
 </div>
-${up ? html`<p class="small muted" style="margin: -12px 0 0">Last ODK upload: ${when(up.stamp.at, d)} by ${up.stamp.byName} · ${up.siteCount} of ${db.stores.filter((s) => s.type === 'OTP').length} OTPs</p>` : ''}
+${up ? html`<p class="small muted" style="margin: -12px 0 0">Last ODK upload: ${lastUploadLine(db)}</p>` : ''}
 ${sub === 'today' ? needsSection(ctx) : ''}
 ${sub === 'today' || sub === 'stores' ? html`${storesTable(ctx)}${storeDetail(ctx)}` : ''}
 ${sub === 'today' || sub === 'shipments' ? html`${suggestedSection(ctx)}${transitSection(ctx)}${centralReceiveSection(ctx)}` : ''}
@@ -433,11 +456,13 @@ ${sh.state === 'sent' ? html`<p class="small muted row g8" style="margin: 0">${i
     const it = db.item(l.itemId);
     const key = `${sh.id}|${l.itemId}`;
     const batches = (sh.state === 'received' ? l.batchesReceived : l.batchesSent) || [];
+    const bText = (x) => `${x.batch || 'no batch'}${x.sentBatch !== undefined && x.sentBatch !== x.batch ? ` (logistics entered ${x.sentBatch || 'none'})` : ''}${x.expiry ? ` (expires ${formatShortDate(x.expiry)} ${x.expiry.slice(0, 4)}${x.sentExpiry !== undefined && x.sentExpiry !== x.expiry ? `; logistics entered ${x.sentExpiry ? `${formatShortDate(x.sentExpiry)} ${x.sentExpiry.slice(0, 4)}` : 'none'}` : ''})` : ''}: ${qtyText(it, x.qty)}`;
     const amountCell = l.qtyProposed === null && sh.state === 'requested'
       ? html`<input class="input" id="amt-${sh.id}-${l.itemId}" value="${amounts[key] ?? ''}" placeholder="Set the amount" inputmode="decimal" style="width: 160px" data-change="amount" data-key="${key}" aria-label="Amount of ${it.name} to send">`
       : html`${lineText(db, sh, l)}${sh.state === 'received' && l.qtyReceived !== l.qtySent ? html`<br><span class="small">Received ${qtyText(it, l.qtyReceived)}</span>` : ''}`;
-    return html`<tr><td><span class="row g8">${pic(it, 'sm')}${it.name}</span>${l.reason ? html`<br><span class="small muted">${l.reason}</span>` : ''}</td><td class="r">${amountCell}</td><td class="small">${batches.length ? batches.map((x) => `${x.batch || 'no batch'}${x.expiry ? ` (expires ${formatShortDate(x.expiry)} ${x.expiry.slice(0, 4)})` : ''}: ${qtyText(it, x.qty)}`).join('; ') : sh.state === 'approved' || sh.state === 'requested' ? firstBatch(db, sh.fromStoreId, l.itemId) || 'Picked when sent' : ''}</td><td class="small muted">${l.targetFrozen !== null && l.targetFrozen !== undefined ? html`${qtyText(it, l.targetFrozen)} ${ic('lock', 'i', 'sm')}` : l.note || 'n/a'}</td></tr>`;
+    return html`<tr><td><span class="row g8">${pic(it, 'sm')}${it.name}</span>${l.reason ? html`<br><span class="small muted">${l.reason}</span>` : ''}</td><td class="r">${amountCell}</td><td class="small">${batches.length ? batches.map(bText).join('; ') : sh.state === 'approved' || sh.state === 'requested' ? firstBatch(db, sh.fromStoreId, l.itemId) || 'Picked when sent' : ''}</td><td class="small muted">${l.targetFrozen !== null && l.targetFrozen !== undefined ? html`${qtyText(it, l.targetFrozen)} ${ic('lock', 'i', 'sm')}` : l.note || 'n/a'}</td></tr>`;
   })}</tbody></table></div>
+${(() => { const diffs = sh.lines.flatMap((l) => receiptDifferences(sh, l).map((x) => ({ ...x, it: db.item(l.itemId) }))); return diffs.length ? html`<div class="banner bn-low">${chip('CHECK', 'Receipt difference')}<p class="grow" style="margin: 0">Received by ${sh.steps.received.byName}, ${when(sh.steps.received.at, d)}: ${diffs.map((x, i) => html`${i ? '; ' : ''}<span class="b">${x.it.name}</span> ${x.kind === 'qty' ? html`sent <span class="b">${qtyText(x.it, x.sent)}</span>, received <span class="b">${qtyText(x.it, x.received)}</span>${x.reason ? ` (${x.reason})` : ''}` : x.kind === 'batch' ? html`batch: logistics entered <span class="b">${x.sent || 'none'}</span>, confirmed <span class="b">${x.received}</span>${x.reason ? ` ("${x.reason}")` : ''}` : html`expiry: logistics entered <span class="b">${x.sent ? `${formatShortDate(x.sent)} ${x.sent.slice(0, 4)}` : 'none'}</span>, confirmed <span class="b">${formatShortDate(x.received)} ${x.received.slice(0, 4)}</span>${x.reason ? ` ("${x.reason}")` : ''}`}`)}. The stock uses what was confirmed. Add a note when it is sorted out; the alert then clears.</p></div>` : ''; })()}
 ${sh.note ? html`<p style="margin: 0">Note from ${sh.steps.requested.byName}: "${sh.note}"</p>` : ''}
 ${notes.map((n) => html`<p class="small" style="margin: 0">${n.stamp.byName}, ${when(n.stamp.at, d)}: "${n.text}"</p>`)}
 <div class="row g8">
@@ -516,15 +541,121 @@ ${btn({ label: 'Propose transfer', icon: 'move', kind: 'primary', act: 'transfer
 
 // ---------- dialogs ----------
 
+// ---------- ODK usage upload (round 4): the last upload first, the format, a preview, then Apply ----------
+
+function monthRange(keys) {
+  const ks = [...keys].sort();
+  if (!ks.length) return 'no months';
+  const name = (k) => MONTH_NAMES[Number(k.slice(5, 7)) - 1];
+  const idx = ks.map((k) => Number(k.slice(0, 4)) * 12 + Number(k.slice(5, 7)));
+  const contiguous = idx.every((v, i) => i === 0 || v === idx[i - 1] + 1);
+  if (contiguous && ks.length > 2) return `${name(ks[0])} to ${name(ks.at(-1))} ${ks.at(-1).slice(0, 4)}`;
+  return `${ks.map(name).join(', ')} ${ks.at(-1).slice(0, 4)}`;
+}
+
+function agoText(db, iso) {
+  const mins = Math.max(0, Math.floor((Date.parse(db.nowIso) - Date.parse(iso)) / 60000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} ${mins === 1 ? 'minute' : 'minutes'} ago`;
+  const h = Math.floor(mins / 60);
+  if (h < 48) return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
+  return `${Math.floor(h / 24)} days ago`;
+}
+
+export function lastUploadLine(db) {
+  const up = db.odk.uploads.at(-1);
+  if (!up) return 'No ODK upload yet';
+  const d = today(db);
+  return `${when(up.stamp.at, d)} (${agoText(db, up.stamp.at)}) by ${up.stamp.byName} · ${up.fileName} · ${up.siteCount} of ${db.stores.filter((s) => s.type === 'OTP').length} OTPs, ${monthRange(up.months || db.odk.months)}`;
+}
+
+// What an upload would change: average use per site and item, before and after (nothing is applied here).
+function odkPreview(db, text) {
+  const parsed = db.parseOdk(text);
+  if (!parsed.ok) return { parsed };
+  const cur = currentMonth(db);
+  const newUsage = mergeUsage(db.odk.usage, parsed.usage);
+  const newMonths = [...new Set([...db.odk.months, ...parsed.months])].sort();
+  const usedNow = completeMonths(db.odk.months, cur).slice(-AMC_MONTHS);
+  const usedNew = completeMonths(newMonths, cur).slice(-AMC_MONTHS);
+  const expected = [];
+  for (let m = 1; m < Number(cur.slice(5, 7)); m++) expected.push(`${cur.slice(0, 4)}-${String(m).padStart(2, '0')}`);
+  const missingMonths = expected.filter((k) => !parsed.months.includes(k));
+  const otps = db.stores.filter((s) => s.type === 'OTP' && s.odkSiteId);
+  const sitesMissing = otps.filter((s) => !parsed.usage[s.id]);
+  let changedPairs = 0;
+  const siteChanges = [];
+  for (const s of otps) {
+    for (const itemId of new Set([...Object.keys(db.odk.usage[s.id] || {}), ...Object.keys(newUsage[s.id] || {})])) {
+      const a = odkAmc(db.odk.usage, s.id, itemId, db.odk.months, cur)?.amc ?? null;
+      const b = odkAmc(newUsage, s.id, itemId, newMonths, cur)?.amc ?? null;
+      if (a === b || (a !== null && b !== null && Math.abs(a - b) < 0.05)) continue;
+      changedPairs++;
+      if (itemId === 'rutf') siteChanges.push({ storeId: s.id, from: a, to: b });
+    }
+  }
+  siteChanges.sort((x, z) => Math.abs((z.to ?? 0) - (z.from ?? 0)) - Math.abs((x.to ?? 0) - (x.from ?? 0)));
+  return { parsed, missingMonths, sitesMissing, changedPairs, siteChanges, usedNow, usedNew };
+}
+
 function odkDialog() {
   return {
-    render: () => html`<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="odkh">
+    render: (ctx) => {
+      const { db } = ctx;
+      const st = (ctx.ui.view.logistics ||= {}).odk || {};
+      const up = db.odk.uploads.at(-1);
+      const cur = currentMonth(db);
+      const used = completeMonths(db.odk.months, cur).slice(-AMC_MONTHS);
+      const lines = db.odk.bundledText.split(/\r?\n/).filter(Boolean);
+      const head = lines[0].split(',');
+      const sample = lines.slice(1, 4).map((l) => l.split(','));
+      const href = db.odk.source === 'bundled' ? encodeURI(DATA_FILES.odkCsv) : (st.blobUrl ||= URL.createObjectURL(new Blob([db.odk.text], { type: 'text/csv' })));
+      const file = db.odk.source === 'bundled' ? DATA_FILES.odkCsv.split('/').pop() : up.fileName;
+      const p = st.preview;
+      const name = (k) => MONTH_FULL[Number(k.slice(5, 7)) - 1];
+      return html`<div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-labelledby="odkh">
 <div class="row sp"><h2 class="h3" id="odkh">Upload ODK usage (CSV)</h2>${btn({ label: 'Close', icon: 'x', kind: 'ghost', size: 'sm', act: 'close-modal' })}</div>
-<p class="muted" style="margin: 0">The monthly ODK export: one row per site and item, with columns site, item, Jan, Feb and so on. Average use comes from the most recent complete months.</p>
-<label class="field"><span class="label">CSV file</span><input type="file" id="odk-file" accept=".csv,text/csv" class="input"></label>
-<div class="row g8">${btn({ label: 'Upload', icon: 'upload', kind: 'primary', act: 'odk-upload' })}${btn({ label: 'Cancel', icon: 'x', act: 'close-modal' })}</div>
-</div>`,
+<div class="banner bn-info">${ic('upload', 'i', 'lg')}<p class="grow" style="margin: 0"><span class="b">Last upload:</span> ${up ? html`${when(up.stamp.at, today(db), { capital: true })} (${agoText(db, up.stamp.at)}) by <span class="b">${up.stamp.byName}</span>. File <span class="b">${up.fileName}</span>, ${up.siteCount} OTPs, ${up.itemCount} items, ${monthRange(up.months || db.odk.months)}.` : 'none yet.'}</p></div>
+${p ? odkPreviewPanel(ctx, st, p) : html`<div class="col g8">
+<h3 class="h3">What the file looks like</h3>
+<p style="margin: 0">The monthly ODK export, as a CSV file: <span class="b">one row per site and item</span>, sites as ids (such as ${sample[0][0]}), and <span class="b">each month's total use</span> in its own column. The first rows of the current file:</p>
+<div class="tbox odk-ex"><table class="tbl"><thead><tr>${head.map((h) => html`<th>${h}</th>`)}</tr></thead><tbody>${sample.map((r) => html`<tr>${r.map((c) => html`<td>${c}</td>`)}</tr>`)}</tbody></table></div>
+<p style="margin: 0"><span class="b">Needed:</span> a "site" column, an "item" column and at least one month column (Jan, Feb and so on). <span class="b">Ignored:</span> any other column, such as ${head.filter((h) => !/^(site|item)$/i.test(h) && !MONTH_NAMES.some((m) => m.toLowerCase() === h.toLowerCase())).join(', ') || 'a total'}.</p>
+<p style="margin: 0"><span class="b">Average use</span> is the average of the most recent complete months: now <span class="b">${used.map(name).join(' and ')}</span>. ${MONTH_FULL[Number(cur.slice(5, 7)) - 1]} is left out because it is not over yet (a partial month would make the average too low).</p>
+<p style="margin: 0">Nothing changes until you have seen what the file will change and pressed Apply. Sites, items or months the file does not have keep their current numbers.</p>
+<div class="row g8"><a class="btn btn-secondary" href="${href}" download="${file}">${raw(`<span class="ic b-upload ic-flip" aria-hidden="true"></span>`)}Download the current file</a><span class="small muted">Use it as a template.</span></div>
+</div>
+<label class="field"><span class="label">Choose the CSV file</span><input type="file" id="odk-file" accept=".csv,text/csv" class="input" style="height: auto; padding: 8px" data-change="odk-file"></label>
+${st.reading ? html`<span class="row g8"><span class="spinner" aria-hidden="true"></span>Reading the file...</span>` : ''}
+<div class="row g8">${btn({ label: 'Cancel', icon: 'x', act: 'close-modal' })}</div>`}
+</div>`;
+    },
   };
+}
+
+function odkPreviewPanel(ctx, st, p) {
+  const { db } = ctx;
+  const r = p.parsed;
+  const name = (k) => MONTH_FULL[Number(k.slice(5, 7)) - 1];
+  if (!r.ok) {
+    return html`<div class="banner bn-order" role="alert">${chip('ORDER_NOW', 'Cannot use this file')}<p class="grow" style="margin: 0"><span class="b">${st.fileName}</span>: ${r.errors.join(' ')} Nothing was changed.</p></div>
+<div class="row g8">${btn({ label: 'Choose another file', icon: 'upload', act: 'odk-again' })}${btn({ label: 'Cancel', icon: 'x', act: 'close-modal' })}</div>`;
+  }
+  const probs = r.problems;
+  return html`<div class="col g8" aria-live="polite">
+<h3 class="h3">What ${st.fileName} will change</h3>
+<p style="margin: 0">Found <span class="b">${r.siteCount} ${r.siteCount === 1 ? 'site' : 'sites'}</span>, <span class="b">${r.itemCount} items</span> and <span class="b">${r.months.length} months</span> (${monthRange(r.months)}) in ${r.rowCount} rows.${r.ignored.length ? ` Ignored ${r.ignored.length === 1 ? 'column' : 'columns'}: ${r.ignored.join(', ')}.` : ''}</p>
+${p.missingMonths.length ? html`<div class="banner bn-low">${chip('LOW', 'Month missing', 'sm')}<p class="grow" style="margin: 0">${joinAnd(p.missingMonths.map(name))} ${p.missingMonths.length === 1 ? 'is' : 'are'} not in this file. The current numbers for ${p.missingMonths.length === 1 ? 'that month' : 'those months'} stay, so average use still comes from <span class="b">${p.usedNew.map(name).join(' and ')}</span>.</p></div>` : html`<p style="margin: 0">Average use will come from <span class="b">${p.usedNew.map(name).join(' and ')}</span>.</p>`}
+${p.sitesMissing.length ? html`<p style="margin: 0">${p.sitesMissing.length} OTP ${p.sitesMissing.length === 1 ? 'site is' : 'sites are'} not in this file (${p.sitesMissing.slice(0, 5).map((s) => s.label).join(', ')}${p.sitesMissing.length > 5 ? ' and more' : ''}); ${p.sitesMissing.length === 1 ? 'it keeps its' : 'they keep their'} current numbers.</p>` : ''}
+${probs.length ? html`<div class="banner bn-low">${chip('CHECK', `${probs.length} ${probs.length === 1 ? 'row' : 'rows'} it cannot read`, 'sm')}<p class="grow" style="margin: 0">These rows are skipped; anything they would have changed keeps its current numbers.</p></div>
+<div class="tbox"><table class="tbl"><thead><tr><th class="r">Row</th><th>Site</th><th>Item</th><th>Why</th></tr></thead><tbody>${probs.slice(0, 12).map((x) => html`<tr><td class="r">${x.row}</td><td>${x.site}</td><td>${x.item}</td><td>${x.reason}</td></tr>`)}${probs.length > 12 ? html`<tr><td colspan="4" class="muted">and ${probs.length - 12} more rows</td></tr>` : ''}</tbody></table></div>` : html`<p class="row g8" style="margin: 0; color: var(--ok-fg)">${ic('ok', 's', 'sm')}Every row could be read.</p>`}
+<h3 class="h3">Average use that would change</h3>
+${p.changedPairs ? html`<p style="margin: 0"><span class="b">${p.changedPairs}</span> site and item ${p.changedPairs === 1 ? 'average' : 'averages'} would change. RUTF at the sites that change most:</p>
+${p.siteChanges.length ? html`<div class="tbox"><table class="tbl"><thead><tr><th>Site</th><th class="r">RUTF a month now</th><th class="r">After the upload</th><th class="r">Change</th></tr></thead><tbody>${p.siteChanges.slice(0, 5).map((x) => html`<tr><td class="b">${db.store(x.storeId).name}</td><td class="r">${x.from === null ? 'none' : formatNumber(Math.round(x.from))}</td><td class="r">${x.to === null ? 'none' : formatNumber(Math.round(x.to))}</td><td class="r">${x.from !== null && x.to !== null ? `${x.to >= x.from ? '+' : '-'}${formatNumber(Math.round(Math.abs(x.to - x.from)))}` : 'n/a'}</td></tr>`)}</tbody></table></div>` : html`<p class="muted" style="margin: 0">RUTF averages stay the same.</p>`}`
+    : html`<p style="margin: 0">No average would change: this file gives the same average use as the current data.</p>`}
+<p class="small muted" style="margin: 0">After Apply, statuses, targets and suggested shipments use the new average use.</p>
+</div>
+<div class="row g8">${btn({ label: 'Apply', icon: 'tick', kind: 'primary', act: 'odk-apply' })}${btn({ label: 'Choose another file', icon: 'upload', act: 'odk-again' })}${btn({ label: 'Cancel', icon: 'x', act: 'close-modal' })}</div>`;
 }
 
 function recountDialog(db) {
@@ -627,22 +758,31 @@ export const actions = {
   },
   'all-stores': (ctx) => { ctx.vs.allStores = true; ctx.rerender(); },
   'all-transit': (ctx) => { ctx.vs.allTransit = true; ctx.rerender(); },
-  'odk-open': (ctx) => ctx.modal(odkDialog()),
-  'odk-upload': (ctx) => {
-    const file = document.getElementById('odk-file')?.files?.[0];
-    if (!file) throw new ActionError('Pick the CSV file first.');
-    file.text().then((text) => {
-      try {
-        const up = uploadOdk(ctx.db, ctx.user, file.name, text);
-        ctx.changed();
-        ctx.ui.modal = null;
-        ctx.flash(`ODK usage updated from ${file.name}: ${up.siteCount} OTPs, ${up.itemCount} items. Average use, targets and statuses now use this file.`);
-      } catch (err) {
-        ctx.ui.modal = null;
-        ctx.flash(`The file could not be used: ${err.message} Nothing was changed.`, 'order');
-      }
-      ctx.rerender();
-    });
+  'odk-open': (ctx) => { (ctx.ui.view.logistics ||= {}).odk = {}; ctx.modal(odkDialog()); },
+  'odk-again': (ctx) => { ctx.ui.view.logistics.odk = {}; ctx.rerender(); },
+  'odk-apply': (ctx) => {
+    const st = ctx.ui.view.logistics.odk;
+    const p = st.preview;
+    try {
+      const up = uploadOdk(ctx.db, ctx.user, st.fileName, st.text);
+      ctx.changed();
+      ctx.ui.modal = null;
+      const top = p.siteChanges[0];
+      const big = top && top.from !== null && top.to !== null ? ` Biggest RUTF change: ${ctx.db.store(top.storeId).name}, ${formatNumber(Math.round(top.from))} to ${formatNumber(Math.round(top.to))} sachets a month.` : '';
+      ctx.flash(`ODK usage updated from ${st.fileName}: ${up.siteCount} OTPs, ${up.itemCount} items, ${monthRange(up.months)}.${up.skipped ? ` ${up.skipped} ${up.skipped === 1 ? 'row' : 'rows'} skipped.` : ''} ${p.changedPairs} site and item ${p.changedPairs === 1 ? 'average' : 'averages'} changed.${big} Statuses, targets and suggested shipments now use it.`);
+    } catch (err) {
+      ctx.ui.modal = null;
+      ctx.flash(`The file could not be used: ${err.message} Nothing was changed.`, 'order');
+    }
+    ctx.ui.view.logistics.odk = {};
+    ctx.rerender();
+  },
+  'unlock-user': (ctx, el) => {
+    const u = ctx.db.user(el.dataset.user);
+    unlockAccount(ctx.db, ctx.user, u.id, 'Asked to unlock');
+    ctx.changed();
+    ctx.flash(`${userDisplayName(u, ctx.db.stores)} is unlocked and can sign in again.`);
+    ctx.rerender();
   },
   'recount-open': (ctx) => ctx.modal(recountDialog(ctx.db)),
   'recount-go': (ctx) => { const id = document.getElementById('recount-store').value; ctx.ui.modal = null; ctx.go(`#/recount/${id}`); },
@@ -749,6 +889,17 @@ export const actions = {
 };
 
 export const changes = {
+  'odk-file': (ctx, el) => {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    const st = (ctx.ui.view.logistics ||= {}).odk ||= {};
+    st.reading = true;
+    ctx.rerender();
+    file.text().then((text) => {
+      Object.assign(st, { reading: false, fileName: file.name, text, preview: odkPreview(ctx.db, text) });
+      ctx.rerender();
+    });
+  },
   'store-item': (ctx, el) => { ctx.vs.itemId = el.value; ctx.rerender(); },
   amount: (ctx, el) => { ctx.vs.amounts ||= {}; ctx.vs.amounts[el.dataset.key] = el.value.trim(); },
   rc: (ctx, el) => { ctx.vs.central[el.dataset.f] = el.value; if (el.dataset.f === 'itemId' || el.dataset.f === 'qty') ctx.rerender(); },

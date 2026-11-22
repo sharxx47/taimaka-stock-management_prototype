@@ -121,10 +121,32 @@ export function roleTabs(ctx) {
     ];
   }
   return [
-    { href: '#/management', label: 'Overview', on: n === 'management' },
+    { href: '#/management', label: 'Overview', on: n === 'management' || n === 'kpi' },
     { href: '#/facility/central', label: 'Central store', on: n === 'facility' },
     { href: '#/history', label: 'History', on: n === 'history' },
   ];
+}
+
+// Phone bottom bar (round 4): the role's tabs and, for facility staff, their three actions, in one bar.
+const TAB_ICON = { Today: 'bell', Overview: 'chart', Stores: 'store', 'Central store': 'store', Shipments: 'truck', History: 'history', Settings: 'gear' };
+export function phoneNavItems(ctx) {
+  const { user, route, db } = ctx;
+  const n = route.name;
+  if (user.kind === 'facility') {
+    const itp = db.store(user.storeId).type === 'ITP';
+    return [
+      { href: '#/home', label: 'Today', icon: 'store', on: n === 'home' },
+      { href: '#/count', label: itp ? 'Log' : 'Count', icon: 'count', on: n === 'count' },
+      { href: '#/receive', label: 'Receive', icon: 'receive', on: n === 'receive' },
+      { href: '#/emergency', label: 'Emergency', icon: 'emergency', on: n === 'emergency' },
+      { href: '#/history', label: 'History', icon: 'history', on: n === 'history' },
+    ];
+  }
+  return roleTabs(ctx).map((t) => ({ ...t, icon: TAB_ICON[t.label] || 'chev' }));
+}
+
+export function phoneNav(ctx) {
+  return html`<nav class="app bbar" aria-label="Main">${phoneNavItems(ctx).map((t) => html`<a href="${t.href}"${t.on ? raw(' class="on" aria-current="page"') : ''}>${ic(t.icon, 'b', 'lg')}<span>${t.label}</span></a>`)}</nav>`;
 }
 
 export function tabsNav(ctx, extraClass = '') {
@@ -229,9 +251,54 @@ export function syncPill(sync, { compact = false } = {}) {
   return html`<span class="sync sync-sent"${compact ? raw(' style="align-self: flex-start"') : ''}>${ic('ok', 's', 'sm')}Sent. Last sync ${formatTime(sync.lastSync)}</span>`;
 }
 
+// Phone header: the sync state as one small icon (green when sent, amber when waiting or offline).
+export function syncIcon(sync) {
+  const device = deviceType();
+  if (!sync.online) return html`<span class="sync-dot sync-dot-wait" role="img" aria-label="Saved on this ${device}, will send when online">${ic('offline', 'i', 'sm')}</span>`;
+  if (sync.waiting) return html`<span class="sync-dot sync-dot-wait" role="img" aria-label="Saved on this ${device}, will send when online">${ic('saved', 'i', 'sm')}</span>`;
+  return html`<span class="sync-dot sync-dot-sent" role="img" aria-label="Sent. Last sync ${formatTime(sync.lastSync)}">${ic('ok', 's', 'sm')}</span>`;
+}
+
+function roleLineFor(ctx) {
+  const { user, db } = ctx;
+  const store = user.storeId ? db.store(user.storeId) : null;
+  return user.kind === 'management'
+    ? html`<span class="small muted">View only</span>`
+    : !user.name && store
+      ? html`<span class="small muted">${store.label}</span>`
+      : html`<span class="small muted caps">${user.role}</span>`;
+}
+
+// Phones (round 4): one compact row with the logo, the facility and an initials button that opens the name,
+// role, sync status and Sign out. The tabs move to the bottom bar.
+function phoneHeader(ctx, { place = null, sync = true, dataAsOf = null } = {}) {
+  const { user, db } = ctx;
+  const ini = initials(user, db.stores);
+  const store = user.storeId ? db.store(user.storeId) : null;
+  const title = user.name || user.role;
+  const p = place || (store ? { name: store.name, type: store.siteType } : null);
+  const syncLine = dataAsOf ? html`<span class="sync">${ic('history', 'i', 'sm')}Data as of ${dataAsOf}</span>` : sync ? html`<span data-slot="sync">${syncPill(ctx.sync)}</span>` : '';
+  return html`<header class="hdr hdr-ph">
+<a class="brand-link" href="${HOME[user.kind]}" aria-label="Taimaka Stock Management, go to your home screen"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka"></a>
+${p ? html`<div class="place-box ph-place">${p.icon === false ? '' : ic('store')}<span class="pb-name">${p.name || p.label}</span></div>` : html`<span class="ph-place ph-place-plain b">Stock Management</span>`}
+${!dataAsOf && sync ? html`<span data-slot="sync" data-compact="icon">${syncIcon(ctx.sync)}</span>` : ''}
+<details class="me"><summary class="me-btn" aria-label="${title}: your name, role, sync and sign out"><span class="avatar" aria-hidden="true">${ini ?? ic('eye')}</span></summary>
+<div class="me-panel col g8" role="group" aria-label="Signed in">
+<span class="b caps">${title}</span>${roleLineFor(ctx)}${p && p.type ? html`<span class="small muted">${p.name} · ${p.type}</span>` : ''}
+${syncLine}
+${btn({ label: 'Sign out', icon: 'logout', kind: 'secondary', act: 'signout', block: true })}
+</div></details>
+</header>`;
+}
+
 // ---------- header ----------
 // place: { name, type } or { label } for roles without one facility. nav: [{ href, label, on }].
-export function header(ctx, { place = null, sync = true, dataAsOf = null } = {}) {
+export function header(ctx, opts = {}) {
+  if (isPhone()) return phoneHeader(ctx, opts);
+  return laptopHeader(ctx, opts);
+}
+
+function laptopHeader(ctx, { place = null, sync = true, dataAsOf = null } = {}) {
   const { user, db } = ctx;
   const ini = initials(user, db.stores);
   const store = user.storeId ? db.store(user.storeId) : null;

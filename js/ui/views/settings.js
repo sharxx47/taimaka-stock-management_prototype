@@ -7,10 +7,11 @@ import { navFor } from './facility.js';
 import { formatShortDate, formatTime, dateOf, MONTH_NAMES } from '../../time.js';
 import { formatNumber, rutfReadBack } from '../../format.js';
 import { today, usageInfo, target, stockView } from '../../stock.js';
-import { addFacility, setItemType, setMultiplier, setTargetOverride, ActionError } from '../../actions.js';
+import { addFacility, setItemType, setMultiplier, setTargetOverride, ActionError, pinState, accessRemoved, removeAccess, restoreAccess, unlockAccount } from '../../actions.js';
+import { userDisplayName } from '../../users.js';
 import { STOCK_TYPES, SACHETS_PER_CARTON } from '../../config.js';
 
-const TABS = [['facilities', 'Facilities'], ['items', 'Items'], ['lean', 'Lean season'], ['targets', 'Target overrides'], ['log', 'Change log']];
+const TABS = [['facilities', 'Facilities'], ['items', 'Items'], ['lean', 'Lean season'], ['targets', 'Target overrides'], ['users', 'Users'], ['log', 'Change log']];
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const START_ITEMS = [['tom_brown', 'Tom Brown'], ['amox_60', 'Amoxicillin susp 60ml']];
 
@@ -44,9 +45,9 @@ ${f.type === 'OTP' ? html`<label class="field"><span class="label">Linked ITP</s
 </div>
 ${f.type === 'OTP' ? html`<span class="label">Starting stock</span>
 <div class="inline-form">
-<label class="field"><span class="small muted">RUTF, sealed cartons</span><input class="input" id="af-sealed" value="${f.sealed}" inputmode="numeric" data-change="af" data-f="sealed"></label>
-<label class="field"><span class="small muted">RUTF, loose sachets</span><input class="input" id="af-loose" value="${f.loose}" inputmode="numeric" data-change="af" data-f="loose"></label>
-${START_ITEMS.map(([id, name]) => html`<label class="field"><span class="small muted">${name}, ${db.item(id).unit.many}</span><input class="input" id="af-${id}" value="${f[id]}" inputmode="numeric" data-change="af" data-f="${id}"></label>`)}
+<label class="field"><span class="label">RUTF, sealed cartons</span><input class="input" id="af-sealed" value="${f.sealed}" inputmode="numeric" data-change="af" data-f="sealed"></label>
+<label class="field"><span class="label">RUTF, loose sachets</span><input class="input" id="af-loose" value="${f.loose}" inputmode="numeric" data-change="af" data-f="loose"></label>
+${START_ITEMS.map(([id, name]) => html`<label class="field"><span class="label">${name}, ${db.item(id).unit.many}</span><input class="input" id="af-${id}" value="${f[id]}" inputmode="numeric" data-change="af" data-f="${id}"></label>`)}
 </div>
 ${f.sealed !== '' || f.loose !== '' ? html`<div class="readback">${rutfReadBack(sealed, loose).text}</div>` : ''}
 <span class="small muted">Other items start with no record; the first daily count sets them.</span>` : ''}
@@ -112,6 +113,50 @@ ${list.length ? html`<div class="tbox"><table class="tbl"><thead><tr><th>Store</
 </section>`;
 }
 
+// Users (round 4): logistics manages the test accounts. The system cannot know by itself that someone has left,
+// so removing access is a step someone takes; it works at once and is logged with who, when and why.
+function usersTab(ctx) {
+  const { db, user, vs } = ctx;
+  const q = (vs.uq || '').trim().toLowerCase();
+  const place = (u) => (u.kind === 'facility' ? db.store(u.storeId).name : u.kind === 'supervisor' ? u.storeIds.map((id) => db.store(id).label).join(', ') : u.kind === 'logistics' ? 'Central store, Gombe' : 'Whole network, view only');
+  const list = db.users.filter((u) => !q || `${u.name || ''} ${u.role} ${place(u)}`.toLowerCase().includes(q));
+  const status = (u) => {
+    if (accessRemoved(db, u.id)) return chip('OUT', 'Access removed', 'sm');
+    const p = pinState(db, u.id);
+    if (p.locked) return chip('WAIT', `Locked until ${formatTime(p.lockedUntil)}`, 'sm');
+    return chip('OK', 'Active', 'sm');
+  };
+  const action = (u) => {
+    if (accessRemoved(db, u.id)) return btn({ label: 'Restore access', icon: 'recount', size: 'sm', act: 'acc-restore', data: { user: u.id } });
+    const p = pinState(db, u.id);
+    return html`<span class="row g8">${p.locked ? btn({ label: 'Unlock now', icon: 'lock', size: 'sm', act: 'acc-unlock', data: { user: u.id } }) : ''}${u.id === user.id ? html`<span class="small muted">You</span>` : btn({ label: 'Remove access', icon: 'x', kind: 'ghost', size: 'sm', act: 'acc-remove', data: { user: u.id } })}</span>`;
+  };
+  return html`<section class="col g16" aria-labelledby="ush">
+<div class="col g4"><h2 class="h2" id="ush">Users (${db.users.length})</h2>
+<p class="muted" style="margin: 0">Every test user, with their role and facility. "Remove access" works at once: the person cannot sign in and sees "This account no longer has access. Ask your supervisor." In real use, HR's leaver step (or the supervisor) triggers the removal within 24 hours at the latest, and accounts not used for 30 days are flagged for review.</p></div>
+<label class="field" style="max-width: 420px"><span class="label">Find a user</span><input class="input" id="u-find" type="search" value="${vs.uq || ''}" placeholder="Name, role or facility" data-input="u-find"></label>
+<div class="tbox"><table class="tbl">
+<thead><tr><th>Name</th><th>Role</th><th>Facility</th><th>Status</th><th></th></tr></thead>
+<tbody>${list.map((u) => html`<tr><td class="b">${u.name || userDisplayName(u, db.stores).split(',')[0]}</td><td>${u.role}</td><td>${place(u)}</td><td>${status(u)}</td><td>${action(u)}</td></tr>`)}</tbody>
+</table></div>
+${db.accounts.log.length ? html`<h3 class="h3">Access log</h3>
+<div class="tbox"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>Change</th><th>Reason</th></tr></thead>
+<tbody>${[...db.accounts.log].reverse().map((r) => html`<tr><td class="small">${formatShortDate(dateOf(r.stamp.at))} ${formatTime(r.stamp.at)}</td><td>${r.stamp.byName}</td><td>${r.text}: ${userDisplayName(db.user(r.userId), db.stores)}</td><td>${r.reason}</td></tr>`)}</tbody></table></div>` : ''}
+</section>`;
+}
+
+function removeDialog(db, userId) {
+  const u = db.user(userId);
+  return {
+    render: () => html`<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="rah">
+<div class="row sp"><h2 class="h3" id="rah">Remove access: ${userDisplayName(u, db.stores)}</h2>${btn({ label: 'Close', icon: 'x', kind: 'ghost', size: 'sm', act: 'close-modal' })}</div>
+<p style="margin: 0">From now on this person cannot sign in. Everything they entered stays, with their name. You can restore access later.</p>
+<label class="field"><span class="label">Why? (needed)</span><input class="input" id="ra-reason" data-autofocus placeholder="For example: left Taimaka on 30 Oct"></label>
+<div class="row g8">${btn({ label: 'Remove access', icon: 'x', kind: 'danger', act: 'acc-remove-confirm', data: { user: userId } })}${btn({ label: 'Cancel', icon: 'back', act: 'close-modal' })}</div>
+</div>`,
+  };
+}
+
 function logTab(ctx) {
   const { db } = ctx;
   const s = db.settings;
@@ -121,6 +166,7 @@ function logTab(ctx) {
     ...s.typeLog.map((x) => ({ stamp: x.stamp, change: `Stock type, ${db.item(x.itemId).name}: ${STOCK_TYPES.find((t) => t.id === x.from)?.label} → ${STOCK_TYPES.find((t) => t.id === x.to)?.label}`, reason: x.reason })),
     ...s.facilityLog.map((x) => ({ stamp: x.stamp, change: x.text, reason: x.reason })),
     ...db.odk.uploads.map((u) => ({ stamp: u.stamp, change: `ODK usage uploaded: ${u.fileName} (${u.siteCount} OTPs, ${u.itemCount} items)`, reason: '' })),
+    ...db.accounts.log.map((x) => ({ stamp: x.stamp, change: `${x.text}: ${userDisplayName(db.user(x.userId), db.stores)}`, reason: x.reason })),
   ].sort((a, b) => b.stamp.at.localeCompare(a.stamp.at));
   return html`<section class="col g8" aria-labelledby="lg">
 <h2 class="h3" id="lg">Change log</h2>
@@ -132,14 +178,14 @@ function logTab(ctx) {
 
 function render(ctx, route) {
   const { vs } = ctx;
-  const tab = route.query.at === 'add' ? 'facilities' : (vs.tab || 'facilities');
+  const tab = route.query.at === 'add' ? 'facilities' : (route.query.tab && TABS.some(([id]) => id === route.query.tab) ? route.query.tab : vs.tab || 'facilities');
   return html`<div class="app">
 ${header(ctx, { nav: navFor(ctx) })}
 <main class="wrap">
 ${flashBanner(ctx)}
 <div class="col g4"><h1 class="h1">Settings</h1><p class="muted" style="margin: 0">Only logistics can see this page. Every change is saved with who made it and when.</p></div>
 <div class="tabs" role="group" aria-label="Section">${TABS.map(([id, label]) => html`<button type="button" class="tab${tab === id ? ' tab-on' : ''}" aria-pressed="${tab === id}" data-act="set-tab" data-tab="${id}">${label}</button>`)}</div>
-${tab === 'facilities' ? facilitiesTab(ctx) : tab === 'items' ? itemsTab(ctx) : tab === 'lean' ? leanTab(ctx) : tab === 'targets' ? targetsTab(ctx) : logTab(ctx)}
+${tab === 'facilities' ? facilitiesTab(ctx) : tab === 'items' ? itemsTab(ctx) : tab === 'lean' ? leanTab(ctx) : tab === 'targets' ? targetsTab(ctx) : tab === 'users' ? usersTab(ctx) : logTab(ctx)}
 </main>
 </div>`;
 }
@@ -149,6 +195,27 @@ export const views = { settings: { render, roles: ['logistics'] } };
 export const actions = {
   'set-tab': (ctx, el) => { ctx.vs.tab = el.dataset.tab; if (location.hash.includes('?')) ctx.go('#/settings'); else ctx.rerender(); },
   'set-all-fac': (ctx) => { ctx.vs.allFacilities = true; ctx.rerender(); },
+  'acc-remove': (ctx, el) => ctx.modal(removeDialog(ctx.db, el.dataset.user)),
+  'acc-remove-confirm': (ctx, el) => {
+    const reason = document.getElementById('ra-reason')?.value || '';
+    removeAccess(ctx.db, ctx.user, el.dataset.user, reason);
+    ctx.changed();
+    ctx.ui.modal = null;
+    ctx.flash(`Access removed for ${userDisplayName(ctx.db.user(el.dataset.user), ctx.db.stores)}. They can no longer sign in.`);
+    ctx.rerender();
+  },
+  'acc-restore': (ctx, el) => {
+    restoreAccess(ctx.db, ctx.user, el.dataset.user, 'Restored in Settings');
+    ctx.changed();
+    ctx.flash(`Access restored for ${userDisplayName(ctx.db.user(el.dataset.user), ctx.db.stores)}.`);
+    ctx.rerender();
+  },
+  'acc-unlock': (ctx, el) => {
+    unlockAccount(ctx.db, ctx.user, el.dataset.user, 'Unlocked in Settings');
+    ctx.changed();
+    ctx.flash(`${userDisplayName(ctx.db.user(el.dataset.user), ctx.db.stores)} is unlocked.`);
+    ctx.rerender();
+  },
   'af-save': (ctx) => {
     const { db, user, vs } = ctx;
     const f = vs.add;
@@ -207,5 +274,6 @@ export const changes = {
 };
 
 export const inputs = {
+  'u-find': (ctx, el) => { ctx.vs.uq = el.value; ctx.rerender(); },
   'mult-reason': (ctx, el) => { ctx.vs.pendingMult.reason = el.value; },
 };

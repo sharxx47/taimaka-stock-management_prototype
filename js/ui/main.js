@@ -4,7 +4,8 @@
 import { initApp } from '../app-data.js';
 import { saveState } from '../storage.js';
 import { html, raw } from './dom.js';
-import { ic, syncPill, btn } from './parts.js';
+import { ic, syncPill, syncIcon, btn, phoneNav, isPhone } from './parts.js';
+import { accessRemoved } from '../actions.js';
 import * as signin from './views/signin.js';
 import * as facility from './views/facility.js';
 import * as count from './views/count.js';
@@ -79,8 +80,10 @@ function scheduleSend() {
   }, 1500);
 }
 function updateSyncSlot() {
-  const el = root.querySelector('[data-slot="sync"]');
-  if (el) el.innerHTML = String(syncPill(syncState(), { compact: el.dataset.compact === '1' }));
+  const st = syncState();
+  root.querySelectorAll('[data-slot="sync"]').forEach((el) => {
+    el.innerHTML = String(el.dataset.compact === 'icon' ? syncIcon(st) : syncPill(st, { compact: el.dataset.compact === '1' }));
+  });
 }
 
 function persist() {
@@ -108,10 +111,12 @@ function makeCtx(route) {
     signIn(userId) {
       ui.navStack = [];
       app.state.session = { userId };
+      // This browser remembers who signed in on it (most recent first, a few at most), for "Welcome back".
+      app.state.remembered = [userId, ...(app.state.remembered || []).filter((x) => x !== userId)].slice(0, 5);
       persist();
       go(HOME[app.db.user(userId).kind]);
     },
-    signOut() { app.state.session = null; ui.view = {}; ui.modal = null; persist(); go('#/signin'); },
+    signOut() { app.state.session = null; ui.view = {}; ui.modal = null; ui.flash = null; persist(); go('#/signin'); },
     reset() { app.reset(); app.state.session = null; app.state.sync = { pending: 0, lastSync: null }; ui.view = {}; persist(); },
     home: user ? HOME[user.kind] : '#/signin',
   };
@@ -127,7 +132,14 @@ function go(hash) {
 function render() {
   if (!app) return;
   const route = parseRoute();
-  const user = currentUser();
+  let user = currentUser();
+  if (user && accessRemoved(app.db, user.id)) {
+    // Access removed by logistics takes effect at once, also for someone who is signed in.
+    app.state.session = null;
+    persist();
+    ui.flash = { kind: 'order', text: 'This account no longer has access. Ask your supervisor.', keep: true };
+    user = null;
+  }
   if (!user && route.name !== 'signin') { location.replace('#/signin'); return; }
   if (route.name === '' || (user && route.name === 'signin')) { location.replace(user ? HOME[user.kind] : '#/signin'); return; }
   const view = VIEWS[route.name];
@@ -151,7 +163,10 @@ function render() {
   }
   const focus = captureFocus();
   const routeKey = location.hash.split('?')[0];
-  root.innerHTML = String(html`${body}${ui.modal ? html`<div class="app overlay" role="presentation" data-act="modal-bg">${ui.modal.render(ctx)}</div>` : ''}`);
+  // Phones: one bottom bar with the role's tabs (and the facility staff's three actions); the page leaves room for it.
+  const bar = user && route.name !== 'signin' && isPhone() ? phoneNav(ctx) : '';
+  root.classList.toggle('has-bbar', !!bar);
+  root.innerHTML = String(html`${body}${bar}${ui.modal ? html`<div class="app overlay" role="presentation" data-act="modal-bg">${ui.modal.render(ctx)}</div>` : ''}`);
   const routeChanged = ui.lastRoute !== location.hash;
   if (routeChanged) { ui.lastRoute = location.hash; if (route.query.at) scrollToId(route.query.at); }
   restoreFocus(focus);
@@ -272,13 +287,26 @@ window.addEventListener('hashchange', () => {
   if (h.startsWith('#/signin')) ui.navStack = [];
   lastHash = h; for (const v of Object.values(ui.view)) delete v.done; ui.flash = ui.flash && ui.flash.keep ? { ...ui.flash, keep: false } : null; ui.modal = null; render(); });
 window.addEventListener('online', () => { scheduleSend(); render(); });
+// Add to home screen: the service worker keeps the app's own files so it opens without signal (network first).
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* the app still works without it */ }); });
+}
 window.addEventListener('offline', () => render());
 let wasPhone = window.innerWidth < 640;
 window.addEventListener('resize', () => {
   const p = window.innerWidth < 640;
   if (p !== wasPhone) { wasPhone = p; render(); } else stackWrappedActions();
 });
-setInterval(() => { if (app) { app.tick(); updateSyncSlot(); } }, 30000);
+setInterval(() => {
+  if (!app) return;
+  app.tick();
+  updateSyncSlot();
+  // The sign-in screen counts down a PIN lock: show the PIN boxes again once it has ended.
+  if (parseRoute().name === 'signin' && root.querySelector('[data-locked-until]')) {
+    const until = Date.parse(root.querySelector('[data-locked-until]').dataset.lockedUntil);
+    if (Date.parse(app.db.nowIso) >= until) render();
+  }
+}, 5000);
 
 // ---------- start ----------
 (async function start() {

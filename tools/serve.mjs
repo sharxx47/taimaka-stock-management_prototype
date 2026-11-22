@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.argv[2] || process.env.PORT || 8080);
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.csv': 'text/csv; charset=utf-8', '.woff2': 'font/woff2', '.png': 'image/png', '.jpeg': 'image/jpeg', '.json': 'application/json', '.md': 'text/markdown; charset=utf-8' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.csv': 'text/csv; charset=utf-8', '.woff2': 'font/woff2', '.png': 'image/png', '.jpeg': 'image/jpeg', '.json': 'application/json', '.md': 'text/markdown; charset=utf-8', '.webmanifest': 'application/manifest+json' };
 
 http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);

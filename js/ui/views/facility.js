@@ -140,18 +140,32 @@ function filterPill(kind, label, size, on) {
   const P = { OUT: 'out', ORDER_NOW: 'order', LOW: 'low', CENTRAL_LOW: 'low', TOO_MUCH: 'much', CHECK: 'check', OK: 'ok', NOT_COUNTED: 'nc' }[kind];
   const icon = { OUT: 'out', ORDER_NOW: 'order', LOW: 'low', CENTRAL_LOW: 'low', TOO_MUCH: 'much', CHECK: 'check', OK: 'ok', NOT_COUNTED: 'nc' }[kind];
   const sm = size === 'sm';
-  return html`<button type="button" class="chip chip-${P}${sm ? ' chip-sm' : ''}" aria-pressed="${on ? 'true' : 'false'}" data-act="pill-filter" data-filter="${kind}">${ic(icon, 's', sm ? 'sm' : '')}${label ?? 'Not counted today'}</button>`;
+  return html`<button type="button" class="chip chip-${P}${sm ? ' chip-sm' : ''}" aria-pressed="${on ? 'true' : 'false'}" data-act="pill-filter" data-filter="${kind}">${on ? ic('tick', 'w', sm ? 'sm' : '') : ic(icon, 's', sm ? 'sm' : '')}${label ?? 'Not counted today'}</button>`;
 }
 
 // Items shown for a summary filter, and the list heading.
-const FILTER_WORDS = { OUT: 'out of stock', ORDER_NOW: 'to order now', LOW: 'running low', CENTRAL_LOW: 'below 3-month target', TOO_MUCH: 'with too much', CHECK: 'to check', OK: 'OK', NOT_COUNTED: 'not counted today' };
+const FILTER_WORDS = { OUT: 'out of stock', ORDER_NOW: 'order now', LOW: 'running low', CENTRAL_LOW: 'below 3-month target', TOO_MUCH: 'too much', CHECK: 'to check', OK: 'OK', NOT_COUNTED: 'not counted today' };
 export function applyFilter(views, filter) {
   if (!filter) return views;
   if (filter === 'CHECK') return views.filter((v) => v.needsCheck);
   return views.filter((v) => v.status.code === filter);
 }
 export function filterHeading(n, filter) {
-  return `${n} ${n === 1 ? 'item' : 'items'} ${FILTER_WORDS[filter]}`;
+  return `${n} ${FILTER_WORDS[filter]}`;
+}
+export const PILL_HINT = 'Tap a pill to see only those items';
+
+// The list heading says what is shown, with "Show all items" beside it: "4 running low · Show all items".
+export function listHeading(n, filter, act = 'pill-filter', data = { filter: '' }) {
+  return html`<div class="list-head"><h2 class="sec-t" id="all">${filterHeading(n, filter)}</h2><span aria-hidden="true">·</span>${btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act, data, style: 'padding-left: 4px; padding-right: 4px' })}</div>`;
+}
+
+// Tapping a filter scrolls to the list: smoothly, or at once when the person prefers reduced motion.
+export function scrollToList(id = 'all') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
 }
 const RUNNING_LOW_LINE = 'Logistics tops these up in the next monthly shipment. If one will run out sooner, use Request emergency stock.';
 
@@ -273,7 +287,8 @@ ${flashBanner(ctx)}
 <h1 class="h1">${readOnly ? `${store.name} today` : 'Your stock today'}</h1>
 ${readOnly ? html`<p class="muted" style="margin: 0">View only. ${store.type === 'CENTRAL' ? '' : `Supervisor ${store.supervisor}.`}</p>` : ''}
 </div>
-<div class="sum" role="group" aria-label="Summary: tap to show only those items">${summaryChips(db, storeId, '', { filter, hasAlerts: alerts.length > 0 })}</div>
+<div class="col g8"><div class="sum" role="group" aria-label="Summary: tap a pill to see only those items">${summaryChips(db, storeId, '', { filter, hasAlerts: alerts.length > 0 })}</div>
+<p class="pill-hint">${PILL_HINT}</p></div>
 ${readOnly ? '' : html`<div class="actions">
 <a class="btn btn-primary btn-lg" href="#/count">${ic('count', 'w', 'lg')}${countLabel(store)}</a>
 <a class="btn btn-secondary btn-lg" href="#/receive">${ic('receive', 'b', 'lg')}Receive a shipment</a>
@@ -284,7 +299,7 @@ ${alerts.length || transit.length ? html`<section class="col g8 needs" aria-labe
 ${alerts}${transit}
 </section>` : html`<div class="banner bn-ok">${chip('OK', 'All OK')}<p class="grow" style="margin: 0">Nothing needs attention right now.</p></div>`}
 <section class="col g8" aria-labelledby="all">
-<div class="row sp"><h2 class="sec-t" id="all">${filter ? `${filterHeading(shown.length, filter)}, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}` : `All items, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}`}</h2>${filter ? btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act: 'pill-filter', data: { filter: '' } }) : html`<span class="small muted">${views.length} items</span>`}</div>
+${filter ? listHeading(shown.length, filter) : html`<div class="row sp"><h2 class="sec-t" id="all">All items, ${store.type === 'OTP' ? 'in bin card order' : 'in item list order'}</h2><span class="small muted">${views.length} items</span></div>`}
 ${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}</p>` : ''}
 <div class="items">${shown.map((v) => itemCard(ctx, v, { readOnly }))}</div>
 </section>
@@ -292,31 +307,33 @@ ${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}
 </div>`;
 }
 
-// Phone home (PhoneHome artboard): urgent-first list and the three actions at the bottom.
+// Phone home (PhoneHome artboard, round 4): the compact header, the summary pills, then the list urgent-first.
+// Items that are OK are collapsed behind "Show [N] OK items", so the list starts with what needs attention.
+// The three actions are in the bottom bar (main.js), with the tabs.
 function homePhone(ctx, storeId) {
   const { db, user, vs } = ctx;
-  const store = db.store(storeId);
   const views = storeItems(db, storeId);
   const filter = vs.filterStore === storeId ? vs.filter || '' : '';
   const outs = views.filter((v) => v.status === STATUS.OUT);
   // With a filter, the list shows only those items (urgent-first stays the order without one).
   const rest = filter ? applyFilter(views, filter) : urgentFirst(views.filter((v) => v.status !== STATUS.OUT));
+  const isOk = (v) => v.sortRank === STATUS.OK.rank;
+  const okCount = rest.filter(isOk).length;
+  const showOk = filter || vs.showOk === storeId || okCount === 0;
+  const firstOk = rest.findIndex(isOk);
+  const okBtn = btn({ label: `Show ${okCount} OK ${okCount === 1 ? 'item' : 'items'}`, icon: 'chev', kind: 'secondary', act: 'show-ok', data: { store: storeId }, style: 'align-self: stretch' });
+  const list = showOk ? rest.map((v) => itemCard(ctx, v, { phone: true }))
+    : rest.flatMap((v, i) => (isOk(v) ? (i === firstOk ? [okBtn] : []) : [itemCard(ctx, v, { phone: true })]));
   // The urgent-first list already shows each Check, so the phone skips those banners.
   const alerts = facilityAlerts(ctx, storeId, { skipChecks: true }).slice(outs.length ? 1 : 0);
   const req = openEmergency(db, storeId);
-  return html`<div class="app ph-page">
-<div class="ph-hdr">
-<div class="row sp"><a class="brand-link" href="${HOME[user.kind]}" aria-label="Taimaka Stock Management, go to your home screen"><img class="logo" src="Assets/taimaka-logo.svg" alt="Taimaka" style="height: 40px"></a><span class="row g8">${btn({ label: 'Sign out', icon: 'logout', kind: 'ghost', size: 'sm', act: 'signout' })}<span class="avatar" aria-label="${user.name || user.role}">${initials(user, db.stores)}</span></span></div>
-<div class="place-box">${ic('store')}<span class="col" style="gap: 0"><span class="pb-name">${store.name}</span><span class="pb-type">${store.siteType}</span></span></div>
-<span class="small muted">${user.name ? html`<span class="caps">${user.name}</span> · ` : ''}<span class="caps">${user.role}</span></span>
-<span data-slot="sync" data-compact="1">${syncPill(ctx.sync, { compact: true })}</span>
-${tabsNav(ctx)}
-</div>
-<div class="ph-body">
+  return html`<div class="app">
+${header(ctx)}
+<main class="wrap">
 ${flashBanner(ctx)}
-<div class="col g4"><span class="small muted">${dayName(today(db), true)} ${formatShortDate(today(db))} · ${lastCountLine(db, storeId).replace(/ by .*$/, '')}</span>
-<div class="row g8" role="group" aria-label="Summary: tap to show only those items">${summaryChips(db, storeId, 'sm', { filter, hasAlerts: true })}</div></div>
-${filter ? html`<div class="row sp"><h2 class="sec-t">${filterHeading(rest.length, filter)}</h2>${btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act: 'pill-filter', data: { filter: '' } })}</div>${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}</p>` : ''}` : ''}
+<div class="col g8"><span class="small muted">${dayName(today(db), true)} ${formatShortDate(today(db))} · ${lastCountLine(db, storeId).replace(/ by .*$/, '')}</span>
+<div class="row g8" role="group" aria-label="Summary: tap a pill to see only those items">${summaryChips(db, storeId, 'sm', { filter, hasAlerts: true })}</div>
+<p class="pill-hint">${PILL_HINT}</p></div>
 ${outs.length && !filter ? html`<article class="item" style="border: 2px solid var(--out-bg); padding: 12px; gap: 8px">
 <div class="row sp"><span class="b" style="font-size: 18px">Out of stock</span>${chip('OUT')}</div>
 ${outs.map((v) => html`<div class="row g8" style="flex-wrap: nowrap">${pic(v.item, 'sm')}<span class="grow b">${v.item.name}</span><span>${qtyText(v.item, 0)}</span></div>`)}
@@ -324,15 +341,11 @@ ${req ? html`<span class="muted">Emergency request sent ${when(req.steps.request
 <a class="btn btn-primary btn-block" href="#/emergency">${ic('emergency', 'w')}Request emergency stock</a>
 </article>` : ''}
 ${alerts.length && !filter ? html`<div class="col g8 needs">${alerts}</div>` : ''}
-${rest.map((v) => itemCard(ctx, v, { phone: true }))}
-</div>
-<div class="ph-foot">
-<a class="btn btn-primary btn-lg btn-block" href="#/count">${ic('count', 'w', 'lg')}${countLabel(store)}</a>
-<div class="ph-actions">
-<a class="btn btn-secondary" href="#/receive">${ic('receive', 'b')}Receive a shipment</a>
-<a class="btn btn-secondary" href="#/emergency">${ic('emergency', 'b')}Request emergency stock</a>
-</div>
-</div>
+<section class="col g8" aria-labelledby="all">
+${filter ? html`${listHeading(rest.length, filter)}${filter === 'LOW' ? html`<p class="muted" style="margin: 0">${RUNNING_LOW_LINE}</p>` : ''}` : html`<h2 class="sec-t" id="all">${outs.length ? 'Other items' : 'Items'}, most urgent first</h2>`}
+${list}
+</section>
+</main>
 </div>`;
 }
 
@@ -441,13 +454,21 @@ function longExpiry(iso) {
   return iso ? `${formatShortDate(iso)} ${iso.slice(0, 4)}` : 'no expiry recorded';
 }
 
-// Entered values for one shipment, kept while the screen is open: { [itemId]: { batches: [{sealed, loose, qty, batch, expiry}], kind, note } }
+// Entered values for one shipment, kept while the screen is open: { [itemId]: { batches: [...], kind, note } }.
+// Batch number and expiry date come from what logistics entered when sending; staff only check them, and
+// "Edit" opens them with what logistics entered kept beside the new value and a reason required.
 function recvState(vs, sh) {
   vs.recv ||= {};
   if (!vs.recv[sh.id]) {
     vs.recv[sh.id] = {};
     for (const l of sh.lines) {
-      vs.recv[sh.id][l.itemId] = { batches: (l.batchesSent || [{ batch: '', expiry: null, qty: l.qtySent }]).map((b) => ({ sealed: '', loose: '', qty: '', batch: b.batch || '', expiry: toDmy(b.expiry), sent: b.qty })), kind: 'Short', note: '' };
+      vs.recv[sh.id][l.itemId] = {
+        batches: (l.batchesSent || [{ batch: '', expiry: null, qty: l.qtySent }]).map((b) => ({
+          sealed: '', loose: '', qty: '', batch: b.batch || '', expiry: toDmy(b.expiry), sent: b.qty,
+          sentBatch: b.batch || '', sentExpiry: toDmy(b.expiry), editing: !b.batch || !b.expiry, editReason: '',
+        })),
+        kind: 'Short', note: '',
+      };
     }
   }
   return vs.recv[sh.id];
@@ -461,6 +482,18 @@ function batchQty(item, b) {
   return b.qty === '' ? null : Number(b.qty);
 }
 
+function batchEdited(b) {
+  return b.editing && (b.batch.trim() !== b.sentBatch || b.expiry.trim() !== b.sentExpiry);
+}
+
+// A larger tick or cross beside the fields, centered on the field boxes (round 4).
+function matchMark(it, q, sent) {
+  if (q === null) return '';
+  return q === sent
+    ? html`<span class="rmark rmark-ok"><span class="rmark-dot">${ic('tick', 'w')}</span>Matches what was sent</span>`
+    : html`<span class="rmark rmark-no"><span class="rmark-dot">${ic('x', 'w')}</span>Sent ${qtyText(it, sent)}</span>`;
+}
+
 function receiveLine(ctx, sh, l, st) {
   const it = ctx.db.item(l.itemId);
   const s = st[l.itemId];
@@ -468,25 +501,34 @@ function receiveLine(ctx, sh, l, st) {
   const allIn = s.batches.every((b) => batchQty(it, b) !== null);
   const diff = allIn ? total - l.qtySent : 0;
   const key = (i, f) => `rv-${l.itemId}-${i}-${f}`;
-  const field = (i, f, label, value, cls, extra = '') => html`<label class="field"><span class="label">${label}</span><input class="${cls}" id="${key(i, f)}" value="${value}" ${raw(extra)} data-change="rv-field" data-sh="${sh.id}" data-item="${l.itemId}" data-i="${i}" data-f="${f}"></label>`;
+  const data = (i, f) => raw(` data-sh="${sh.id}" data-item="${l.itemId}" data-i="${i}" data-f="${f}"`);
+  const numField = (i, f, label, value, warn) => html`<label class="field"><span class="label">${label}</span><input class="num-c${warn ? ' num-warn' : ''}" id="${key(i, f)}" value="${value}" inputmode="${it.isRutf ? 'numeric' : 'decimal'}" autocomplete="off" data-change="rv-field"${data(i, f)}></label>`;
+  const roField = (i, f, label, value, shown) => html`<div class="field"><span class="label" id="${key(i, f)}-l">${label}</span><div class="ro" aria-labelledby="${key(i, f)}-l"><span>${shown || value || 'Not entered'}</span>${btn({ label: 'Edit', icon: 'edit', kind: 'ghost', size: 'sm', act: 'rv-edit', data: { sh: sh.id, item: l.itemId, i } })}</div></div>`;
+  const textField = (i, f, label, value, placeholder = '') => html`<label class="field"><span class="label">${label}</span><input class="input" id="${key(i, f)}" value="${value}" placeholder="${placeholder}" autocomplete="off" data-change="rv-field"${data(i, f)}></label>`;
+  const editedAny = s.batches.some(batchEdited);
   return html`<section class="card col g16" aria-labelledby="r-${l.itemId}">
 <div class="item-top">${pic(it)}
 <div class="col g4 grow"><h2 class="h3" id="r-${l.itemId}">${it.name}</h2><span class="muted">Sent: <span class="b">${qtyText(it, l.qtySent)}</span> in ${s.batches.length} ${s.batches.length === 1 ? 'batch' : 'batches'}</span></div></div>
+<p class="small muted row g8" style="margin: 0; flex-wrap: nowrap; align-items: flex-start">${ic('lock', 'i', 'sm')}<span>Batch number and expiry date were entered by logistics when the shipment was sent. Check them against what arrived.</span></p>
 ${s.batches.map((b, i) => {
     const q = batchQty(it, b);
     const warn = q !== null && q !== b.sent;
-    const numCls = `num${warn ? ' num-warn' : ''}`;
-    const inner = html`<div class="row g16" style="align-items: flex-end">
-${it.isRutf ? html`${field(i, 'sealed', 'Sealed cartons', b.sealed, numCls, 'inputmode="numeric" style="max-width: 140px"')}${field(i, 'loose', 'Loose sachets', b.loose, numCls, 'inputmode="numeric" style="max-width: 140px"')}` : field(i, 'qty', `${unitLabel(it)} received`, b.qty, numCls, 'inputmode="decimal" style="max-width: 140px"')}
-${field(i, 'batch', 'Batch number', b.batch, 'input', 'style="width: 160px"')}
-${field(i, 'expiry', 'Expiry date', b.expiry, 'input', 'placeholder="DD/MM/YYYY" style="width: 160px"')}
-${!it.isRutf && q !== null && !warn ? html`<span class="savedline">${ic('ok', 's', 'sm')}Matches what was sent</span>` : ''}
+    const inner = html`<div class="fld-row">
+${it.isRutf ? html`${numField(i, 'sealed', 'Sealed cartons', b.sealed, warn)}${numField(i, 'loose', 'Loose sachets', b.loose, warn)}` : numField(i, 'qty', `${unitLabel(it)} received`, b.qty, warn)}
+${b.editing ? textField(i, 'batch', 'Batch number', b.batch, 'As printed') : roField(i, 'batch', 'Batch number', b.batch)}
+${b.editing ? textField(i, 'expiry', 'Expiry date', b.expiry, 'DD/MM/YYYY') : roField(i, 'expiry', 'Expiry date', b.expiry, longExpiry(parseDmy(b.expiry)))}
+${matchMark(it, q, b.sent)}
 </div>
-${it.isRutf && q !== null ? html`<div class="readback">${ic(warn ? 'count' : 'tick', 'b')}${rutfReadBack(Number(b.sealed || 0), Number(b.loose || 0)).text}${warn ? '' : ' · matches what was sent'}</div>` : ''}`;
+${it.isRutf && q !== null ? html`<div class="readback">${ic(warn ? 'count' : 'tick', 'b')}${rutfReadBack(Number(b.sealed || 0), Number(b.loose || 0)).text}</div>` : ''}
+${b.editing && (b.sentBatch || b.sentExpiry) ? html`<div class="col g8">
+<span class="was">Logistics entered: <span class="b">batch ${b.sentBatch || 'not recorded'}, expires ${longExpiry(parseDmy(b.sentExpiry))}</span>${batchEdited(b) ? html`. You confirmed: <span class="b">batch ${b.batch || 'not recorded'}, expires ${longExpiry(parseDmy(b.expiry))}</span>` : ''}</span>
+${batchEdited(b) ? html`<label class="field"><span class="label">Why is it different? (needed)</span><input class="input" id="${key(i, 'editReason')}" value="${b.editReason}" placeholder="For example: Different batch on the cartons" data-change="rv-field"${data(i, 'editReason')}></label>` : ''}
+</div>` : ''}`;
     return s.batches.length > 1 || it.isRutf
-      ? html`<div class="card card-tight col g16" style="background: #FAF8F4"><div class="row sp"><span class="b">Batch ${b.batch || 'not recorded'} · expires ${longExpiry(parseDmy(b.expiry))}</span><span class="small muted">Sent ${qtyText(it, b.sent)}</span></div>${inner}</div>`
+      ? html`<div class="card card-tight col g16" style="background: #FAF8F4"><div class="row sp"><span class="b">Batch ${b.sentBatch || 'not recorded'} · expires ${longExpiry(parseDmy(b.sentExpiry))}</span><span class="small muted">Sent ${qtyText(it, b.sent)}</span></div>${inner}</div>`
       : inner;
   })}
+${editedAny ? html`<div class="banner bn-low">${chip('CHECK', 'Difference', 'sm')}<p class="grow" style="margin: 0">The batch or expiry you confirmed differs from what logistics entered. Logistics will see both, and the stock uses what you confirmed.</p></div>` : ''}
 ${diff !== 0 ? html`<div class="prompt" style="flex-direction: column; align-items: stretch">
 <div class="row g8">${chip('CHECK', `${qtyText(it, Math.abs(diff))} ${diff < 0 ? 'short' : 'extra'}`, 'sm')}<span class="b">What happened?</span></div>
 <div class="row g8" role="group" aria-label="What happened">${DIFF_KINDS.map((k) => html`<button type="button" class="tab${s.kind === k ? ' tab-on' : ''}" data-act="rv-kind" data-sh="${sh.id}" data-item="${l.itemId}" data-kind="${k}" aria-pressed="${s.kind === k}">${k}</button>`)}</div>
@@ -521,7 +563,8 @@ ${waiting.length ? html`<h2 class="sec-t">Not sent yet</h2>${waiting.map((s) => 
     if (!allIn) return html`${it.name}: <span class="muted">not entered yet</span>`;
     const tot = s.batches.reduce((t, b) => t + batchQty(it, b), 0);
     const diff = tot - l.qtySent;
-    return html`${it.name}: <span class="b">${it.isRutf ? `${formatRutf(tot)} of ${formatRutf(l.qtySent)}` : `${formatNumber(tot)} of ${qtyText(it, l.qtySent)}`}</span> received${diff ? `, ${qtyText(it, Math.abs(diff))} ${diff < 0 ? (s.kind === 'Damaged' ? 'damaged' : 'short') : 'extra'}${s.note.trim() ? ' (note added)' : ''}` : ''}`;
+    const edited = s.batches.filter(batchEdited);
+    return html`${it.name}: <span class="b">${it.isRutf ? `${formatRutf(tot)} of ${formatRutf(l.qtySent)}` : `${formatNumber(tot)} of ${qtyText(it, l.qtySent)}`}</span> received${diff ? `, ${qtyText(it, Math.abs(diff))} ${diff < 0 ? (s.kind === 'Damaged' ? 'damaged' : 'short') : 'extra'}${s.note.trim() ? ' (note added)' : ''}` : ''}${edited.length ? ', batch or expiry changed' : ''}`;
   });
   return html`<div class="app">${head}
 <div class="col g8">
@@ -557,8 +600,9 @@ export const actions = {
     ctx.vs.filter = ctx.vs.filter === f && ctx.vs.filterStore === storeId ? '' : f;
     ctx.vs.filterStore = storeId;
     ctx.rerender();
-    document.getElementById('all')?.scrollIntoView({ block: 'nearest' });
+    scrollToList();
   },
+  'show-ok': (ctx, el) => { ctx.vs.showOk = el.dataset.store; ctx.rerender(); },
   'note-open': (ctx, el) => ctx.modal(noteDialog(el.dataset.target, el.dataset.label)),
   'note-save': (ctx, el) => {
     const text = document.getElementById('note-text')?.value || '';
@@ -576,6 +620,12 @@ export const actions = {
     ctx.changed();
     ctx.flash(`Emergency request ${sh.number} sent to logistics.`);
     ctx.rerender();
+  },
+  'rv-edit': (ctx, el) => {
+    const b = ctx.ui.view.receive.recv[el.dataset.sh][el.dataset.item].batches[Number(el.dataset.i)];
+    b.editing = true;
+    ctx.rerender();
+    document.getElementById(`rv-${el.dataset.item}-${el.dataset.i}-batch`)?.focus();
   },
   'rv-kind': (ctx, el) => {
     const s = ctx.ui.view.receive.recv[el.dataset.sh][el.dataset.item];
@@ -595,7 +645,11 @@ export const actions = {
         if (q === null) throw new ActionError(`Enter what arrived for ${it.name}.`);
         const exp = parseDmy(b.expiry);
         if (!exp) throw new ActionError(`${it.name}: type the expiry date as DD/MM/YYYY.`);
-        return { batch: b.batch.trim(), expiry: exp, qty: q };
+        if (batchEdited(b) && !b.editReason.trim()) throw new ActionError(`${it.name}: say why the batch or expiry differs from what logistics entered.`);
+        const out = { batch: b.batch.trim(), expiry: exp, qty: q };
+        // Both values stay in the history: what logistics entered and what was confirmed.
+        if (b.sentBatch || b.sentExpiry) Object.assign(out, { sentBatch: b.sentBatch, sentExpiry: parseDmy(b.sentExpiry) || '', editReason: b.editReason.trim() });
+        return out;
       });
       const tot = batches.reduce((t, b) => t + b.qty, 0);
       const reason = tot !== l.qtySent ? (s.note.trim() ? `${s.kind}: ${s.note.trim()}` : '') : null;
@@ -613,7 +667,7 @@ export const actions = {
 export const changes = {
   'rv-field': (ctx, el) => {
     const s = ctx.ui.view.receive.recv[el.dataset.sh][el.dataset.item];
-    s.batches[Number(el.dataset.i)][el.dataset.f] = el.value.trim();
+    s.batches[Number(el.dataset.i)][el.dataset.f] = el.dataset.f === 'editReason' ? el.value : el.value.trim();
     ctx.rerender();
   },
 };

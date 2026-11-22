@@ -9,7 +9,7 @@ import { formatNumber, formatRutf, rutfReadBack } from '../../format.js';
 import { today, onHand, previewDifference, nowMs, latestCount, evaluateCount } from '../../stock.js';
 import { saveCountLine, submitCount, draftKey, ActionError, STORE_PROBLEMS } from '../../actions.js';
 import { SACHETS_PER_CARTON } from '../../config.js';
-import { navFor, noteDialog } from './facility.js';
+import { navFor, noteDialog, scrollToList } from './facility.js';
 
 function modeOf(ctx, route) {
   if (route.name === 'recount') return { kind: 'recount', storeId: route.parts[0] };
@@ -154,8 +154,8 @@ ${earlierEval && earlierEval.applicable && earlierEval.flagged ? html`<div class
 ${sessToday && !isRecount ? html`<div class="banner bn-info">${ic('history', 'i', 'lg')}<p class="grow" style="margin: 0">Today's ${word} was submitted at <span class="b">${formatTime(sessToday.submittedAt)}</span> by ${sessToday.stamp?.byName === user.name ? 'you' : sessToday.stamp?.byName}. If you ${isLog ? 'log' : 'count'} again, the new ${word} is added and the first one stays in the history.</p></div>` : ''}
 <div class="side">
 <div class="main">
-<div class="crows" role="group" aria-label="${isLog ? 'Daily log' : 'Count'}, one line per item">
-${rowFilter ? html`<div class="row sp" style="padding: 8px 16px"><span class="b">${rowFilter === 'blank' ? `${blanks.length} ${blanks.length === 1 ? 'item' : 'items'} left blank` : `${flags.length} ${flags.length === 1 ? 'difference' : 'differences'}`}</span>${filterBtn(rowFilter, '')}</div>` : ''}
+<div class="crows" id="rows" role="group" aria-label="${isLog ? 'Daily log' : 'Count'}, one line per item">
+${rowFilter ? html`<div class="list-head" style="padding: 8px 16px"><h2 class="sec-t">${rowFilter === 'blank' ? `${blanks.length} left blank` : `${flags.length} ${flags.length === 1 ? 'difference' : 'differences'}`}</h2><span aria-hidden="true">·</span>${btn({ label: 'Show all items', icon: 'x', kind: 'ghost', size: 'sm', act: 'cnt-filter', data: { filter: '', key: `${mode.storeId}|${mode.kind}` }, style: 'padding-left: 4px; padding-right: 4px' })}</div>` : ''}
 ${shownItems.map((it) => (isLog ? logRow : countRow)(ctx, mode, it, items.indexOf(it) + 1, lines[it.id]))}
 </div>
 <section class="card col g16" aria-labelledby="rv" style="border: 2px solid var(--primary)">
@@ -280,7 +280,7 @@ export const actions = {
     ctx.vs.rowFilter = el.dataset.filter;
     ctx.vs.rowFilterKey = el.dataset.key;
     ctx.rerender();
-    document.querySelector('.crows')?.scrollIntoView({ block: 'start' });
+    scrollToList('rows');
   },
   'cnt-ask-close': (ctx) => { ctx.vs.ask = false; ctx.rerender(); },
   // Submit: if rows are blank or the storage box is not ticked, ask once in the page first.
