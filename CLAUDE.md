@@ -24,7 +24,8 @@ A prototype for Taimaka's Operations Associate test task (Task 1). Taimaka treat
 
 - Usable on day one with no training. Each role sees only what it needs; facility staff get at most three actions.
 - The system does the maths: facility staff see "Lasts until [date] ([N] days)"; logistics and management also see months of stock.
-- Exceptions first. Every alert shows its next action as a button.
+- Exceptions first. Every alert shows its next action as a button. Alert order is set in "Alert order" below.
+- Where the Claude Design files and this file differ, this file wins.
 - Status is color + icon + word, never color alone.
 - Every number carries its unit and thousands separators, and shows when it was last updated ("Counted today 5:40 PM").
 - RUTF quantities of 150 sachets or more show the sachet total, then whole cartons and loose sachets: "23,870 sachets (159 cartons + 20 loose)". An exact number of cartons reads "1,800 sachets (12 cartons)". Under 150, sachets only ("131 sachets"). This applies everywhere RUTF appears (shipments, emergency requests, receiving, item cards, logistics table, item history). It is display only: all calculations stay in exact sachets.
@@ -34,7 +35,7 @@ A prototype for Taimaka's Operations Associate test task (Task 1). Taimaka treat
 - The signed-in user's name and role always show in the header.
 - The sync indicator names the device type the app detects (phone, tablet or laptop): "Saved on this [device], will send when online" while entries are waiting to send, and "Sent. Last sync [time]" when everything has been sent. The sync indicator appears only on screens where staff enter data; view-only screens (management) show "Data as of [time]".
 - Header: the Taimaka logo from `Assets/Taimaka_white.svg` (the navy logo on white, despite the file name; trim its empty margins, never redraw or recolor it), a thin divider, then "Stock Management". The facility sits in its own tinted box with the store icon, the facility name in bold and the site type below ("Outpatient site" or "Inpatient site"). Roles without one facility keep their label in the same box.
-- Names and roles in the header user pill and on the sign-in cards display in capitals ("MUHAMMAD S.", "LEAD TRIAGE OFFICER") through CSS text-transform; the stored text stays in normal case. Entry stamps and history ("by Muhammad S.") stay in normal case.
+- Names and roles display in capitals wherever they identify the signed-in user or a person to pick (laptop and phone headers, sign-in cards) ("MUHAMMAD S.", "LEAD TRIAGE OFFICER") through CSS text-transform; the stored text stays in normal case. Entry stamps and history ("by Muhammad S.") stay in normal case.
 - Font: Atkinson Hyperlegible (designed by the Braille Institute for readers with low vision; every digit is unmistakable). Bundle the font files with the app; do not load them from Google Fonts at runtime. Every number uses tabular figures (font-variant-numeric: tabular-nums) so columns line up.
 - Icons: every icon must render. SVG data URIs in CSS use single quotes outside, url('data:image/svg+xml,...'), because the SVG markup contains double quotes. Check that every icon shows on every screen.
 - Pills and buttons: with the real font loaded, the icon and word are centered left to right, and the gap above the capital letters equals the gap below within 0.5px, at every size. Check this in a browser.
@@ -58,27 +59,47 @@ In production, logins are individual from day one (no shared accounts). The prot
 - `ODK OTP usage Jan-Oct 2026.csv`: monthly totals per OTP site per item (19 items), Jan to Oct 2026. Site ids are snake_case (`jigawan_iro`); map them to facility labels.
 - October is a partial month: every site and item has October = 62.3% of September (about 19 days). Rule: compute usage from the most recent complete months only. For this data, average August and September.
 - 14 of 27 OTPs started during 2026 (6 in August: Barambu, Daban Fulani, Dukul, Jamari, Kalshingi, Zaune). Rule: a site with fewer than 3 complete months of data shows an "Estimated target" badge.
-- ODK values have decimals (compilation artifacts). Round them for display. Counts show exactly as recorded (Zinc sulphate 28.5 on the bin card shows as 28.5).
-- Units come from `ITP item list.csv` or the ODK item name. Ciprotap ear drop is in bottles (same form as Otomed drops); Tom Brown is in packs (assumption). Items in neither source (Tabs ACT AL 2, ACT AA toddler, ACT AA infant, Cefixime, TB Bucket, BMS, Soap, Sponge) show "units" until Taimaka confirms.
+- ODK values have decimals (compilation artifacts). Round them for display. Counts show exactly as recorded (Zinc sulfate 28.5 on the bin card shows as 28.5).
+- Units come from `ITP item list.csv` or the ODK item name. Ciprotap ear drop is in bottles (same form as Otomed drops); Tom Brown is in packs (assumption). Items whose unit is in neither source (Tabs ACT AL 2, Z AA (Toddler), Z AA (Infant), Z Sups. Cefixime, TB Bucket, BMS, Soap, Sponge) show "units" until Taimaka confirms.
 - RUTF units are sachets; 1 carton = 150 sachets.
-- `ITP item list.csv`: ITP therapeutic food and medication with units. There is no ITP usage data. As the task says, ITP usage comes only from the stock record, so calculate it from the daily log: used = previous count + received - today's count. Seed about 60 days of past ITP daily logs with plausible sample values (and say so), and derive ITP average monthly use from them.
+- `ITP item list.csv`: ITP therapeutic food and medication with units. There is no ITP usage data. As the task says, ITP usage comes only from the stock record, so calculate it from the daily log: used = previous count + received - today's count. Seed past ITP daily logs from 1 July 2026 to 30 October 2026 with plausible sample values (and say so). That gives three complete months, so ITP average monthly use comes from August and September, the same as OTPs.
 - No opening balances, central store stock, shipment history or expiry dates are provided. Seed them with sample values (deterministic) so every status appears somewhere. Jigawan Iro OTP is seeded from the bin card (counted 30 Oct 2026).
 - The prototype's "today" is 30 October 2026 (the bin card date). With Aug and Sep usage this gives, for Jigawan Iro: RUTF 1.43 months, lasts until 12 Dec (OK, but below the 2-month target); Tom Brown 20 days, lasts until 19 Nov (Running low); Amoxicillin 60ml lasts until 23 Dec (OK, flagged difference); Malaria RDT about 2 months (OK); Otomed about 21 months (Too much); Ciprotap, Multivite, ACT AL 2 and Sponge at 0 (Out of stock). Use these as a check that the logic is right. "Order now" examples come from seeded data at other facilities, including Zaune OTP with RUTF seeded at 3,630 sachets (24 sealed cartons + 30 loose). That value is worked out, not arbitrary: at Zaune's real August and September use (about 13,750 sachets a month, the busiest site), 3,630 sachets lasts exactly 8 days (until 7 Nov), the Order now case in the design brief. Its emergency top-up to the estimated 2-month target (27,500) is 23,870 sachets.
 
 ### Jigawan Iro bin card values (seed these)
 
-20% Zinc oxide cream 56; ACT tablets AL 1 76; Amoxicillin susp 100ml 82; Amoxicillin susp 60ml 80 (bin card said 86: a flagged difference); Ciprotap ear drop 0; Loratadine 60; Malaria RDT 132; Multivite syrup 0; Nystatin suspension 26; ORS 96; Paracetamol syrup 58; RUTF 4,331 sachets (28 sealed cartons + 131 loose); Tabs ACT AL 2 0; Tabs Albendazole 400mg 69; Tetracycline ointment 19; Tom Brown 11; ACT AA toddler 13; Otomed 29; Zinc sulphate 28.5; Cefixime 25; ACT AA infant 14; TB Bucket (blank on the card: not counted); BMS 11; Benzyl benzoate 33; Soap 38; Sponge 0. That is 26 rows, in this order (the bin card order).
+20% Zinc oxide cream 56; ACT tablets AL 1 76; Amoxicillin susp 100ml 82; Amoxicillin susp 60ml 80 (bin card said 86: a flagged difference); Ciprotap ear drop 0; Loratadine 60; Malaria RDT 132; Multivite syrup (Fe/FA) 0; Nystatin suspension 26; ORS 96; Paracetamol syrup 58; RUTF 4,331 sachets (28 sealed cartons + 131 loose); Tabs ACT AL 2 0; Tabs Albendazole 400mg 69; Tetracycline ointment 19; Tom Brown 11; Z AA (Toddler) 13; Z Otomed 29; Zinc sulfate 28.5; Z Sups. Cefixime 25; Z AA (Infant) 14; TB Bucket (blank on the card: not counted); BMS 11; Benzyl benzoate 33; Soap 38; Sponge 0. That is 26 rows, in this order (the bin card order).
 
 ### Master item list (one name per item, with aliases)
 
-Names differ across sources. Keep one master list with a base unit and aliases, e.g.:
-- Zinc sulfate = "Zinc Sulphate" (bin card)
-- ACT AA infant = "Z AA (Infant)"; ACT AA toddler = "Z AA (Todler)"
-- ACT AL = "ACT tablets AL 1"
-- Amoxicillin 60 ml bottles = "Amoxicillin susp 60ml"; Amoxicillin 100 ml bottles = "Amoxicillin susp 100ml"
-- Malaria RDT kits = "Malaria RDT"; Otomed = "Z Otomed"; Cefixime = "Z Sups. Cefexime"
-- Zinc oxide = "20% Zinc oxide cream"; Tetracycline = "Tetracycline ointment"; Albendazole = "Tabs Albendazole 400mg"
-Items on the bin card with no ODK usage (Ciprotap, Multivite, ACT AL 2, Benzyl benzoate, Soap, Sponge, BMS, TB Bucket) are tracked on hand only. "Tom Brown container" is in ODK but not on the bin card, so at Jigawan Iro it shows "Not counted today".
+Display names are the names written on the Jigawan Iro bin card, so staff see the same words as on their paper card (and a future bin card photo reader matches them). Spelling is corrected in two cases, and the card's spelling is kept as an alias: three clear misspellings (Todler, Cefexime, Spong), and Zinc Sulphate, which becomes Zinc sulfate, the spelling Taimaka's own ODK file and ITP item list use (and American spelling). No display name has a spelling mistake, and each item has one spelling everywhere. Every other spelling (ODK file, ITP item list) is an alias. Display names, in bin card order (aliases in brackets):
+1. 20% Zinc oxide cream (ODK: Zinc oxide)
+2. ACT tablets AL 1 (ODK: ACT AL)
+3. Amoxicillin susp 100ml (ODK: Amoxicillin 100 ml bottles)
+4. Amoxicillin susp 60ml (ODK: Amoxicillin 60 ml bottles)
+5. Ciprotap ear drop
+6. Loratadine (ODK: Loratadine)
+7. Malaria RDT (ODK: Malaria RDT kits)
+8. Multivite syrup (Fe/FA)
+9. Nystatin suspension (ODK: Nystatin)
+10. ORS (ODK: ORS)
+11. Paracetamol syrup (ODK: Paracetamol)
+12. RUTF (ODK: RUTF)
+13. Tabs ACT AL 2
+14. Tabs Albendazole 400mg (ODK: Albendazole)
+15. Tetracycline ointment (ODK: Tetracycline)
+16. Tom Brown (card: TOM BROWN; ODK: Tom Brown)
+17. Z AA (Toddler) (card: Z AA (Todler); ODK: ACT AA toddler)
+18. Z Otomed (ODK: Otomed)
+19. Zinc sulfate (card: Zinc Sulphate; ITP list: Zinc sulfate 20mg tablets)
+20. Z Sups. Cefixime (card: Z Sups. Cefexime; ODK: Cefixime)
+21. Z AA (Infant) (ODK: ACT AA infant)
+22. TB Bucket (ODK: Tom Brown container; assumed to be the same item, to confirm with Taimaka)
+23. BMS
+24. Benzyl benzoate
+25. Soap
+26. Sponge (card: Spong)
+Items on the bin card with no ODK usage (Ciprotap ear drop, Multivite syrup (Fe/FA), Tabs ACT AL 2, Benzyl benzoate, Soap, Sponge, BMS) are tracked on hand only. TB Bucket is tracked through its ODK alias; it is blank on the card, so at Jigawan Iro it shows "Not counted today".
 
 Every item has one of the task's four stock types: therapeutic food, medication, medical and non-medical consumables, non-consumables. Logistics can change an item's type in Settings. Types for unclear items (e.g. BMS, TB Bucket) are assumptions; list them in the README.
 
@@ -107,6 +128,18 @@ Every item has one of the task's four stock types: therapeutic food, medication,
 - Precedence when more than one applies: Out of stock, then Order now, then Running low, then Too much, then OK.
 - Urgent-first order (phone home and any list sorted by urgency): Out of stock, Order now, Check (count difference), Running low, Not counted today, Too much, OK, Usage not tracked.
 - An item tracked in ODK with zero recent use and stock on hand counts as Too much. An item not tracked in ODK at all shows "Usage not tracked" (on hand only, no status).
+
+### Alert order (all screens)
+
+Alerts are ranked by how soon a child could go without treatment, then by how much they affect trust in the numbers, then planning:
+- Stock-out risk: 1. Out of stock. 2. Order now. 3. Shipment overdue (in Sent for over 72 hours).
+- Data checks: 4. Escalation. 5. Count difference. 6. Not counted today. 7. Approval waiting.
+- Planning: 8. Central store below target. 9. Will expire before use. 10. Too much (transfer suggestions).
+- Within one type: therapeutic food first, then medication, then consumables, then non-consumables (the task's order of stock types); then the most urgent (fewest days left, or the oldest alert); then bin card order.
+- Logistics dashboard: "Needs attention today" groups alerts under the three headings, each with its count ("Stock-out risk (3)"). Groups with no alerts are hidden. Other screens (facility home, supervisor home) use the same order without headings.
+- Pills in "Needs attention" use the summary pill size. In alert text, bold only the item name, the key number, the date and the person responsible.
+- Every button has an icon.
+- Items with the same status follow bin card order.
 
 ### Count differences
 

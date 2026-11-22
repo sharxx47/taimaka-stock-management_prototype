@@ -18,7 +18,9 @@ export function makeUnit(one) {
   return { one, many: PLURALS[one] || `${one}s`, multiply: false };
 }
 
-// The 26 bin card rows, in bin card order, then the one ODK item that is not on the bin card.
+// The 26 bin card rows, in bin card order. Display names are the names written on the bin card,
+// with spelling corrected in four cases (the card spelling stays an alias): Todler, Cefexime, Spong,
+// and Zinc Sulphate (shown as Zinc sulfate, the spelling in the ODK file and ITP item list).
 // name: the one display name. binCard: the text printed on the card. odk: the ODK item name.
 // itp: the ITP item list name when it is the same item (merged).
 // unitFrom: where the unit comes from: { itp: name } | { odk: unit } | { assumption: unit } | { none: true }
@@ -30,7 +32,7 @@ const OTP_ITEMS = [
   { id: 'ciprotap', name: 'Ciprotap ear drop', binCard: 'Ciprotap ear drop', unitFrom: { assumption: 'bottle', note: 'Same form as Otomed drops, which the ITP item list counts in bottles' }, type: 'medication', icon: 'drops' },
   { id: 'loratadine', name: 'Loratadine', binCard: 'Loratadine', odk: 'Loratadine', itp: 'Loratadine syrup', unitFrom: { itp: 'Loratadine syrup' }, type: 'medication', icon: 'bottle' },
   { id: 'malaria_rdt', name: 'Malaria RDT', binCard: 'Malaria RDT', odk: 'Malaria RDT kits', unitFrom: { odk: 'kit' }, type: 'consumable', icon: 'test' },
-  { id: 'multivite', name: 'Multivite syrup', binCard: 'Multivite syrup (Fe/ FA)', unitFrom: { itp: 'Multivitamin syrup without ferrous sulfate', note: 'Same form (syrup); the ITP item is a different formulation, so it is not merged' }, type: 'medication', icon: 'bottle' },
+  { id: 'multivite', name: 'Multivite syrup (Fe/FA)', binCard: 'Multivite syrup (Fe/ FA)', unitFrom: { itp: 'Multivitamin syrup without ferrous sulfate', note: 'Same form (syrup); the ITP item is a different formulation, so it is not merged' }, type: 'medication', icon: 'bottle' },
   { id: 'nystatin', name: 'Nystatin suspension', binCard: 'Nystatin suspension', odk: 'Nystatin', itp: 'Nystatin suspension 100,000 IU/5 ml', unitFrom: { itp: 'Nystatin suspension 100,000 IU/5 ml' }, type: 'medication', icon: 'bottle' },
   { id: 'ors', name: 'ORS', binCard: 'ORS', odk: 'ORS', itp: 'ORS', unitFrom: { itp: 'ORS' }, type: 'medication', icon: 'sachet' },
   { id: 'paracetamol', name: 'Paracetamol syrup', binCard: 'Paracetamol syrup', odk: 'Paracetamol', itp: 'Paracetamol syrup 120mg/5 ml (Emzor)', unitFrom: { itp: 'Paracetamol syrup 120mg/5 ml (Emzor)' }, type: 'medication', icon: 'bottle' },
@@ -39,18 +41,17 @@ const OTP_ITEMS = [
   { id: 'albendazole', name: 'Tabs Albendazole 400mg', binCard: 'Tabs Albendazole 400mg', odk: 'Albendazole', itp: 'Albendazole 400mg tablets', unitFrom: { itp: 'Albendazole 400mg tablets' }, type: 'medication', icon: 'tablets' },
   { id: 'tetracycline', name: 'Tetracycline ointment', binCard: 'Tetracycline ointment', odk: 'Tetracycline', itp: '3% Tetracycline ointment', unitFrom: { itp: '3% Tetracycline ointment' }, type: 'medication', icon: 'tube' },
   { id: 'tom_brown', name: 'Tom Brown', binCard: 'TOM BROWN', odk: 'Tom Brown', unitFrom: { assumption: 'pack' }, type: 'therapeutic_food', typeAssumed: true, icon: 'food' },
-  { id: 'act_aa_toddler', name: 'ACT AA toddler', binCard: 'Z AA (Todler)', odk: 'ACT AA toddler', unitFrom: { none: true }, type: 'medication', icon: 'tablets' },
-  { id: 'otomed', name: 'Otomed', binCard: 'Z Otomed', odk: 'Otomed', itp: 'Otomed drops', unitFrom: { itp: 'Otomed drops' }, type: 'medication', icon: 'drops' },
-  { id: 'zinc_sulfate', name: 'Zinc sulphate', binCard: 'Zinc Sulphate', odk: 'Zinc sulfate', itp: 'Zinc sulfate 20mg tablets', unitFrom: { itp: 'Zinc sulfate 20mg tablets' }, type: 'medication', icon: 'tablets' },
-  { id: 'cefixime', name: 'Cefixime', binCard: 'Z Sups. Cefexime', odk: 'Cefixime', unitFrom: { none: true }, type: 'medication', icon: 'bottle' },
-  { id: 'act_aa_infant', name: 'ACT AA infant', binCard: 'Z AA (Infant)', odk: 'ACT AA infant', unitFrom: { none: true }, type: 'medication', icon: 'tablets' },
-  { id: 'tb_bucket', name: 'TB Bucket', binCard: 'TB Bucket', unitFrom: { none: true }, type: 'non_consumable', typeAssumed: true, icon: 'bucket' },
+  { id: 'act_aa_toddler', name: 'Z AA (Toddler)', binCard: 'Z AA (Todler)', odk: 'ACT AA toddler', unitFrom: { none: true }, type: 'medication', icon: 'tablets' },
+  { id: 'otomed', name: 'Z Otomed', binCard: 'Z Otomed', odk: 'Otomed', itp: 'Otomed drops', unitFrom: { itp: 'Otomed drops' }, type: 'medication', icon: 'drops' },
+  { id: 'zinc_sulfate', name: 'Zinc sulfate', binCard: 'Zinc Sulphate', odk: 'Zinc sulfate', itp: 'Zinc sulfate 20mg tablets', unitFrom: { itp: 'Zinc sulfate 20mg tablets' }, type: 'medication', icon: 'tablets' },
+  { id: 'cefixime', name: 'Z Sups. Cefixime', binCard: 'Z Sups. Cefexime', odk: 'Cefixime', unitFrom: { none: true }, type: 'medication', icon: 'bottle' },
+  { id: 'act_aa_infant', name: 'Z AA (Infant)', binCard: 'Z AA (Infant)', odk: 'ACT AA infant', unitFrom: { none: true }, type: 'medication', icon: 'tablets' },
+  // TB Bucket and the ODK item "Tom Brown container" are assumed to be the same item (to confirm with Taimaka).
+  { id: 'tb_bucket', name: 'TB Bucket', binCard: 'TB Bucket', odk: 'Tom Brown container', unitFrom: { none: true }, type: 'consumable', typeAssumed: true, icon: 'bucket' },
   { id: 'bms', name: 'BMS', binCard: 'BMS', unitFrom: { none: true }, type: 'therapeutic_food', typeAssumed: true, icon: 'tin' },
   { id: 'benzyl_benzoate', name: 'Benzyl benzoate', binCard: 'Benzyl benzoate', itp: 'Benzyl benzoate lotion', unitFrom: { itp: 'Benzyl benzoate lotion' }, type: 'medication', icon: 'bottle' },
   { id: 'soap', name: 'Soap', binCard: 'Soap', unitFrom: { none: true }, type: 'consumable', icon: 'soap' },
   { id: 'sponge', name: 'Sponge', binCard: 'Spong', unitFrom: { none: true }, type: 'consumable', icon: 'sponge' },
-  // In ODK but not on the bin card: at Jigawan Iro it shows "Not counted today".
-  { id: 'tom_brown_container', name: 'Tom Brown container', odk: 'Tom Brown container', unitFrom: { odk: 'container' }, type: 'consumable', typeAssumed: true, icon: 'bucket' },
 ];
 
 export const BIN_CARD_ITEM_COUNT = 26;

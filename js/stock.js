@@ -492,7 +492,7 @@ export function sentTooLong(db, sh) {
 
 export function hoursInSent(db, sh) {
   if (sh.state !== 'sent') return null;
-  return Math.floor((nowMs(db) - ms(sh.steps.sent.at)) / 3600000);
+  return Math.round((nowMs(db) - ms(sh.steps.sent.at)) / 3600000); // display: nearest hour
 }
 
 // ---------- Network and central store ----------
