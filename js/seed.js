@@ -420,7 +420,12 @@ export function seedDemo(db) {
     },
   }, id);
 
-  // ---------- Central store: opening balance 30 Oct 8:00 AM (after shipments already sent) ----------
+  // ---------- Central store ----------
+  // Opening balance on 30 Jun 8:00 AM, before its first movement (shipments sent from 1 Jul), so every line of
+  // the item history shows the balance after it. Its amount is today's stock plus everything sent since, so
+  // today's numbers do not change. Logistics checked the stock at 8:00 AM today (the "Today 8:00 AM" of the
+  // design's logistics table); the central store has no daily count.
+  const openTs = at('2026-06-30', '08:00');
   const cTs = at(TODAY, '08:00');
   for (const it of db.itemsForStore('central')) {
     let q;
@@ -433,7 +438,18 @@ export function seedDemo(db) {
       q = u ? Math.round(u.amc * between(`central|${it.id}`, 3.1, 3.6)) : intBetween(`central|${it.id}`, 100, 400);
       batches = [{ ...batchFor(it.id, TODAY, 3.6, `central|${it.id}`), qty: q }];
     }
-    push({ kind: 'opening', storeId: 'central', itemId: it.id, qty: q, ts: cTs, stamp: st(NASIRU, cTs), note: 'Opening balance (demo)', batches });
+    const sentBefore = db.ledger.entries('central', it.id).filter((e) => e.kind === 'sent' && e.ts < cTs);
+    const sentQty = sentBefore.reduce((t, e) => t + e.qty, 0);
+    const openBatches = new Map(batches.map((b) => [b.batch, { ...b }]));
+    for (const e of sentBefore) {
+      for (const b of e.batches || []) {
+        const prev = openBatches.get(b.batch) || { batch: b.batch, expiry: b.expiry, qty: 0 };
+        prev.qty += b.qty;
+        openBatches.set(b.batch, prev);
+      }
+    }
+    push({ kind: 'opening', storeId: 'central', itemId: it.id, qty: q + sentQty, ts: openTs, stamp: st(NASIRU, openTs), note: 'Opening balance (demo)', batches: [...openBatches.values()] });
+    push({ kind: 'count', storeId: 'central', itemId: it.id, qty: q, expected: q, ts: cTs, stamp: st(NASIRU, cTs), recount: true, stockCheck: true, submittedAt: cTs });
   }
   db.apply({ type: 'ledger_batch', entries: entries.splice(0) }, 'seed');
   db.apply({

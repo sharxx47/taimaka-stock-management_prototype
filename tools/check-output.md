@@ -78,6 +78,8 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 | Jigawan Iro emergency request (starts unsent) | open requests 0, Out of stock alert button: Send emergency shipment | open requests 0, Out of stock alert button: Send emergency shipment | OK |
 | Management indicators (design: Management overview) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35) | stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35) | OK |
 | Network RUTF on hand (design: 661,461 + 40,000 on order) | 661,461 held + 1,800 in transit + 40,000 on order | 661,461 held + 1,800 in transit + 40,000 on order | OK |
+| Central store RUTF status (every screen uses this view) | Below 3-month target, 2.4 months incl. on order, above target false, last updated 30 Oct 8:00 AM | Below 3-month target, 2.4 months incl. on order, above target false, last updated 30 Oct 8:00 AM | OK |
+| Every item history starts with its opening balance | yes | yes | OK |
 | Every status appears somewhere | all | all | OK |
 
 ## Logistics: Needs attention today
@@ -90,7 +92,7 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 
 ### Data checks (3)
 1. [Escalation] Jigawan Iro OTP: 3 count differences since 20 Oct (Amoxicillin susp 60ml), sent to supervisor Hajara Nuhu; goes to management on 19 Nov if it keeps happening  -> button: View history
-2. [Not counted today] Maikaho OTP: last counted 29 Oct 5:15 PM; Tumfure OTP: last counted 29 Oct 5:20 PM  -> button: Send a reminder
+2. [Not counted today] Maikaho OTP: last counted 29 Oct 5:15 PM; Tumfure OTP: last counted 29 Oct 5:20 PM; Jigawan Iro OTP left 1 item blank: TB Bucket  -> button: Send a reminder
 3. [Approval waiting] Jigawan Iro OTP: RUTF correction -180 sachets (1 carton + 30 loose) (damaged) by Muhammad S., waiting for Hajara Nuhu  -> button: Remind approver
 
 ### Planning (3)
@@ -105,6 +107,7 @@ Emergency request: Ciprotap ear drop: No usage data for this item. Logistics wil
 - Same person approving: "A second person must approve this correction."
 - Approved by Hajara Nuhu: on hand 4,050, pending approvals 1
 - Muhammad S. sends the emergency request: shipment 1044, 4 items (amount set by logistics, amount set by logistics, amount set by logistics, amount set by logistics); logistics button "Approve request"; emergency orders 5 of 36
+- Count of 1 item with the storage box unticked: without a reason "Say what is wrong with the store: not cool, not dry or not locked."; with "not cool, not locked": 25 blank rows, Store problem alert in Data checks (not_cool, not_locked, by Muhammad S., note "Door lock broken"); after a ticked count: 0 Store problem alerts
 - Shipment 1042 received: RUTF 5,850 sachets (39 cartons), in transit 0; Tom Brown 33 packs
 - ODK upload of the provided file: 27 of 27 OTPs, 19 items
 - Replaying the 6 saved events gives RUTF 5,850 (dropped 0)

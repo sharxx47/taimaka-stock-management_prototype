@@ -184,10 +184,16 @@ row('Management indicators (design: Management overview)', `stock-out days ${kp.
   'stock-out days 6 (4 in Sept), on time 94% (846 of 900), accuracy 96.2%, unexplained 3, emergency 11% (4 of 35)'); // 14% (5 of 36) once Muhammad S. sends his request (see Actions)
 row('Network RUTF on hand (design: 661,461 + 40,000 on order)', `${formatNumber(kp.rutf.held)} held + ${formatNumber(kp.rutf.inTransit)} in transit + ${formatNumber(kp.rutf.onOrder)} on order`, '661,461 held + 1,800 in transit + 40,000 on order');
 
+// Round 3: the central store is judged by the central store rules (3 months of network use, counting stock on order).
+const cr = stockView(db, 'central', 'rutf');
+row('Central store RUTF status (every screen uses this view)', `${cr.status.label}, ${cr.months.toFixed(1)} months incl. on order, above target ${cr.aboveTarget}, last updated ${formatShortDate(dateOf(cr.lastUpdated.at))} ${formatTime(cr.lastUpdated.at)}`, 'Below 3-month target, 2.4 months incl. on order, above target false, last updated 30 Oct 8:00 AM');
+const firstLines = db.stores.flatMap((st) => db.itemsForStore(st.id).map((it) => db.ledger.history(st.id, it.id)[0])).filter(Boolean);
+row('Every item history starts with its opening balance', firstLines.every((r) => r.entry.kind === 'opening') ? 'yes' : firstLines.filter((r) => r.entry.kind !== 'opening').length + ' do not', 'yes');
+
 // Statuses that appear somewhere in the network.
 const seen = new Set();
 for (const s of db.stores) for (const v of storeItems(db, s.id)) { seen.add(v.status.label); if (v.needsCheck) seen.add('Check'); if (v.aboveTarget) seen.add('Above target'); if (v.estimated) seen.add('Estimated target'); }
-row('Every status appears somewhere', ['Out of stock', 'Order now', 'Check', 'Running low', 'Not counted today', 'Too much', 'OK', 'Usage not tracked', 'Above target', 'Estimated target'].filter((x) => !seen.has(x)).join(', ') || 'all', 'all');
+row('Every status appears somewhere', ['Out of stock', 'Order now', 'Check', 'Running low', 'Not counted today', 'Too much', 'OK', 'Usage not tracked', 'Above target', 'Estimated target', 'Below 3-month target'].filter((x) => !seen.has(x)).join(', ') || 'all', 'all');
 
 // ---------- Needs attention (logistics) ----------
 console.log('\n## Logistics: Needs attention today\n');
@@ -203,7 +209,8 @@ for (const g of groups) {
       case 'OVERDUE': text = `Shipment ${a.number} to ${sname(a.storeId)}: in Sent for ${a.hours} hours`; break;
       case 'ESCALATION': text = `${sname(a.storeId)}: ${a.flagCount} count differences since ${formatShortDate(a.firstFlagDate)} (${a.itemIds.map((x) => db.item(x).name).join(', ')}), sent to supervisor ${a.supervisor}; goes to management on ${formatShortDate(a.managementDate)} if it keeps happening`; break;
       case 'COUNT_DIFF': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} counted ${a.counted}, expected ${a.expected}`; break;
-      case 'NOT_COUNTED': text = a.stores.map((x) => `${sname(x.storeId)}: last counted ${formatShortDate(dateOf(x.lastCountAt))} ${formatTime(x.lastCountAt)}`).join('; '); break;
+      case 'NOT_COUNTED': text = [...a.stores.map((x) => `${sname(x.storeId)}: last counted ${formatShortDate(dateOf(x.lastCountAt))} ${formatTime(x.lastCountAt)}`), ...a.partial.map((x) => `${sname(x.storeId)} left ${x.itemIds.length} ${x.itemIds.length === 1 ? 'item' : 'items'} blank: ${x.itemIds.map((i) => db.item(i).name).join(', ')}`)].join('; '); break;
+      case 'STORE_PROBLEM': text = `${sname(a.storeId)}: ${a.problem.problems.join(', ')} reported by ${a.problem.byName}`; break;
       case 'APPROVAL': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} correction ${formatQty(db.item(a.itemId), a.qty)} (${a.reason}) by ${a.requestedBy}, waiting for ${a.approver}`; break;
       case 'CENTRAL_BELOW': text = `Central store ${db.item(a.itemId).name}: ${a.monthsInclOrder.toFixed(1)} months, including ${formatQty(db.item(a.itemId), a.onOrder)} on order (target ${formatQty(db.item(a.itemId), a.target)})`; break;
       case 'EXPIRY': text = `${sname(a.storeId)}: ${db.item(a.itemId).name} batch ${a.batches.map((b) => b.batch).join(', ')} expires ${formatShortDate(a.expiry)}, ${formatQty(db.item(a.itemId), a.qty)} on hand, about ${formatQty(db.item(a.itemId), a.unused)} will not be used by then (lasts until ${formatShortDate(a.lastsUntil)})`; break;
@@ -217,6 +224,10 @@ for (const g of groups) {
 const allAlerts = groups.flatMap((g) => g.alerts);
 const ranks = allAlerts.map((a) => a.rank);
 expect('Alert order is by type rank', ranks.every((r, i) => i === 0 || ranks[i - 1] <= r), true);
+const ncAlert = allAlerts.find((a) => a.type === 'NOT_COUNTED');
+// Round 3: Jigawan Iro now appears in "Not counted today" because its submitted count left TB Bucket blank.
+expect('Not counted today alert', `${ncAlert.stores.map((x) => x.storeId).join(', ')} | blank: ${ncAlert.partial.map((x) => `${x.storeId} ${x.itemIds.join(', ')}`).join('; ')}`, 'maikaho, tumfure | blank: jigawan_iro tb_bucket');
+expect('No store problem in the demo data', allAlerts.filter((a) => a.type === 'STORE_PROBLEM').length, 0);
 const jiOut = allAlerts.find((a) => a.type === 'OUT' && a.storeId === 'jigawan_iro');
 expect('Jigawan Iro Out of stock alert lists 4 items', jiOut ? jiOut.items.map((x) => x.name).sort().join(', ') : '', 'Ciprotap ear drop, Multivite syrup (Fe/FA), Sponge, Tabs ACT AL 2');
 
@@ -246,6 +257,23 @@ console.log(`- Muhammad S. sends the emergency request: shipment ${req.number}, 
 expect('Request number', req.number, 1044);
 expect('Out of stock alert after the request', jiOutAfter.action.label, 'Approve request');
 expect('Emergency orders after the request', `${Math.round(kpAfter.emergencyShare * 100)}% (${kpAfter.emergency} of ${kpAfter.orders})`, '14% (5 of 36)');
+// Round 3: a count with the storage box unticked raises a Store problem; a later ticked count clears it.
+const t2 = buildDb(src, freshState()).db;
+const d2 = {};
+saveCountLine(t2, d2, t2.user('lto_jigawan_iro'), 'jigawan_iro', 'ors', { qty: 96 });
+let refused = '';
+try { submitCount(t2, d2, t2.user('lto_jigawan_iro'), 'jigawan_iro', { storeCheck: false }); } catch (e) { refused = e.message; }
+const sp1 = submitCount(t2, d2, t2.user('lto_jigawan_iro'), 'jigawan_iro', { storeCheck: false, storeProblems: ['not_cool', 'not_locked'], storeNote: 'Door lock broken' });
+const spAlert = needsAttention(t2).flatMap((g) => g.alerts).find((a) => a.type === 'STORE_PROBLEM');
+const spGroup = needsAttention(t2).find((g) => g.id === spAlert.group);
+const order2 = needsAttention(t2).flatMap((g) => g.alerts).map((a) => a.rank);
+saveCountLine(t2, d2, t2.user('lto_jigawan_iro'), 'jigawan_iro', 'ors', { qty: 96 });
+submitCount(t2, d2, t2.user('lto_jigawan_iro'), 'jigawan_iro', { storeCheck: true });
+const spAfter = needsAttention(t2).flatMap((g) => g.alerts).filter((a) => a.type === 'STORE_PROBLEM').length;
+console.log(`- Count of 1 item with the storage box unticked: without a reason "${refused}"; with "not cool, not locked": ${sp1.blanks.length} blank rows, Store problem alert in ${spGroup.label} (${spAlert.problem.problems.join(', ')}, by ${spAlert.problem.byName}, note "${spAlert.problem.note}"); after a ticked count: ${spAfter} Store problem alerts`);
+expect('Store problem raised', `${spAlert.storeId} ${spAlert.problem.problems.join(',')} ${spGroup.id}`, 'jigawan_iro not_cool,not_locked data');
+expect('Store problem cleared by a ticked count', spAfter, 0);
+expect('Alert order with a Store problem', order2.every((r, i) => i === 0 || order2[i - 1] <= r), true);
 const sh = [...t.shipments.values()].find((s) => s.number === 1042);
 receiveShipment(t, muhammad, sh.id, {
   rutf: { batches: [{ batch: 'RU-2604', expiry: '2027-03-31', qty: 1200 }, { batch: 'RU-TEST', expiry: '2027-05-31', qty: 600 }] },

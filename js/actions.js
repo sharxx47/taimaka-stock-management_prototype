@@ -62,7 +62,15 @@ export function saveCountLine(db, drafts, user, storeId, itemId, { qty = null, s
   return d.lines[itemId];
 }
 
-export function submitCount(db, drafts, user, storeId, { storeCheck = false, kind: wanted = null } = {}) {
+export const STORE_PROBLEMS = [
+  { id: 'not_cool', label: 'Not cool' },
+  { id: 'not_dry', label: 'Not dry' },
+  { id: 'not_locked', label: 'Not locked' },
+];
+
+// storeCheck: "Store is cool, dry and locked today". When it is not ticked, storeProblems names at least one
+// problem (not_cool, not_dry, not_locked), with an optional storeNote. The count still submits.
+export function submitCount(db, drafts, user, storeId, { storeCheck = false, storeProblems = [], storeNote = '', kind: wanted = null } = {}) {
   const key = draftKey(storeId, wanted || drafts[storeId]?.kind || 'daily');
   const draft = drafts[key];
   if (!draft) fail('Nothing has been entered yet.');
@@ -90,7 +98,9 @@ export function submitCount(db, drafts, user, storeId, { storeCheck = false, kin
     }
   }
   if (!entries.length) fail('Enter at least one count before submitting.');
-  const session = { id: sessionId, storeId, kind, storeCheck: !!storeCheck, blanks, submittedAt: db.nowIso };
+  const problems = storeCheck ? [] : storeProblems.filter((p) => STORE_PROBLEMS.some((x) => x.id === p));
+  if (!storeCheck && !problems.length) fail('Say what is wrong with the store: not cool, not dry or not locked.');
+  const session = { id: sessionId, storeId, kind, storeCheck: !!storeCheck, storeProblems: problems, storeNote: storeCheck ? '' : storeNote.trim(), blanks, submittedAt: db.nowIso };
   db.apply({ type: 'count_submit', session, entries, stamp: st });
   for (const n of notes) db.apply({ type: 'note', targetId: n.entryId, text: n.text, stamp: st });
   delete drafts[key];

@@ -24,6 +24,8 @@ export const STATUS = {
   TOO_MUCH: { code: 'TOO_MUCH', label: 'Too much', rank: 5 },
   OK: { code: 'OK', label: 'OK', rank: 6 },
   NOT_TRACKED: { code: 'NOT_TRACKED', label: 'Usage not tracked', rank: 7 },
+  // Central store only: under its 3-month target, counting stock on order (CLAUDE.md, central store rules).
+  CENTRAL_LOW: { code: 'CENTRAL_LOW', label: 'Below 3-month target', rank: 3 },
 };
 export const ABOVE_TARGET = { code: 'ABOVE_TARGET', label: 'Above target' }; // logistics view only
 export const ESTIMATED_TARGET = { code: 'ESTIMATED', label: 'Estimated target' }; // logistics view only
@@ -382,9 +384,22 @@ export function stockView(db, storeId, itemId) {
     const todayCount = latestCount(db, storeId, itemId, { onDate: today(db) });
     const check = todayCount ? evaluateCount(db, todayCount) : null;
 
+    const t = target(db, storeId, itemId);
+    const transit = store.type === 'CENTRAL' ? 0 : inTransitTo(db, storeId, itemId);
+    const ordered = store.type === 'CENTRAL' ? onOrder(db, itemId) : 0;
+    const monthsInclPipeline = tracked && qty !== null && use > 0 ? (qty + transit + ordered) / use : null;
+    const belowCentralTarget = store.type === 'CENTRAL' && t !== null && qty !== null ? qty + ordered < t.exact : false;
+
     let status;
     let zeroUse = false;
-    if (isFacility(store) && !counted) status = STATUS.NOT_COUNTED;
+    if (store.type === 'CENTRAL') {
+      // The central store has no daily count; it is judged against 3 months of network use, counting stock on order.
+      if (qty === null) status = STATUS.NOT_TRACKED;
+      else if (qty <= 0) status = STATUS.OUT;
+      else if (!tracked) status = STATUS.NOT_TRACKED;
+      else if (belowCentralTarget) status = STATUS.CENTRAL_LOW;
+      else status = STATUS.OK;
+    } else if (!counted) status = STATUS.NOT_COUNTED;
     else if (qty === null) status = STATUS.NOT_COUNTED;
     else if (qty <= 0) status = STATUS.OUT;
     else if (!tracked) status = STATUS.NOT_TRACKED;
@@ -396,15 +411,13 @@ export function stockView(db, storeId, itemId) {
 
     const needsCheck = !!(check && check.applicable && check.flagged);
     const sortRank = status === STATUS.OUT || status === STATUS.ORDER_NOW ? status.rank : needsCheck ? STATUS.CHECK.rank : status.rank;
-    const aboveTarget = status === STATUS.OK && months >= ABOVE_TARGET_MIN_MONTHS && months <= TOO_MUCH_MONTHS;
-    const t = target(db, storeId, itemId);
-    const transit = store.type === 'CENTRAL' ? 0 : inTransitTo(db, storeId, itemId);
-    const ordered = store.type === 'CENTRAL' ? onOrder(db, itemId) : 0;
-    const monthsInclPipeline = tracked && qty !== null && use > 0 ? (qty + transit + ordered) / use : null;
+    const aboveTarget = isFacility(store) && status === STATUS.OK && months >= ABOVE_TARGET_MIN_MONTHS && months <= TOO_MUCH_MONTHS;
     const lastEntry = db.ledger.entries(storeId, itemId).filter((e) => e.tsMs <= nowMs(db)).at(-1) || null;
 
     return {
-      store, item, onHand: qty, usage: u, amc: use, tracked, days, months, lastsUntil,
+      store, item, onHand: qty, usage: u, amc: use, tracked, days, lastsUntil,
+      // Central store: months of stock count stock on order (the same figure as the logistics table).
+      months: store.type === 'CENTRAL' ? monthsInclPipeline : months,
       lastsMoreThanYear: days !== null && days > 365,
       noRecentUse: zeroUse,
       status, needsCheck, check, sortRank, aboveTarget,
@@ -412,7 +425,8 @@ export function stockView(db, storeId, itemId) {
       countedToday: counted, todayCount, countedAt: todayCount ? (todayCount.submittedAt || todayCount.ts) : null,
       lastCount: latestCount(db, storeId, itemId),
       target: t, inTransit: transit, onOrder: ordered, monthsInclPipeline,
-      belowCentralTarget: store.type === 'CENTRAL' && t !== null && qty !== null ? qty + ordered < t.exact : false,
+      belowCentralTarget,
+      isCentral: store.type === 'CENTRAL',
       lastUpdated: lastEntry ? { at: lastEntry.ts, byName: lastEntry.stamp?.byName ?? null, kind: lastEntry.kind } : null,
     };
   });
@@ -431,11 +445,12 @@ export function urgentFirst(views) {
 // Facility home summary: "4 items out of stock, 1 running low, 7 with too much".
 export function facilitySummary(db, storeId) {
   const views = storeItems(db, storeId);
-  const c = { out: 0, orderNow: 0, low: 0, tooMuch: 0, ok: 0, notCounted: 0, notTracked: 0, check: 0, total: views.length };
+  const c = { out: 0, orderNow: 0, low: 0, centralLow: 0, tooMuch: 0, ok: 0, notCounted: 0, notTracked: 0, check: 0, total: views.length };
   for (const v of views) {
     if (v.status === STATUS.OUT) c.out++;
     else if (v.status === STATUS.ORDER_NOW) c.orderNow++;
     else if (v.status === STATUS.LOW) c.low++;
+    else if (v.status === STATUS.CENTRAL_LOW) c.centralLow++;
     else if (v.status === STATUS.TOO_MUCH) c.tooMuch++;
     else if (v.status === STATUS.OK) c.ok++;
     else if (v.status === STATUS.NOT_COUNTED) c.notCounted++;
@@ -446,6 +461,7 @@ export function facilitySummary(db, storeId) {
   if (c.out) parts.push(`${c.out} out of stock`);
   if (c.orderNow) parts.push(`${c.orderNow} to order now`);
   if (c.low) parts.push(`${c.low} running low`);
+  if (c.centralLow) parts.push(`${c.centralLow} below 3-month target`);
   if (c.tooMuch) parts.push(`${c.tooMuch} with too much`);
   if (parts.length) {
     const firstN = Number(parts[0].split(' ')[0]);

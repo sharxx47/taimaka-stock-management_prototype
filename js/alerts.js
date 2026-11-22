@@ -1,8 +1,9 @@
 // "Needs attention": alerts in the agreed order (CLAUDE.md, "Alert order").
 // Ranked by how soon a child could go without treatment, then trust in the numbers, then planning:
 //   Stock-out risk: 1 Out of stock, 2 Order now, 3 Shipment overdue (in Sent over 72 hours)
-//   Data checks:    4 Escalation, 5 Count difference, 6 Not counted today, 7 Approval waiting
-//   Planning:       8 Central store below target, 9 Will expire before use, 10 Too much (transfer suggestions)
+//   Data checks:    4 Escalation, 5 Count difference, 6 Store problem, 7 Not counted today (including counts
+//                   submitted with blank rows), 8 Approval waiting
+//   Planning:       9 Central store below target, 10 Will expire before use, 11 Too much (transfer suggestions)
 // Within one type: therapeutic food, medication, consumables, non-consumables; then the most urgent
 // (fewest days left, or the oldest alert); then bin card order.
 // Pill labels and button labels come from the final design files (Logistics dashboard).
@@ -27,11 +28,12 @@ export const ALERT_TYPES = {
   OVERDUE: { rank: 3, group: 'stockout', label: 'Sent over 72 hours', pill: 'order', icon: 'transit', banner: 'order', action: { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary' } },
   ESCALATION: { rank: 4, group: 'data', label: 'Escalation', pill: 'order', banner: 'order', action: { id: 'history', label: 'View history', icon: 'history', kind: 'secondary' } },
   COUNT_DIFF: { rank: 5, group: 'data', label: 'Count difference', pill: 'check', banner: 'low', action: { id: 'recount', label: 'Plan a recount', icon: 'recount', kind: 'secondary' } },
-  NOT_COUNTED: { rank: 6, group: 'data', label: 'Not counted today', pill: 'nc', banner: 'nc', action: { id: 'remind', label: 'Send a reminder', icon: 'bell', kind: 'secondary' } },
-  APPROVAL: { rank: 7, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', action: { id: 'remind_approver', label: 'Remind approver', icon: 'bell', kind: 'secondary' } },
-  CENTRAL_BELOW: { rank: 8, group: 'planning', label: 'Central store low', pill: 'low', banner: 'low', action: { id: 'supplier_order', label: 'Plan supplier order', icon: 'truck', kind: 'secondary' } },
-  EXPIRY: { rank: 9, group: 'planning', label: 'Will expire before use', pill: 'exp', banner: 'exp', action: { id: 'move', label: 'Move to another facility', icon: 'move', kind: 'secondary' } },
-  TRANSFER: { rank: 10, group: 'planning', label: 'Too much', pill: 'much', banner: 'much', action: { id: 'transfer', label: 'Plan transfer', icon: 'move', kind: 'secondary' } },
+  STORE_PROBLEM: { rank: 6, group: 'data', label: 'Store problem', pill: 'order', icon: 'lock', banner: 'order', action: { id: 'note', label: 'Add a note', icon: 'note', kind: 'secondary' } },
+  NOT_COUNTED: { rank: 7, group: 'data', label: 'Not counted today', pill: 'nc', banner: 'nc', action: { id: 'remind', label: 'Send a reminder', icon: 'bell', kind: 'secondary' } },
+  APPROVAL: { rank: 8, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', action: { id: 'remind_approver', label: 'Remind approver', icon: 'bell', kind: 'secondary' } },
+  CENTRAL_BELOW: { rank: 9, group: 'planning', label: 'Central store low', pill: 'low', banner: 'low', action: { id: 'supplier_order', label: 'Plan supplier order', icon: 'truck', kind: 'secondary' } },
+  EXPIRY: { rank: 10, group: 'planning', label: 'Will expire before use', pill: 'exp', banner: 'exp', action: { id: 'move', label: 'Move to another facility', icon: 'move', kind: 'secondary' } },
+  TRANSFER: { rank: 11, group: 'planning', label: 'Too much', pill: 'much', banner: 'much', action: { id: 'transfer', label: 'Plan transfer', icon: 'move', kind: 'secondary' } },
 };
 
 const TYPE_ORDER = Object.fromEntries(STOCK_TYPES.map((t, i) => [t.id, i]));
@@ -61,6 +63,14 @@ function make(type, fields) {
 
 function storeRank(db, storeId) {
   return db.stores.findIndex((s) => s.id === storeId);
+}
+
+// The store problem still open at a store: the latest submitted count, log or recount where the storage
+// box was not ticked. null once a later count confirms the store is cool, dry and locked.
+export function storeProblem(db, storeId) {
+  const sess = [...db.countSessions.values()].filter((x) => x.storeId === storeId && x.submittedAt <= db.nowIso).sort((x, y) => x.submittedAt.localeCompare(y.submittedAt)).at(-1);
+  if (!sess || sess.storeCheck || !(sess.storeProblems || []).length) return null;
+  return { problems: sess.storeProblems, note: sess.storeNote || '', at: sess.submittedAt, byName: sess.stamp?.byName || null, sessionId: sess.id };
 }
 
 // The open emergency request for a facility (Requested or Approved, not yet sent), if any.
@@ -143,13 +153,25 @@ export function needsAttention(db) {
     }
   }
 
-  // 6. Not counted today: one alert listing every facility with no count submitted today
-  // (oldest last count first). Single blank rows (for example TB Bucket) show on the facility's own screen.
+  // 6. Store problem: the latest submitted count or log did not confirm "Store is cool, dry and locked today".
+  // It clears at the next submitted count where the box is ticked.
+  for (const s of db.stores) {
+    const p = storeProblem(db, s.id);
+    if (p) alerts.push(make('STORE_PROBLEM', { storeId: s.id, problem: p, key: [0, p.at, storeRank(db, s.id)] }));
+  }
+
+  // 7. Not counted today: one alert listing every facility with no count submitted today (oldest last count
+  // first), and every facility whose count today left items blank.
   const notCounted = [];
+  const partial = [];
   for (const s of db.stores) {
     if (s.type !== 'OTP' && s.type !== 'ITP') continue;
     const views = storeItems(db, s.id);
-    if (views.some((v) => v.countedToday)) continue;
+    if (views.some((v) => v.countedToday)) {
+      const blank = views.filter((v) => !v.countedToday);
+      if (blank.length) partial.push({ storeId: s.id, itemIds: blank.map((v) => v.item.id) });
+      continue;
+    }
     let last = null;
     for (const v of views) {
       const c = latestCount(db, s.id, v.item.id);
@@ -158,12 +180,18 @@ export function needsAttention(db) {
     }
     notCounted.push({ storeId: s.id, lastCountAt: last });
   }
-  if (notCounted.length) {
+  if (notCounted.length || partial.length) {
     notCounted.sort((a, b) => (a.lastCountAt || '').localeCompare(b.lastCountAt || '') || storeRank(db, a.storeId) - storeRank(db, b.storeId));
-    alerts.push(make('NOT_COUNTED', { storeId: notCounted[0].storeId, stores: notCounted, storeIds: notCounted.map((x) => x.storeId), key: [0, notCounted[0].lastCountAt || ''] }));
+    partial.sort((a, b) => storeRank(db, a.storeId) - storeRank(db, b.storeId));
+    const first = notCounted[0] || partial[0];
+    alerts.push(make('NOT_COUNTED', {
+      storeId: first.storeId, stores: notCounted, partial,
+      storeIds: [...notCounted.map((x) => x.storeId), ...partial.map((x) => x.storeId)],
+      key: [0, notCounted[0] ? notCounted[0].lastCountAt || '' : 'z'],
+    }));
   }
 
-  // 7. Approval waiting: corrections waiting for a second named person (oldest first).
+  // 8. Approval waiting: corrections waiting for a second named person (oldest first).
   for (const e of pendingApprovals(db)) {
     const it = db.item(e.itemId);
     alerts.push(make('APPROVAL', {
@@ -172,7 +200,7 @@ export function needsAttention(db) {
     }));
   }
 
-  // 8. Central store below its 3-month target, counting stock on order.
+  // 9. Central store below its 3-month target, counting stock on order.
   for (const v of centralBelowTarget(db)) {
     alerts.push(make('CENTRAL_BELOW', {
       storeId: 'central', itemId: v.item.id, onHand: v.onHand, onOrder: v.onOrder, monthsInclOrder: v.monthsInclPipeline,
@@ -180,7 +208,7 @@ export function needsAttention(db) {
     }));
   }
 
-  // 9. Will expire before use: one alert per item and store, listing the batches.
+  // 10. Will expire before use: one alert per item and store, listing the batches.
   for (const s of db.stores) {
     for (const it of db.itemsForStore(s.id)) {
       const v = stockView(db, s.id, it.id);
@@ -195,7 +223,7 @@ export function needsAttention(db) {
     }
   }
 
-  // 10. Too much: transfer suggestions to a site that needs the stock.
+  // 11. Too much: transfer suggestions to a site that needs the stock.
   for (const t of suggestTransfers(db)) {
     const it = db.item(t.lines[0].itemId);
     const days = stockView(db, t.toStoreId, it.id).days;
