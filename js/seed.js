@@ -26,6 +26,7 @@ function rand(key) {
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
+export { rand as seedRand, largestRemainder };
 const between = (key, lo, hi) => lo + rand(key) * (hi - lo);
 const intBetween = (key, lo, hi) => Math.floor(between(key, lo, hi + 1));
 

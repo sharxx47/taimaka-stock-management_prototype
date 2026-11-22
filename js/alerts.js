@@ -13,7 +13,8 @@ import {
   STATUS, stockView, storeItems, escalation, evaluateCount, latestCount, today, hoursInSent, sentTooLong,
   centralBelowTarget, expiryFlags, suggestTransfers,
 } from './stock.js';
-import { pendingApprovals } from './actions.js';
+import { pendingApprovals, receiptDifferences, openUnlockRequests } from './actions.js';
+import { dateOf } from './time.js';
 
 export const ALERT_GROUPS = [
   { id: 'stockout', label: 'Stock-out risk' },
@@ -27,10 +28,12 @@ export const ALERT_TYPES = {
   ORDER_NOW: { rank: 2, group: 'stockout', label: 'Order now', pill: 'order', banner: 'order', action: { id: 'emergency', label: 'Send emergency shipment', icon: 'truck' } },
   OVERDUE: { rank: 3, group: 'stockout', label: 'Sent over 72 hours', pill: 'order', icon: 'transit', banner: 'order', action: { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary' } },
   ESCALATION: { rank: 4, group: 'data', label: 'Escalation', pill: 'order', banner: 'order', action: { id: 'history', label: 'View history', icon: 'history', kind: 'secondary' } },
+  RECEIPT_DIFF: { rank: 5, group: 'data', label: 'Receipt difference', pill: 'check', banner: 'low', logisticsOnly: true, action: { id: 'shipment', label: 'Check shipment', icon: 'truck', kind: 'secondary' } },
   COUNT_DIFF: { rank: 5, group: 'data', label: 'Count difference', pill: 'check', banner: 'low', action: { id: 'recount', label: 'Plan a recount', icon: 'recount', kind: 'secondary' } },
   STORE_PROBLEM: { rank: 6, group: 'data', label: 'Store problem', pill: 'order', banner: 'order', action: { id: 'note', label: 'Add a note', icon: 'note', kind: 'secondary' } },
   NOT_COUNTED: { rank: 7, group: 'data', label: 'Not counted today', pill: 'nc', banner: 'nc', action: { id: 'remind', label: 'Send a reminder', icon: 'bell', kind: 'secondary' } },
   APPROVAL: { rank: 8, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', action: { id: 'remind_approver', label: 'Remind approver', icon: 'bell', kind: 'secondary' } },
+  UNLOCK: { rank: 8, group: 'data', label: 'Approval waiting', pill: 'wait', banner: 'wait', logisticsOnly: true, action: { id: 'unlock', label: 'Unlock now', icon: 'lock', kind: 'secondary' } },
   CENTRAL_BELOW: { rank: 9, group: 'planning', label: 'Central store low', pill: 'low', banner: 'low', action: { id: 'supplier_order', label: 'Plan supplier order', icon: 'truck', kind: 'secondary' } },
   EXPIRY: { rank: 10, group: 'planning', label: 'Will expire before use', pill: 'exp', banner: 'exp', action: { id: 'move', label: 'Move to another facility', icon: 'move', kind: 'secondary' } },
   TRANSFER: { rank: 11, group: 'planning', label: 'Too much', pill: 'much', banner: 'much', action: { id: 'transfer', label: 'Plan transfer', icon: 'move', kind: 'secondary' } },
@@ -58,7 +61,7 @@ function compareKeys(a, b) {
 
 function make(type, fields) {
   const t = ALERT_TYPES[type];
-  return { type, rank: t.rank, group: t.group, label: t.label, pill: t.pill, icon: t.icon || t.pill, banner: t.banner, action: { ...t.action }, ...fields };
+  return { type, rank: t.rank, group: t.group, label: t.label, pill: t.pill, icon: t.icon || t.pill, banner: t.banner, logisticsOnly: !!t.logisticsOnly, action: { ...t.action }, ...fields };
 }
 
 function storeRank(db, storeId) {
@@ -153,6 +156,23 @@ export function needsAttention(db) {
     }
   }
 
+  // 5. Receipt difference (same rank as Count difference): a shipment received today with a short, damaged or
+  // extra amount, or a batch or expiry changed by the receiver. It clears when logistics adds a note to the shipment.
+  for (const sh of db.shipments.values()) {
+    if (sh.state !== 'received' || dateOf(sh.steps.received.at) !== d || sh.steps.received.at > db.nowIso) continue;
+    const answered = db.notes.some((n) => n.targetId === sh.id && n.stamp.at >= sh.steps.received.at && db.user(n.stamp.by).kind === 'logistics');
+    if (answered) continue;
+    for (const l of sh.lines) {
+      const diffs = receiptDifferences(sh, l);
+      if (!diffs.length) continue;
+      const it = db.item(l.itemId);
+      alerts.push(make('RECEIPT_DIFF', {
+        storeId: sh.toStoreId, shipmentId: sh.id, number: sh.number, itemId: it.id, diffs, receivedBy: sh.steps.received.byName, at: sh.steps.received.at,
+        key: [TYPE_ORDER[it.type], sh.steps.received.at, itemOrder(it)],
+      }));
+    }
+  }
+
   // 6. Store problem: the latest submitted count or log did not confirm "Store is cool, dry and locked today".
   // It clears at the next submitted count where the box is ticked.
   for (const s of db.stores) {
@@ -200,6 +220,11 @@ export function needsAttention(db) {
     }));
   }
 
+  // 8. Approval waiting, also: unlock requests from people locked out after 3 wrong PINs (logistics only).
+  for (const r of openUnlockRequests(db)) {
+    alerts.push(make('UNLOCK', { storeId: null, userId: r.userId, at: r.at, key: [9, r.at] }));
+  }
+
   // 9. Central store below its 3-month target, counting stock on order.
   for (const v of centralBelowTarget(db)) {
     alerts.push(make('CENTRAL_BELOW', {
@@ -240,5 +265,5 @@ export function needsAttention(db) {
 // Supervisor home and other filtered views: the same order without headings.
 export function alertsForStores(db, storeIds) {
   const set = new Set(storeIds);
-  return needsAttention(db).flatMap((g) => g.alerts).filter((a) => set.has(a.storeId) || set.has(a.toStoreId) || (a.storeIds || []).some((x) => set.has(x)));
+  return needsAttention(db).flatMap((g) => g.alerts).filter((a) => !a.logisticsOnly).filter((a) => set.has(a.storeId) || set.has(a.toStoreId) || (a.storeIds || []).some((x) => set.has(x)));
 }

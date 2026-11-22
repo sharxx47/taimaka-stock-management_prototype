@@ -62,3 +62,8 @@ export const STORAGE_KEY = 'taimaka-stock-demo';
 export const STORAGE_VERSION = 1;
 
 export const TEST_PIN = '1234';
+
+// Test sign-in safety (round 4): 3 tries, then a short lock that ends by itself.
+export const PIN_TRIES = 3;
+export const PIN_LOCK_MINUTES = 1; // prototype; the real app would use a longer time (15 minutes, to set with Taimaka)
+export const REAL_PIN_LOCK_MINUTES = 15;

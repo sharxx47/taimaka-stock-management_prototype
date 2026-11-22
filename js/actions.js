@@ -2,7 +2,7 @@
 // name, role and time, and appends events. Nothing is edited or deleted.
 
 import { stamp } from './users.js';
-import { CORRECTION_REASONS, STOCK_TYPES, SACHETS_PER_CARTON } from './config.js';
+import { CORRECTION_REASONS, STOCK_TYPES, SACHETS_PER_CARTON, TEST_PIN, PIN_TRIES } from './config.js';
 import {
   rutfAlertLevel, target, currentMonth, batchesOnHand, emergencyRequest, onHand, evaluateCount,
 } from './stock.js';
@@ -246,10 +246,31 @@ export function receiveShipment(db, user, shipmentId, received) {
     const qty = batches.reduce((s, b) => s + Number(b.qty), 0);
     if (batches.some((b) => !b.batch || !b.expiry)) fail('Enter the batch and expiry for every batch.');
     if (qty !== l.qtySent && !(r.reason && r.reason.trim())) fail(`${db.item(l.itemId).name}: say why the amount differs from what was sent.`);
+    // Batch number and expiry date were entered by logistics when they sent the shipment. If staff change either,
+    // both values are kept and a reason is required; the confirmed values are what the stock uses from now on.
+    for (const b of batches) {
+      const sent = b.sentBatch !== undefined ? { batch: b.sentBatch, expiry: b.sentExpiry } : null;
+      if (!sent) continue;
+      const changed = (sent.batch || '') !== b.batch || (sent.expiry || '') !== b.expiry;
+      if (changed && !(b.editReason && b.editReason.trim())) fail(`${db.item(l.itemId).name}: say why the batch or expiry differs from what logistics entered.`);
+      if (!changed) { delete b.sentBatch; delete b.sentExpiry; delete b.editReason; }
+    }
     lines.push({ itemId: l.itemId, qtyReceived: qty, batchesReceived: batches, reason: r.reason || null });
     if (qty > 0) ledger.push({ id: newId('e'), kind: 'received', storeId: sh.toStoreId, itemId: l.itemId, qty, ts: db.nowIso, stamp: st, shipmentId, batches });
   }
   db.apply({ type: 'shipment_step', shipmentId, step: 'received', lines, ledger, stamp: st });
+}
+
+// Receipt differences on one shipment line: short, damaged or extra, and any batch or expiry changed by the receiver.
+export function receiptDifferences(sh, line) {
+  const out = [];
+  if (sh.state !== 'received') return out;
+  if (line.qtyReceived !== null && line.qtyReceived !== line.qtySent) out.push({ kind: 'qty', sent: line.qtySent, received: line.qtyReceived, reason: line.reason });
+  for (const b of line.batchesReceived || []) {
+    if (b.sentBatch !== undefined && (b.sentBatch || '') !== b.batch) out.push({ kind: 'batch', sent: b.sentBatch, received: b.batch, reason: b.editReason });
+    if (b.sentExpiry !== undefined && (b.sentExpiry || '') !== b.expiry) out.push({ kind: 'expiry', sent: b.sentExpiry, received: b.expiry, reason: b.editReason });
+  }
+  return out;
 }
 
 // ---------- Central store ----------
@@ -329,4 +350,61 @@ export function addFacility(db, user, { label, type, supervisor, linkedItpId = n
   }));
   if (entries.length) db.apply({ type: 'ledger_batch', entries, stamp: st });
   return db.store(id);
+}
+
+// ---------- Test sign-in safety (round 4) ----------
+// Wrong PIN: 3 tries, then the account locks for a short time and unlocks by itself. Logistics can unlock it
+// sooner, and can remove or restore a person's access. Every change is logged with who, when and why.
+
+export function pinState(db, userId) {
+  const p = db.accounts.pin[userId] || { fails: 0, lockedUntil: null };
+  const locked = !!p.lockedUntil && Date.parse(db.nowIso) < Date.parse(p.lockedUntil);
+  const request = db.accounts.unlockRequests.find((r) => r.userId === userId && !r.closedAt) || null;
+  return { fails: locked ? 0 : p.fails, triesLeft: PIN_TRIES - (locked ? 0 : p.fails), locked, lockedUntil: locked ? p.lockedUntil : null, lockedAt: p.lockedAt || null, request: locked ? request : null };
+}
+
+export function accessRemoved(db, userId) {
+  return db.accounts.removed.get(userId) || null;
+}
+
+// Returns { ok } or { ok: false, reason: 'removed' | 'locked' | 'wrong', triesLeft }.
+export function trySignIn(db, userId, pin) {
+  db.user(userId);
+  if (accessRemoved(db, userId)) return { ok: false, reason: 'removed' };
+  if (pinState(db, userId).locked) return { ok: false, reason: 'locked' };
+  if (pin !== TEST_PIN) {
+    db.apply({ type: 'pin_fail', userId, at: db.nowIso });
+    const p = pinState(db, userId);
+    return p.locked ? { ok: false, reason: 'locked' } : { ok: false, reason: 'wrong', triesLeft: p.triesLeft };
+  }
+  db.apply({ type: 'pin_ok', userId, at: db.nowIso });
+  return { ok: true };
+}
+
+export function requestUnlock(db, userId) {
+  if (!pinState(db, userId).locked) fail('This account is not locked.');
+  db.apply({ type: 'unlock_request', userId, at: db.nowIso });
+}
+
+export function unlockAccount(db, user, userId, reason = '') {
+  if (!isLogistics(user)) fail('Only logistics can unlock an account.');
+  db.apply({ type: 'account_unlock', userId, reason, stamp: stamp(user, db.stores, db.nowIso) });
+}
+
+export function removeAccess(db, user, userId, reason) {
+  if (!isLogistics(user)) fail('Only logistics can remove access.');
+  if (userId === user.id) fail('You cannot remove your own access. Ask the other logistics officer.');
+  if (!reason || !reason.trim()) fail('Say why access is being removed.');
+  db.user(userId);
+  db.apply({ type: 'access_remove', userId, reason: reason.trim(), stamp: stamp(user, db.stores, db.nowIso) });
+}
+
+export function restoreAccess(db, user, userId, reason = '') {
+  if (!isLogistics(user)) fail('Only logistics can restore access.');
+  db.apply({ type: 'access_restore', userId, reason: (reason || '').trim(), stamp: stamp(user, db.stores, db.nowIso) });
+}
+
+// Open unlock requests from people who are still locked out (Approval waiting for logistics).
+export function openUnlockRequests(db) {
+  return db.accounts.unlockRequests.filter((r) => !r.closedAt && pinState(db, r.userId).locked);
 }

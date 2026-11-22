@@ -8,13 +8,16 @@ import { buildDb, DATA_FILES } from '../js/app-data.js';
 import { freshState, loadState, saveState, resetDemoData } from '../js/storage.js';
 import {
   storeItems, facilitySummary, stockView, emergencyRequest, target, escalation, usageInfo, amc, networkPosition,
-  hoursInSent, sentTooLong, latestCount, urgentFirst, topUp,
+  hoursInSent, sentTooLong, latestCount, urgentFirst, topUp, batchesOnHand,
 } from '../js/stock.js';
-import { needsAttention } from '../js/alerts.js';
-import { monthKpis } from '../js/kpis.js';
+import { needsAttention, alertsForStores } from '../js/alerts.js';
+import { monthKpis, monthDetails, demoMonthRecords } from '../js/kpis.js';
 import { formatQty, formatRutf, formatNumber, rutfReadBack } from '../js/format.js';
 import { formatShortDate, formatTime } from '../js/time.js';
-import { saveCountLine, submitCount, correctEntry, decideCorrection, receiveShipment, uploadOdk, pendingApprovals, requestEmergency } from '../js/actions.js';
+import {
+  saveCountLine, submitCount, correctEntry, decideCorrection, receiveShipment, uploadOdk, pendingApprovals, requestEmergency,
+  trySignIn, requestUnlock, unlockAccount, pinState, removeAccess, restoreAccess, addNote,
+} from '../js/actions.js';
 import { dateOf } from '../js/time.js'; // eslint-disable-line
 
 const src = Object.fromEntries(Object.entries(DATA_FILES).map(([k, p]) => [k, fs.readFileSync(p, 'utf8')]));
@@ -290,6 +293,99 @@ expect('Replay matches', stockView(replay.db, 'jigawan_iro', 'rutf').onHand, 585
 const loaded = loadState();
 const saved = saveState(loaded.state);
 console.log(`- Storage without a browser: available ${loaded.available}, saved ${saved} (kept in memory instead); reset gives ${resetDemoData().events.length} events`);
+
+
+// ---------- Round 4 ----------
+console.log('\n## Round 4\n');
+function detailSums(x) {
+  const m = monthDetails(x);
+  const k = m.kpis;
+  const s = (a, f) => a.reduce((n, y) => n + f(y), 0);
+  return {
+    text: `stock-out days ${s(m.stockOuts, (y) => y.days)} of ${k.stockOutDays}; days not on time ${s(m.onTime, (y) => y.days)} of ${k.facilityDays - k.countsOnTime}; counts ${s(m.accuracy, (y) => y.made)} of ${k.otpCounts}, matched ${s(m.accuracy, (y) => y.matched)} of ${k.accurate}; unexplained ${m.unexplained.length} of ${k.unexplained}; emergency ${m.emergency.length} of ${k.emergency}`,
+    ok: s(m.stockOuts, (y) => y.days) === k.stockOutDays && s(m.onTime, (y) => y.days) === k.facilityDays - k.countsOnTime && s(m.accuracy, (y) => y.made) === k.otpCounts && s(m.accuracy, (y) => y.matched) === k.accurate && m.unexplained.length === k.unexplained && m.emergency.length === k.emergency,
+    m,
+  };
+}
+const dBefore = detailSums(db);
+row('Management detail records add up (start)', dBefore.text, 'stock-out days 6 of 6; days not on time 54 of 54; counts 756 of 756, matched 727 of 727; unexplained 3 of 3; emergency 4 of 4');
+row('Demo records stay the same on every load', JSON.stringify(demoMonthRecords(db)) === JSON.stringify(demoMonthRecords(buildDb(src, freshState()).db)) ? 'yes' : 'no', 'yes');
+row('Unexplained differences (worst first)', dBefore.m.unexplained.map((x) => `${db.store(x.storeId).label} ${db.item(x.itemId).name} ${formatShortDate(x.date)} ${x.counted} vs ${x.expected}`).join('; '), 'Jamari ORS 3 Oct 85 vs 93; Jigawan Iro Amoxicillin susp 60ml 26 Oct 91 vs 98; Jigawan Iro Amoxicillin susp 60ml 20 Oct 108 vs 116');
+const dAfter = detailSums(t);
+row('Management detail records add up (after the walkthrough copy)', dAfter.ok ? 'yes' : dAfter.text, 'yes');
+console.log(`  (after: ${dAfter.text})`);
+
+// Receive 1042 with a short RUTF amount and a changed expiry: logistics sees a Receipt difference at rank 5.
+const t3 = buildDb(src, freshState()).db;
+const sh3 = [...t3.shipments.values()].find((s) => s.number === 1042);
+receiveShipment(t3, t3.user('lto_jigawan_iro'), sh3.id, {
+  rutf: { batches: [{ batch: 'RU-2604', expiry: '2027-03-31', qty: 1200, sentBatch: 'RU-2604', sentExpiry: '2027-03-31' }, { batch: 'RU-2611', expiry: '2027-05-31', qty: 450, sentBatch: 'RU-2611', sentExpiry: '2027-06-30', editReason: 'Different date on the cartons' }], reason: 'Short: 1 carton missing' },
+  tom_brown: { batches: [{ batch: 'TB-0925', expiry: '2027-01-15', qty: 23, sentBatch: 'TB-0925', sentExpiry: '2027-01-15' }] },
+});
+const rd = needsAttention(t3).flatMap((g) => g.alerts).filter((a) => a.type === 'RECEIPT_DIFF');
+row('Receipt difference alert (1042 short, expiry changed)', rd.map((a) => `rank ${a.rank} ${a.group} ${a.number} ${t3.item(a.itemId).name}: ${a.diffs.map((x) => `${x.kind} ${x.sent} -> ${x.received}`).join(', ')}`).join(' | '), 'rank 5 data 1042 RUTF: qty 1800 -> 1650, expiry 2027-06-30 -> 2027-05-31');
+const rcv3 = t3.ledger.entries('jigawan_iro', 'rutf').filter((e) => e.kind === 'received' && e.shipmentId === sh3.id).flatMap((e) => e.batches);
+row('The stock record keeps the confirmed expiry and what logistics entered', rcv3.map((x) => `${x.batch} ${x.expiry}${x.sentExpiry && x.sentExpiry !== x.expiry ? ` (sent ${x.sentExpiry}, "${x.editReason}")` : ''}`).join('; '), 'RU-2604 2027-03-31; RU-2611 2027-05-31 (sent 2027-06-30, "Different date on the cartons")');
+addNote(t3, t3.user('log_nasiru_bello'), sh3.id, 'Checked with the driver');
+row('Receipt difference clears after a logistics note', needsAttention(t3).flatMap((g) => g.alerts).filter((a) => a.type === 'RECEIPT_DIFF').length, 0);
+
+// Wrong PIN: 3 tries, a short lock, an unlock request for logistics, and removed access.
+const t4 = buildDb(src, freshState()).db;
+const tries = [trySignIn(t4, 'pharm_gh_deba', '1111'), trySignIn(t4, 'pharm_gh_deba', '2222'), trySignIn(t4, 'pharm_gh_deba', '3333')];
+row('Wrong PIN tries', tries.map((x) => (x.reason === 'wrong' ? `wrong, ${x.triesLeft} left` : x.reason)).join('; '), 'wrong, 2 left; wrong, 1 left; locked');
+row('Right PIN while locked', trySignIn(t4, 'pharm_gh_deba', '1234').reason, 'locked');
+requestUnlock(t4, 'pharm_gh_deba');
+const ua = needsAttention(t4).flatMap((g) => g.alerts).find((a) => a.type === 'UNLOCK');
+row('Unlock request for logistics', ua ? `rank ${ua.rank}, ${ua.label}, button ${ua.action.label}, logistics only ${ua.logisticsOnly}` : 'none', 'rank 8, Approval waiting, button Unlock now, logistics only true');
+row('Unlock request not on the supervisor home', alertsForStores(t4, ['gh_deba']).some((a) => a.type === 'UNLOCK') ? 'shown' : 'not shown', 'not shown');
+unlockAccount(t4, t4.user('log_nasiru_bello'), 'pharm_gh_deba', 'Asked to unlock');
+row('After Unlock now', `${trySignIn(t4, 'pharm_gh_deba', '1234').ok}, alerts ${needsAttention(t4).flatMap((g) => g.alerts).filter((a) => a.type === 'UNLOCK').length}`, 'true, alerts 0');
+const t5 = buildDb(src, freshState()).db;
+trySignIn(t5, 'lto_kurjale', '0000'); trySignIn(t5, 'lto_kurjale', '0000'); trySignIn(t5, 'lto_kurjale', '0000');
+t5.setNow('2026-10-30T18:06:01+01:00');
+row('Lock ends by itself after 1 minute', `${pinState(t5, 'lto_kurjale').locked}, sign in ${trySignIn(t5, 'lto_kurjale', '1234').ok}`, 'false, sign in true');
+removeAccess(t5, t5.user('log_nasiru_bello'), 'lto_kurjale', 'Left Taimaka');
+row('Removed access', `${trySignIn(t5, 'lto_kurjale', '1234').reason}; log: ${t5.accounts.log.map((x) => `${x.text} by ${x.stamp.byName} (${x.reason})`).join('; ')}`, 'removed; log: Access removed by Nasiru Bello (Left Taimaka)');
+restoreAccess(t5, t5.user('log_nasiru_bello'), 'lto_kurjale', 'Back at work');
+row('Restored access', trySignIn(t5, 'lto_kurjale', '1234').ok, true);
+const t5r = buildDb(src, { ...freshState(), events: t5.userEvents });
+row('Account events replay', `${t5r.dropped.length} dropped, ${t5r.db.accounts.log.length} log lines`, '0 dropped, 2 log lines');
+
+// ODK upload: the bundled file, a file with a misspelled site and item, and a file with September missing.
+const odkLines = src.odkCsv.split(/\r?\n/);
+const misspelled = odkLines.map((l) => l.replace(/^ashaka_gari,RUTF,/, 'ashaka_garri,RUTF,').replace(/^barambu,Tom Brown,/, 'barambu,Tom Brwn,')).join('\n');
+const noSep = odkLines.map((l) => l.split(',').filter((_, i) => i !== 10).join(',')).join('\n');
+const pBundled = db.parseOdk(src.odkCsv);
+const pMis = db.parseOdk(misspelled);
+const pNoSep = db.parseOdk(noSep);
+row('ODK preview, bundled file', `${pBundled.siteCount} sites, ${pBundled.itemCount} items, ${pBundled.months.length} months, ${pBundled.problems.length} problems, ignored ${pBundled.ignored.join(', ')}`, '27 sites, 19 items, 10 months, 0 problems, ignored total_jan_oct');
+row('ODK preview, misspelled site and item', pMis.problems.map((p) => `row ${p.row}: ${p.reason}`).join(' | '), 'row 2: Unknown site "ashaka_garri". Did you mean ashaka_gari? | row 22: Unknown item name "Tom Brwn". Closest known name: Tom Brown');
+row('ODK preview, September missing', `months ${pNoSep.months.length}, has Sep ${pNoSep.months.includes('2026-09')}`, 'months 9, has Sep false');
+const t6 = buildDb(src, freshState()).db;
+uploadOdk(t6, t6.user('log_nasiru_bello'), 'no-september.csv', noSep);
+row('Upload without September keeps September (Zaune RUTF a month)', formatNumber(Math.round(amc(t6, 'zaune', 'rutf'))), '13,750');
+uploadOdk(t6, t6.user('log_nasiru_bello'), 'misspelled.csv', misspelled);
+row('Upload with unreadable rows keeps their numbers (Ashaka Gari RUTF a month)', formatNumber(Math.round(amc(t6, 'ashaka_gari', 'rutf'))), '5,516');
+let badFile = '';
+try { uploadOdk(t6, t6.user('log_nasiru_bello'), 'bad.csv', 'a,b\n1,2'); } catch (e) { badFile = e.message; }
+row('A file without site and item columns is refused', badFile, 'The file needs a "site" column and an "item" column.');
+
+// Service worker: its file list matches every file the app loads.
+const swText = fs.readFileSync('sw.js', 'utf8');
+const swFiles = [...swText.matchAll(/^\s+'([^']+)',$/gm)].map((x) => x[1]).filter((f) => f !== './');
+const need = new Set(['index.html', 'manifest.webmanifest', ...Object.values(DATA_FILES)]);
+const html0 = fs.readFileSync('index.html', 'utf8');
+for (const m of html0.matchAll(/(?:href|src)="([^"#:]+)"/g)) need.add(m[1]);
+const man = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
+for (const i of man.icons) need.add(i.src);
+const seenJs = new Set();
+const walk = (f) => { if (seenJs.has(f)) return; seenJs.add(f); need.add(f); const dir = f.split('/').slice(0, -1).join('/'); for (const m of fs.readFileSync(f, 'utf8').matchAll(/^import[^'"]*['"]([^'"]+)['"]/gm)) { const parts = `${dir}/${m[1]}`.split('/'); const out = []; for (const p of parts) { if (p === '..') out.pop(); else if (p !== '.') out.push(p); } walk(out.join('/')); } };
+walk('js/ui/main.js');
+for (const m of fs.readFileSync('css/fonts.css', 'utf8').matchAll(/url\(['"]?\.\.\/([^'")]+)/g)) need.add(m[1]);
+need.add('Assets/taimaka-logo.svg');
+const missingSw = [...need].filter((f) => !swFiles.includes(f));
+const extraSw = swFiles.filter((f) => !need.has(f) || !fs.existsSync(f));
+row('Service worker caches every file the app loads', missingSw.length || extraSw.length ? `missing ${missingSw.join(', ')}; extra ${extraSw.join(', ')}` : `yes (${swFiles.length} files)`, `yes (${swFiles.length} files)`);
 
 console.log(`\n## Result: ${mismatches.length ? `${mismatches.length} mismatch(es)` : 'all values match'}\n`);
 for (const m of mismatches) console.log(`- ${m}`);
